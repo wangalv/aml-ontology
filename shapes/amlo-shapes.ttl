@@ -1,0 +1,69 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix amlo: <https://example.org/amlo#> .
+@prefix ex:   <https://example.org/amlo-shapes#> .
+
+# Integrity rules for AMLTRIX instance data. Relationships are stored in the
+# AMLTRIX direction (e.g. Mitigation -mitigates-> Technique), so rules about a
+# technique use inverse paths.
+
+ex:LabelledConcept a sh:NodeShape ;
+    sh:targetClass amlo:AmltrixConcept ;
+    sh:property [ sh:path skos:prefLabel ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "Every concept needs exactly one label." ] ;
+    sh:property [ sh:path skos:notation ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "Every concept needs exactly one AMLTRIX ID." ] ;
+    sh:property [ sh:path amlo:stixId ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+ex:TacticShape a sh:NodeShape ;
+    sh:targetClass amlo:Tactic ;
+    sh:property [ sh:path skos:notation ; sh:pattern "^ML\\.TA[0-9]{4}$" ; sh:message "Tactic IDs look like ML.TA0007." ] .
+
+ex:TechniqueShape a sh:NodeShape ;
+    sh:targetClass amlo:Technique ;
+    sh:property [ sh:path skos:notation ; sh:pattern "^T[0-9]{4}(\\.[0-9]{3})?$" ; sh:message "Technique IDs look like T0013 or T0013.004." ] ;
+    sh:property [ sh:path [ sh:inversePath amlo:isAchievedBy ] ; sh:minCount 1 ; sh:message "A technique must serve at least one tactic." ] ;
+    sh:property [ sh:path amlo:isIndicatedBy ; sh:minCount 1 ; sh:message "A technique must have at least one indicator." ] ;
+    sh:property [ sh:path [ sh:inversePath amlo:mitigates ] ; sh:minCount 1 ; sh:message "A technique must have at least one mitigation." ] .
+
+ex:SubTechniqueShape a sh:NodeShape ;
+    sh:targetClass amlo:SubTechnique ;
+    sh:property [ sh:path skos:notation ; sh:pattern "^T[0-9]{4}\\.[0-9]{3}$" ] ;
+    sh:property [
+        sh:path skos:broader ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:class amlo:Technique ;
+        sh:not [ sh:class amlo:SubTechnique ] ;
+        sh:message "A sub-technique has exactly one parent, and that parent is a top-level technique."
+    ] .
+
+ex:IndicatorShape a sh:NodeShape ;
+    sh:targetClass amlo:Indicator ;
+    sh:property [ sh:path skos:definition ; sh:minCount 1 ; sh:message "An indicator without text is meaningless." ] ;
+    sh:property [ sh:path [ sh:inversePath amlo:isIndicatedBy ] ; sh:minCount 1 ; sh:maxCount 1 ; sh:message "An indicator belongs to exactly one technique." ] .
+
+ex:LinkShape a sh:NodeShape ;
+    sh:targetClass amlo:Link ;
+    sh:property [ sh:path amlo:technique ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Technique ] ;
+    sh:property [ sh:path dct:description ; sh:minCount 1 ; sh:message "A link exists to carry its text." ] .
+
+ex:TacticLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:TacticLink ;
+    sh:property [ sh:path amlo:tactic ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Tactic ] .
+ex:MitigationLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:MitigationLink ;
+    sh:property [ sh:path amlo:mitigation ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Mitigation ] .
+ex:ActorLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:ActorLink ;
+    sh:property [ sh:path amlo:actor ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Actor ] .
+ex:InstrumentLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:InstrumentLink ;
+    sh:property [ sh:path amlo:instrument ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:ValueInstrument ] .
+ex:ProductServiceLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:ProductServiceLink ;
+    sh:property [ sh:path amlo:productService ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:ProductService ] .
+ex:RiskLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:RiskLink ;
+    sh:property [ sh:path amlo:riskType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:RiskType ] .
+ex:DataSourceLinkShape a sh:NodeShape ;
+    sh:targetClass amlo:DataSourceLink ;
+    sh:property [ sh:path amlo:dataSource ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:DataSource ] .

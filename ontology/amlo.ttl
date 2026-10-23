@@ -1,0 +1,177 @@
+@prefix amlo:    <https://example.org/amlo#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+
+# ---------------------------------------------------------------------------
+# AMLO: a middle-layer AML ontology (schema / TBox).
+# Models the structure of the AMLTRIX framework (beta.4 CSV export).
+# The namespace is a placeholder; replace example.org with a domain you control.
+#
+# Design decisions
+#  - Technique / Tactic / Indicator ... are individuals of OWL classes, not
+#    subclasses: a transaction is not an "instance of" Shell Companies, it
+#    exhibits it. Hierarchy between techniques uses skos:broader.
+#  - Sub-techniques are Techniques with a skos:broader parent.
+#  - Each AMLTRIX relationship type has a direct property for simple queries.
+#    Seven of them also carry edge-specific text; that is kept on a Link node
+#    (n-ary relation pattern) so no information is lost. Both are generated
+#    from the same source row, so they cannot drift apart.
+#  - Indicators are owned by exactly one Technique in the data (the edge text
+#    equals the indicator text), so no Link node is created for them.
+# ---------------------------------------------------------------------------
+
+<https://example.org/amlo> a owl:Ontology ;
+    dct:title "AMLO - AML middle-layer ontology (AMLTRIX structure)"@en ;
+    dct:description "Schema for representing the AMLTRIX money-laundering framework as linked data."@en ;
+    dct:source <https://framework.amltrix.com> ;
+    owl:versionInfo "0.1-draft; built against AMLTRIX 1.0-beta.4" ;
+    skos:note "Instance data derived from AMLTRIX must carry AMLTRIX attribution and the AMLTRIX License Terms (https://framework.amltrix.com/license)."@en .
+
+# ---------------------------------------------------------------- classes ---
+
+amlo:AmltrixConcept a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "AMLTRIX concept"@en ;
+    rdfs:comment "Abstract parent of every catalogue entry (tactic, technique, ...). Label = skos:prefLabel, ID = skos:notation, text = skos:definition."@en .
+
+amlo:Tactic a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Tactic"@en ;
+    rdfs:comment "A stage of the laundering process (e.g. Layering). A technique may serve several tactics."@en .
+
+amlo:Technique a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Technique"@en ;
+    rdfs:comment "A method of laundering. Plays the role of a typology."@en .
+
+amlo:SubTechnique a owl:Class ;
+    rdfs:subClassOf amlo:Technique ;
+    rdfs:label "Sub-technique"@en ;
+    rdfs:comment "A refinement of exactly one parent technique, linked with skos:broader."@en .
+
+amlo:Indicator a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Indicator"@en ;
+    rdfs:comment "An observable red flag, owned by one technique."@en .
+
+amlo:Mitigation a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Mitigation"@en .
+
+amlo:Actor a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Actor"@en ;
+    rdfs:comment "A persona or institution type that takes part in laundering (e.g. Cardholder, Insurance Company)."@en .
+
+amlo:ValueInstrument a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Value instrument"@en ;
+    rdfs:comment "A vehicle that stores or moves value (e.g. Casino Chips)."@en .
+
+amlo:ProductService a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Product or service"@en .
+
+amlo:DataSource a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Data source"@en ;
+    rdfs:comment "Where evidence of a technique can be observed."@en .
+
+amlo:RiskType a owl:Class ;
+    rdfs:subClassOf amlo:AmltrixConcept ;
+    rdfs:label "Risk type"@en .
+
+# Link classes: one per relationship type that carries its own text.
+
+amlo:Link a owl:Class ;
+    rdfs:label "Link"@en ;
+    rdfs:comment "Reified relationship between a technique and another concept. dct:description holds the context-specific text of that pairing."@en .
+
+amlo:TacticLink a owl:Class ;       rdfs:subClassOf amlo:Link ; rdfs:label "Tactic link"@en .
+amlo:MitigationLink a owl:Class ;   rdfs:subClassOf amlo:Link ; rdfs:label "Mitigation link"@en .
+amlo:ActorLink a owl:Class ;        rdfs:subClassOf amlo:Link ; rdfs:label "Actor link"@en .
+amlo:InstrumentLink a owl:Class ;   rdfs:subClassOf amlo:Link ; rdfs:label "Instrument link"@en .
+amlo:ProductServiceLink a owl:Class ; rdfs:subClassOf amlo:Link ; rdfs:label "Product/service link"@en .
+amlo:RiskLink a owl:Class ;         rdfs:subClassOf amlo:Link ; rdfs:label "Risk link"@en .
+amlo:DataSourceLink a owl:Class ;   rdfs:subClassOf amlo:Link ; rdfs:label "Data source link"@en .
+
+# ------------------------------------------------ direct relationships ------
+# Names follow the verbs used in AMLTRIX; the inverse reads from the technique.
+
+amlo:isAchievedBy a owl:ObjectProperty ;
+    rdfs:label "is achieved by"@en ; rdfs:domain amlo:Tactic ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:achievesTactic .
+amlo:achievesTactic a owl:ObjectProperty ;
+    rdfs:label "achieves tactic"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:Tactic .
+
+amlo:mitigates a owl:ObjectProperty ;
+    rdfs:label "mitigates"@en ; rdfs:domain amlo:Mitigation ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:mitigatedBy .
+amlo:mitigatedBy a owl:ObjectProperty ;
+    rdfs:label "mitigated by"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:Mitigation .
+
+amlo:engagesIn a owl:ObjectProperty ;
+    rdfs:label "engages in"@en ; rdfs:domain amlo:Actor ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:engagedInBy .
+amlo:engagedInBy a owl:ObjectProperty ;
+    rdfs:label "engaged in by"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:Actor .
+
+amlo:isUsedBy a owl:ObjectProperty ;
+    rdfs:label "is used by"@en ; rdfs:domain amlo:ValueInstrument ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:usesInstrument .
+amlo:usesInstrument a owl:ObjectProperty ;
+    rdfs:label "uses instrument"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:ValueInstrument .
+
+amlo:isExploitedBy a owl:ObjectProperty ;
+    rdfs:label "is exploited by"@en ; rdfs:domain amlo:ProductService ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:exploitsProductService .
+amlo:exploitsProductService a owl:ObjectProperty ;
+    rdfs:label "exploits product or service"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:ProductService .
+
+amlo:isAssociatedWith a owl:ObjectProperty ;
+    rdfs:label "is associated with"@en ; rdfs:domain amlo:RiskType ; rdfs:range amlo:Technique ;
+    owl:inverseOf amlo:hasRiskType .
+amlo:hasRiskType a owl:ObjectProperty ;
+    rdfs:label "has risk type"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:RiskType .
+
+amlo:isIdentifiedIn a owl:ObjectProperty ;
+    rdfs:label "is identified in"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:DataSource ;
+    rdfs:comment "The technique can be detected in this data source."@en .
+
+amlo:isIndicatedBy a owl:ObjectProperty ;
+    rdfs:label "is indicated by"@en ; rdfs:domain amlo:Technique ; rdfs:range amlo:Indicator ;
+    owl:inverseOf amlo:indicates .
+amlo:indicates a owl:ObjectProperty ;
+    rdfs:label "indicates"@en ; rdfs:domain amlo:Indicator ; rdfs:range amlo:Technique .
+
+# ------------------------------------------------ link node properties ------
+
+amlo:technique a owl:ObjectProperty ;
+    rdfs:label "technique"@en ; rdfs:domain amlo:Link ; rdfs:range amlo:Technique .
+amlo:tactic a owl:ObjectProperty ;
+    rdfs:label "tactic"@en ; rdfs:domain amlo:TacticLink ; rdfs:range amlo:Tactic .
+amlo:mitigation a owl:ObjectProperty ;
+    rdfs:label "mitigation"@en ; rdfs:domain amlo:MitigationLink ; rdfs:range amlo:Mitigation .
+amlo:actor a owl:ObjectProperty ;
+    rdfs:label "actor"@en ; rdfs:domain amlo:ActorLink ; rdfs:range amlo:Actor .
+amlo:instrument a owl:ObjectProperty ;
+    rdfs:label "instrument"@en ; rdfs:domain amlo:InstrumentLink ; rdfs:range amlo:ValueInstrument .
+amlo:productService a owl:ObjectProperty ;
+    rdfs:label "product or service"@en ; rdfs:domain amlo:ProductServiceLink ; rdfs:range amlo:ProductService .
+amlo:riskType a owl:ObjectProperty ;
+    rdfs:label "risk type"@en ; rdfs:domain amlo:RiskLink ; rdfs:range amlo:RiskType .
+amlo:dataSource a owl:ObjectProperty ;
+    rdfs:label "data source"@en ; rdfs:domain amlo:DataSourceLink ; rdfs:range amlo:DataSource .
+
+# ------------------------------------------------ data properties -----------
+
+amlo:stixId a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "STIX identifier"@en ; rdfs:domain amlo:AmltrixConcept ; rdfs:range xsd:string ;
+    rdfs:comment "Original STIX 2.1 id, kept for round-tripping to the AMLTRIX export."@en .
+amlo:shortDescription a owl:DatatypeProperty ;
+    rdfs:label "short description"@en ; rdfs:subPropertyOf skos:scopeNote ;
+    rdfs:domain amlo:AmltrixConcept ; rdfs:range xsd:string .
