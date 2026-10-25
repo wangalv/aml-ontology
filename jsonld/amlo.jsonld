@@ -1,0 +1,682 @@
+{
+  "@context": {
+    "amlo": "https://example.org/amlo#",
+    "brick": "https://brickschema.org/schema/Brick#",
+    "csvw": "http://www.w3.org/ns/csvw#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcam": "http://purl.org/dc/dcam/",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dcmitype": "http://purl.org/dc/dcmitype/",
+    "dct": "http://purl.org/dc/terms/",
+    "doap": "http://usefulinc.com/ns/doap#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "geo": "http://www.opengis.net/ont/geosparql#",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "org": "http://www.w3.org/ns/org#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "prof": "http://www.w3.org/ns/dx/prof/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "qb": "http://purl.org/linked-data/cube#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "https://schema.org/",
+    "sh": "http://www.w3.org/ns/shacl#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "sosa": "http://www.w3.org/ns/sosa/",
+    "ssn": "http://www.w3.org/ns/ssn/",
+    "time": "http://www.w3.org/2006/time#",
+    "vann": "http://purl.org/vocab/vann/",
+    "void": "http://rdfs.org/ns/void#",
+    "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "amlo:mitigates",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:mitigatedBy"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:Mitigation"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mitigates"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:ProductService",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Product or service"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:MitigationLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Mitigation link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:productService",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:ProductServiceLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "product or service"
+      },
+      "rdfs:range": {
+        "@id": "amlo:ProductService"
+      }
+    },
+    {
+      "@id": "amlo:isAssociatedWith",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:hasRiskType"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:RiskType"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is associated with"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:shortDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:domain": {
+        "@id": "amlo:AmltrixConcept"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "short description"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "skos:scopeNote"
+      }
+    },
+    {
+      "@id": "amlo:isIndicatedBy",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:indicates"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is indicated by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Indicator"
+      }
+    },
+    {
+      "@id": "amlo:TacticLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Tactic link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:ActorLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Actor link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:RiskLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Risk link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "https://example.org/amlo",
+      "@type": "owl:Ontology",
+      "dct:description": {
+        "@language": "en",
+        "@value": "Schema for representing the AMLTRIX money-laundering framework as linked data."
+      },
+      "dct:source": {
+        "@id": "https://framework.amltrix.com"
+      },
+      "dct:title": {
+        "@language": "en",
+        "@value": "AMLO - AML middle-layer ontology (AMLTRIX structure)"
+      },
+      "owl:versionInfo": "0.1-draft; built against AMLTRIX 1.0-beta.4",
+      "skos:note": {
+        "@language": "en",
+        "@value": "Instance data derived from AMLTRIX must carry AMLTRIX attribution and the AMLTRIX License Terms (https://framework.amltrix.com/license)."
+      }
+    },
+    {
+      "@id": "amlo:ProductServiceLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Product/service link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:AmltrixConcept",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Abstract parent of every catalogue entry (tactic, technique, ...). Label = skos:prefLabel, ID = skos:notation, text = skos:definition."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "AMLTRIX concept"
+      },
+      "rdfs:subClassOf": {
+        "@id": "skos:Concept"
+      }
+    },
+    {
+      "@id": "amlo:Indicator",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An observable red flag, owned by one technique."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Indicator"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:Technique",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A method of laundering. Plays the role of a typology."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Technique"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:stixId",
+      "@type": [
+        "owl:DatatypeProperty",
+        "owl:FunctionalProperty"
+      ],
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Original STIX 2.1 id, kept for round-tripping to the AMLTRIX export."
+      },
+      "rdfs:domain": {
+        "@id": "amlo:AmltrixConcept"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "STIX identifier"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "amlo:engagedInBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "engaged in by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Actor"
+      }
+    },
+    {
+      "@id": "amlo:Mitigation",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Mitigation"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:exploitsProductService",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "exploits product or service"
+      },
+      "rdfs:range": {
+        "@id": "amlo:ProductService"
+      }
+    },
+    {
+      "@id": "amlo:Tactic",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A stage of the laundering process (e.g. Layering). A technique may serve several tactics."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Tactic"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:isUsedBy",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:usesInstrument"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:ValueInstrument"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is used by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:usesInstrument",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "uses instrument"
+      },
+      "rdfs:range": {
+        "@id": "amlo:ValueInstrument"
+      }
+    },
+    {
+      "@id": "amlo:indicates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Indicator"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "indicates"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:instrument",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:InstrumentLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "instrument"
+      },
+      "rdfs:range": {
+        "@id": "amlo:ValueInstrument"
+      }
+    },
+    {
+      "@id": "amlo:InstrumentLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Instrument link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:SubTechnique",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A refinement of exactly one parent technique, linked with skos:broader."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Sub-technique"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:dataSource",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:DataSourceLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "data source"
+      },
+      "rdfs:range": {
+        "@id": "amlo:DataSource"
+      }
+    },
+    {
+      "@id": "amlo:engagesIn",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:engagedInBy"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:Actor"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "engages in"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:mitigatedBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mitigated by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Mitigation"
+      }
+    },
+    {
+      "@id": "amlo:hasRiskType",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "has risk type"
+      },
+      "rdfs:range": {
+        "@id": "amlo:RiskType"
+      }
+    },
+    {
+      "@id": "amlo:achievesTactic",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "achieves tactic"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Tactic"
+      }
+    },
+    {
+      "@id": "amlo:riskType",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:RiskLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "risk type"
+      },
+      "rdfs:range": {
+        "@id": "amlo:RiskType"
+      }
+    },
+    {
+      "@id": "amlo:actor",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:ActorLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "actor"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Actor"
+      }
+    },
+    {
+      "@id": "amlo:ValueInstrument",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A vehicle that stores or moves value (e.g. Casino Chips)."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Value instrument"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:technique",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:Link"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "technique"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:tactic",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:TacticLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "tactic"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Tactic"
+      }
+    },
+    {
+      "@id": "amlo:DataSourceLink",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Data source link"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:Link"
+      }
+    },
+    {
+      "@id": "amlo:Actor",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A persona or institution type that takes part in laundering (e.g. Cardholder, Insurance Company)."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Actor"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:RiskType",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Risk type"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:isIdentifiedIn",
+      "@type": "owl:ObjectProperty",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The technique can be detected in this data source."
+      },
+      "rdfs:domain": {
+        "@id": "amlo:Technique"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is identified in"
+      },
+      "rdfs:range": {
+        "@id": "amlo:DataSource"
+      }
+    },
+    {
+      "@id": "amlo:DataSource",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Where evidence of a technique can be observed."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Data source"
+      },
+      "rdfs:subClassOf": {
+        "@id": "amlo:AmltrixConcept"
+      }
+    },
+    {
+      "@id": "amlo:isAchievedBy",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:achievesTactic"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:Tactic"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is achieved by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    },
+    {
+      "@id": "amlo:mitigation",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "amlo:MitigationLink"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mitigation"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Mitigation"
+      }
+    },
+    {
+      "@id": "amlo:Link",
+      "@type": "owl:Class",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Reified relationship between a technique and another concept. dct:description holds the context-specific text of that pairing."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Link"
+      }
+    },
+    {
+      "@id": "amlo:isExploitedBy",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "amlo:exploitsProductService"
+      },
+      "rdfs:domain": {
+        "@id": "amlo:ProductService"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "is exploited by"
+      },
+      "rdfs:range": {
+        "@id": "amlo:Technique"
+      }
+    }
+  ]
+}
