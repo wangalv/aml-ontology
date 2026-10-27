@@ -1,0 +1,25 @@
+{
+  "@context": {
+    "inv":  "https://example.org/investigation#",
+    "amx":  "https://example.org/amltrix/",
+    "data": "https://example.org/investigation/data/",
+    "xsd":  "http://www.w3.org/2001/XMLSchema#",
+
+    "alert_id":            "inv:alertId",
+    "raised_at":           { "@id": "inv:raisedAt", "@type": "xsd:dateTime" },
+    "trigger_reason":      "inv:triggerReason",
+    "suspected_technique": { "@id": "inv:suspectedTechnique", "@type": "@id" },
+    "evidence":            { "@id": "inv:hasEvidence", "@type": "@id" },
+
+    "evidence_id":         "inv:sourceId",
+    "record_type":         { "@id": "inv:recordType", "@type": "@id" },
+
+    "item_id":             "inv:sourceId",
+    "for_alert":           { "@id": "inv:forAlert", "@type": "@id" },
+    "indicator":           { "@id": "inv:indicator", "@type": "@id" },
+    "assessability":       "inv:assessability",
+    "check_with":          { "@id": "inv:checkWith", "@type": "@id" },
+    "needs_record_type":   { "@id": "inv:needsRecordType", "@type": "@id" },
+    "needs_record_note":   "inv:needsRecordNote"
+  }
+}

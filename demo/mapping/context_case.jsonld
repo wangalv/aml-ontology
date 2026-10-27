@@ -1,0 +1,30 @@
+{
+  "@context": {
+    "inv":  "https://example.org/investigation#",
+    "amx":  "https://example.org/amltrix/",
+    "data": "https://example.org/investigation/data/",
+    "xsd":  "http://www.w3.org/2001/XMLSchema#",
+
+    "case_id":      "inv:caseId",
+    "opened_at":    { "@id": "inv:openedAt", "@type": "xsd:dateTime" },
+    "hypothesis":   { "@id": "inv:hypothesis", "@type": "@id" },
+    "findings":     { "@id": "inv:hasFinding", "@type": "@id" },
+
+    "evidence_id":  "inv:sourceId",
+    "record_type":  { "@id": "inv:recordType", "@type": "@id" },
+
+    "finding_id":   "inv:sourceId",
+    "technique":    { "@id": "inv:technique", "@type": "@id" },
+    "indicator":    { "@id": "inv:indicator", "@type": "@id" },
+    "status":       "inv:status",
+    "observation":  "inv:observation",
+    "supported_by": { "@id": "inv:supportedBy", "@type": "@id" },
+
+    "draft_id":      "inv:sourceId",
+    "for_case":      { "@id": "inv:forCase", "@type": "@id" },
+    "review_status": "inv:reviewStatus",
+    "paragraphs":    { "@id": "inv:paragraphs", "@container": "@list" },
+    "text":          "inv:text",
+    "based_on":      { "@id": "inv:basedOn", "@type": "@id" }
+  }
+}

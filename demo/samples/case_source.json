@@ -1,0 +1,25 @@
+{
+  "case_id": "CASE-0007",
+  "opened_at": "2022-09-13T09:00:00Z",
+  "hypothesis": ["T0039"],
+  "evidence": [
+    { "evidence_id": "EV-TXLOG-1001", "record_type": "DS0019" }
+  ],
+  "findings": [
+    { "finding_id": "F-1", "technique": "T0039", "indicator": "IND02191", "status": "supported",
+      "observation": "Funds left account A-01 and returned to it through four intermediate accounts within 5.2 days.",
+      "supported_by": ["EV-TXLOG-1001"] },
+    { "finding_id": "F-2", "technique": "T0039", "indicator": "IND02194", "status": "not-assessable",
+      "observation": "No ownership or onboarding data was available, so this indicator was not assessed." }
+  ],
+  "report_draft": {
+    "draft_id": "RD-0007",
+    "review_status": "draft, requires investigator review",
+    "paragraphs": [
+      { "text": "Transaction records show a circular movement of funds consistent with Circular Transactions (T0039): the funds returned to the originating account within 5.2 days (IND02191).",
+        "based_on": ["F-1"] },
+      { "text": "Indicator IND02194 could not be assessed because ownership and onboarding data was not available.",
+        "based_on": ["F-2"] }
+    ]
+  }
+}

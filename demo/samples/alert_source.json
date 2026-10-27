@@ -1,0 +1,16 @@
+{
+  "alert_id": "ALT-1001",
+  "raised_at": "2022-09-12T14:54:00Z",
+  "trigger_reason": "Graph analysis: funds moved through 5 accounts and returned to the origin within 5.2 days",
+  "suspected_technique": "T0039",
+  "evidence": [
+    { "evidence_id": "EV-TXLOG-1001", "record_type": "DS0019" }
+  ],
+  "checklist": [
+    { "item_id": "CHK-1001-1", "indicator": "IND02191", "assessability": "can-assess-now", "check_with": "EV-TXLOG-1001" },
+    { "item_id": "CHK-1001-2", "indicator": "IND02194", "assessability": "needs-more-data", "needs_record_type": "DS0039",
+      "needs_record_note": "Ownership and onboarding history of the five account holders" },
+    { "item_id": "CHK-1001-3", "indicator": "IND02197", "assessability": "needs-more-data", "needs_record_type": "DS0036",
+      "needs_record_note": "Shipping and invoicing records (not in the current data)" }
+  ]
+}

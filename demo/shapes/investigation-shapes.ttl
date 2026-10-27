@@ -1,0 +1,86 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix inv:  <https://example.org/investigation#> .
+@prefix amlo: <https://example.org/amlo#> .
+@prefix invs: <https://example.org/investigation-shapes#> .
+
+# Data-shape rules for the Investigation Ontology (Demo). They check the structure of investigation
+# records and that the AMLTRIX individuals they point to are of the right kind. Cross-record
+# consistency (for example, that an indicator really belongs to the suspected technique) is checked
+# in amldemo/validate.py, because it needs a graph walk across dictionary and case data.
+
+invs:EvidenceShape a sh:NodeShape ;
+    sh:targetClass inv:Evidence ;
+    sh:property [ sh:path inv:recordType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:DataSource ;
+                  sh:message "Evidence needs exactly one record type, and it must be an AMLTRIX data source." ] .
+
+invs:AlertShape a sh:NodeShape ;
+    sh:targetClass inv:Alert ;
+    sh:property [ sh:path inv:alertId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "An alert needs exactly one alert id." ] ;
+    sh:property [ sh:path inv:raisedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+                  sh:message "An alert needs exactly one raised-at timestamp (xsd:dateTime)." ] ;
+    sh:property [ sh:path inv:triggerReason ; sh:minCount 1 ; sh:datatype xsd:string ;
+                  sh:message "An alert needs the reason the monitoring system raised it." ] ;
+    sh:property [ sh:path inv:suspectedTechnique ; sh:minCount 1 ; sh:class amlo:Technique ;
+                  sh:message "An alert needs at least one suspected technique, and it must be an AMLTRIX technique." ] ;
+    sh:property [ sh:path inv:hasEvidence ; sh:class inv:Evidence ;
+                  sh:message "hasEvidence must point to Evidence." ] .
+
+invs:ChecklistItemShape a sh:NodeShape ;
+    sh:targetClass inv:ChecklistItem ;
+    sh:property [ sh:path inv:forAlert ; sh:minCount 1 ; sh:maxCount 1 ; sh:class inv:Alert ;
+                  sh:message "A checklist item belongs to exactly one alert." ] ;
+    sh:property [ sh:path inv:indicator ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Indicator ;
+                  sh:message "A checklist item is about exactly one AMLTRIX indicator." ] ;
+    sh:property [ sh:path inv:assessability ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "can-assess-now" "needs-more-data" ) ;
+                  sh:message "assessability must be can-assess-now or needs-more-data." ] ;
+    sh:property [ sh:path inv:checkWith ; sh:class inv:Evidence ] ;
+    sh:property [ sh:path inv:needsRecordType ; sh:class amlo:DataSource ] ;
+    sh:or ( [ sh:not [ sh:property [ sh:path inv:assessability ; sh:hasValue "can-assess-now" ] ] ]
+            [ sh:property [ sh:path inv:checkWith ; sh:minCount 1 ] ] ) ;
+    sh:or ( [ sh:not [ sh:property [ sh:path inv:assessability ; sh:hasValue "needs-more-data" ] ] ]
+            [ sh:property [ sh:path inv:needsRecordType ; sh:minCount 1 ] ]
+            [ sh:property [ sh:path inv:needsRecordNote ; sh:minCount 1 ] ] ) ;
+    sh:message "A can-assess-now item must name the evidence to check with; a needs-more-data item must say which records are needed." .
+
+invs:CaseShape a sh:NodeShape ;
+    sh:targetClass inv:Case ;
+    sh:property [ sh:path inv:caseId ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A case needs exactly one case id." ] ;
+    sh:property [ sh:path inv:openedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ;
+                  sh:message "A case needs exactly one opened-at timestamp." ] ;
+    sh:property [ sh:path inv:hypothesis ; sh:minCount 1 ; sh:class amlo:Technique ;
+                  sh:message "A case needs at least one hypothesis, and it must be an AMLTRIX technique." ] ;
+    sh:property [ sh:path inv:hasFinding ; sh:class inv:Finding ] .
+
+invs:FindingShape a sh:NodeShape ;
+    sh:targetClass inv:Finding ;
+    sh:property [ sh:path inv:technique ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Technique ;
+                  sh:message "A finding is made under exactly one AMLTRIX technique." ] ;
+    sh:property [ sh:path inv:indicator ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Indicator ;
+                  sh:message "A finding is about exactly one AMLTRIX indicator." ] ;
+    sh:property [ sh:path inv:status ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "supported" "not-supported" "inconclusive" "not-assessable" ) ;
+                  sh:message "status must be supported, not-supported, inconclusive or not-assessable." ] ;
+    sh:property [ sh:path inv:observation ; sh:minCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A finding needs an observation." ] ;
+    sh:property [ sh:path inv:supportedBy ; sh:class inv:Evidence ] ;
+    sh:or ( [ sh:not [ sh:property [ sh:path inv:status ; sh:hasValue "supported" ] ] ]
+            [ sh:property [ sh:path inv:supportedBy ; sh:minCount 1 ] ] ) ;
+    sh:message "A supported finding must cite the evidence it rests on." .
+
+invs:ReportDraftShape a sh:NodeShape ;
+    sh:targetClass inv:ReportDraft ;
+    sh:property [ sh:path inv:forCase ; sh:minCount 1 ; sh:maxCount 1 ; sh:class inv:Case ;
+                  sh:message "A report draft belongs to exactly one case." ] ;
+    sh:property [ sh:path inv:reviewStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A report draft needs a review status." ] ;
+    sh:property [ sh:path inv:paragraphs ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:message "A report draft needs one ordered list of paragraphs." ] .
+
+invs:ParagraphShape a sh:NodeShape ;
+    sh:targetClass inv:Paragraph ;
+    sh:property [ sh:path inv:text ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A paragraph needs exactly one text." ] ;
+    sh:property [ sh:path inv:basedOn ; sh:minCount 1 ; sh:class inv:Finding ;
+                  sh:message "Every paragraph must be based on at least one finding." ] .

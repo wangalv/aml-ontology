@@ -1,0 +1,204 @@
+@prefix inv:  <https://example.org/investigation#> .
+@prefix amlo: <https://example.org/amlo#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+# ---------------------------------------------------------------------------
+# Investigation Ontology (Demo): the smallest vocabulary needed to record an
+# AML alert, a case, its findings and a report draft.
+#
+# This is an EXTENSION. It is not part of AMLO or AMLTRIX, which describe
+# laundering techniques and indicators but contain no alert, case, evidence,
+# finding or report concepts. Terms here point into the dictionary by reusing
+# AMLTRIX individuals (techniques, indicators, data sources) as values.
+#
+# Allowed values (enforced in shapes/investigation-shapes.ttl, not here):
+#   inv:assessability  "can-assess-now" | "needs-more-data"
+#   inv:status         "supported" | "not-supported" | "inconclusive" | "not-assessable"
+#
+# The namespace is a placeholder, as it is for AMLO.
+# ---------------------------------------------------------------------------
+
+<https://example.org/investigation> a owl:Ontology ;
+    dct:title "Investigation Ontology (Demo)"@en ;
+    dct:description "A minimal vocabulary for AML investigation records, built to demonstrate how business data can point into AMLO and AMLTRIX. An extension: not part of AMLO or AMLTRIX."@en ;
+    owl:versionInfo "0.1-draft" ;
+    skos:note "Not a standard and not complete. The namespace is a placeholder."@en .
+
+# ---------------------------------------------------------------- classes ---
+
+inv:Alert a owl:Class ;
+    rdfs:label "Alert"@en ;
+    rdfs:comment "A flag raised by monitoring (a rule, a model or a graph analysis) on some activity."@en .
+
+inv:Evidence a owl:Class ;
+    rdfs:label "Evidence"@en ;
+    rdfs:comment "A piece of material gathered for an alert or case. Its kind is given by inv:recordType, an AMLTRIX data source type."@en .
+
+inv:ChecklistItem a owl:Class ;
+    rdfs:label "Checklist item"@en ;
+    rdfs:comment "One AMLTRIX indicator to check for an alert, with whether it can be assessed with the data at hand."@en .
+
+inv:Case a owl:Class ;
+    rdfs:label "Case"@en ;
+    rdfs:comment "An investigation opened on one or more alerts."@en .
+
+inv:Finding a owl:Class ;
+    rdfs:label "Finding"@en ;
+    rdfs:comment "An investigator's assessment of one AMLTRIX indicator within a case."@en .
+
+inv:ReportDraft a owl:Class ;
+    rdfs:label "Report draft"@en ;
+    rdfs:comment "A draft narrative for a case. It always requires investigator review."@en .
+
+inv:Paragraph a owl:Class ;
+    rdfs:label "Paragraph"@en ;
+    rdfs:comment "One paragraph of a report draft, tied to the findings it rests on."@en .
+
+# ---------------------------------------------------- object properties ---
+
+inv:suspectedTechnique a owl:ObjectProperty ;
+    rdfs:label "suspected technique"@en ;
+    rdfs:comment "The AMLTRIX technique an alert is suspected to involve. A hypothesis, not a conclusion."@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range amlo:Technique .
+
+inv:hasEvidence a owl:ObjectProperty ;
+    rdfs:label "has evidence"@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range inv:Evidence .
+
+inv:recordType a owl:ObjectProperty ;
+    rdfs:label "record type"@en ;
+    rdfs:comment "The kind of record the evidence is: an AMLTRIX data source."@en ;
+    rdfs:domain inv:Evidence ;
+    rdfs:range amlo:DataSource .
+
+inv:forAlert a owl:ObjectProperty ;
+    rdfs:label "for alert"@en ;
+    rdfs:domain inv:ChecklistItem ;
+    rdfs:range inv:Alert .
+
+inv:indicator a owl:ObjectProperty ;
+    rdfs:label "indicator"@en ;
+    rdfs:comment "The AMLTRIX indicator a checklist item or finding is about."@en ;
+    rdfs:range amlo:Indicator .
+
+inv:checkWith a owl:ObjectProperty ;
+    rdfs:label "check with"@en ;
+    rdfs:comment "Evidence that can be used to assess the indicator now."@en ;
+    rdfs:domain inv:ChecklistItem ;
+    rdfs:range inv:Evidence .
+
+inv:needsRecordType a owl:ObjectProperty ;
+    rdfs:label "needs record type"@en ;
+    rdfs:comment "An AMLTRIX data source whose records would be needed to assess the indicator."@en ;
+    rdfs:domain inv:ChecklistItem ;
+    rdfs:range amlo:DataSource .
+
+inv:hypothesis a owl:ObjectProperty ;
+    rdfs:label "hypothesis"@en ;
+    rdfs:comment "An AMLTRIX technique the case is investigating."@en ;
+    rdfs:domain inv:Case ;
+    rdfs:range amlo:Technique .
+
+inv:hasFinding a owl:ObjectProperty ;
+    rdfs:label "has finding"@en ;
+    rdfs:domain inv:Case ;
+    rdfs:range inv:Finding .
+
+inv:technique a owl:ObjectProperty ;
+    rdfs:label "technique"@en ;
+    rdfs:comment "The AMLTRIX technique a finding is made under."@en ;
+    rdfs:domain inv:Finding ;
+    rdfs:range amlo:Technique .
+
+inv:supportedBy a owl:ObjectProperty ;
+    rdfs:label "supported by"@en ;
+    rdfs:domain inv:Finding ;
+    rdfs:range inv:Evidence .
+
+inv:forCase a owl:ObjectProperty ;
+    rdfs:label "for case"@en ;
+    rdfs:domain inv:ReportDraft ;
+    rdfs:range inv:Case .
+
+inv:paragraphs a owl:ObjectProperty ;
+    rdfs:label "paragraphs"@en ;
+    rdfs:comment "The ordered paragraphs of a report draft (an rdf:List)."@en ;
+    rdfs:domain inv:ReportDraft .
+
+inv:basedOn a owl:ObjectProperty ;
+    rdfs:label "based on"@en ;
+    rdfs:comment "The findings a paragraph rests on."@en ;
+    rdfs:domain inv:Paragraph ;
+    rdfs:range inv:Finding .
+
+# -------------------------------------------------------- data properties ---
+
+inv:sourceId a owl:DatatypeProperty ;
+    rdfs:label "source id"@en ;
+    rdfs:comment "The identifier the record has in the source system."@en ;
+    rdfs:range xsd:string .
+
+inv:alertId a owl:DatatypeProperty ;
+    rdfs:label "alert id"@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range xsd:string .
+
+inv:raisedAt a owl:DatatypeProperty ;
+    rdfs:label "raised at"@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range xsd:dateTime .
+
+inv:triggerReason a owl:DatatypeProperty ;
+    rdfs:label "trigger reason"@en ;
+    rdfs:comment "Why the monitoring system raised the alert, as stated by that system."@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range xsd:string .
+
+inv:assessability a owl:DatatypeProperty ;
+    rdfs:label "assessability"@en ;
+    rdfs:domain inv:ChecklistItem ;
+    rdfs:range xsd:string .
+
+inv:needsRecordNote a owl:DatatypeProperty ;
+    rdfs:label "needs record note"@en ;
+    rdfs:comment "Free-text description of records needed when no AMLTRIX data source fits."@en ;
+    rdfs:domain inv:ChecklistItem ;
+    rdfs:range xsd:string .
+
+inv:caseId a owl:DatatypeProperty ;
+    rdfs:label "case id"@en ;
+    rdfs:domain inv:Case ;
+    rdfs:range xsd:string .
+
+inv:openedAt a owl:DatatypeProperty ;
+    rdfs:label "opened at"@en ;
+    rdfs:domain inv:Case ;
+    rdfs:range xsd:dateTime .
+
+inv:status a owl:DatatypeProperty ;
+    rdfs:label "status"@en ;
+    rdfs:comment "Whether the indicator was supported, not supported, inconclusive, or could not be assessed."@en ;
+    rdfs:domain inv:Finding ;
+    rdfs:range xsd:string .
+
+inv:observation a owl:DatatypeProperty ;
+    rdfs:label "observation"@en ;
+    rdfs:domain inv:Finding ;
+    rdfs:range xsd:string .
+
+inv:reviewStatus a owl:DatatypeProperty ;
+    rdfs:label "review status"@en ;
+    rdfs:domain inv:ReportDraft ;
+    rdfs:range xsd:string .
+
+inv:text a owl:DatatypeProperty ;
+    rdfs:label "text"@en ;
+    rdfs:domain inv:Paragraph ;
+    rdfs:range xsd:string .
