@@ -17,9 +17,8 @@
     "item_id":             "inv:sourceId",
     "for_alert":           { "@id": "inv:forAlert", "@type": "@id" },
     "indicator":           { "@id": "inv:indicator", "@type": "@id" },
-    "assessability":       "inv:assessability",
-    "check_with":          { "@id": "inv:checkWith", "@type": "@id" },
-    "needs_record_type":   { "@id": "inv:needsRecordType", "@type": "@id" },
-    "needs_record_note":   "inv:needsRecordNote"
+    "priority":            { "@id": "inv:priority", "@type": "xsd:integer" },
+    "reason":              "inv:reason",
+    "suggested_data_source": { "@id": "inv:suggestedDataSource", "@type": "@id" }
   }
 }

@@ -33,10 +33,12 @@ CONSISTENCY_QUERIES = {
           ?item a inv:ChecklistItem ; inv:forAlert ?alert ; inv:indicator ?ind .
           FILTER NOT EXISTS { ?alert inv:suspectedTechnique ?t .
             { ?t amlo:isIndicatedBy ?ind } UNION { ?sub skos:broader ?t . ?sub amlo:isIndicatedBy ?ind } } }""",
-    "a checklist item checks with evidence that is not attached to its alert": PREFIXES + """
-        SELECT ?item ?ev WHERE {
-          ?item inv:forAlert ?alert ; inv:checkWith ?ev .
-          FILTER NOT EXISTS { ?alert inv:hasEvidence ?ev } }""",
+    "a checklist item suggests a data source that AMLTRIX does not list for the alert's suspected technique": PREFIXES + """
+        SELECT ?item ?ds WHERE {
+          ?item a inv:ChecklistItem ; inv:forAlert ?alert ; inv:suggestedDataSource ?ds .
+          FILTER NOT EXISTS { ?alert inv:suspectedTechnique ?t .
+            { { ?link amlo:technique ?t } UNION { ?sub skos:broader ?t . ?link amlo:technique ?sub } }
+            ?link a amlo:DataSourceLink ; amlo:dataSource ?ds } }""",
     "a finding's indicator does not belong to the finding's technique": PREFIXES + """
         SELECT ?f ?ind WHERE {
           ?f a inv:Finding ; inv:technique ?t ; inv:indicator ?ind .

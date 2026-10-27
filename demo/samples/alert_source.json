@@ -7,10 +7,14 @@
     { "evidence_id": "EV-TXLOG-1001", "record_type": "DS0019" }
   ],
   "checklist": [
-    { "item_id": "CHK-1001-1", "indicator": "IND02191", "assessability": "can-assess-now", "check_with": "EV-TXLOG-1001" },
-    { "item_id": "CHK-1001-2", "indicator": "IND02194", "assessability": "needs-more-data", "needs_record_type": "DS0039",
-      "needs_record_note": "Ownership and onboarding history of the five account holders" },
-    { "item_id": "CHK-1001-3", "indicator": "IND02197", "assessability": "needs-more-data", "needs_record_type": "DS0036",
-      "needs_record_note": "Shipping and invoicing records (not in the current data)" }
+    { "item_id": "CHK-1001-1", "indicator": "IND02191", "priority": 1,
+      "reason": "The alert itself describes funds returning to the origin account, which is the core of this indicator.",
+      "suggested_data_source": "DS0019" },
+    { "item_id": "CHK-1001-2", "indicator": "IND02194", "priority": 2,
+      "reason": "A ring of five accounts raises the question of who owns them and whether they were opened close together.",
+      "suggested_data_source": "DS0039" },
+    { "item_id": "CHK-1001-3", "indicator": "IND02197", "priority": 3,
+      "reason": "If the accounts belong to trading companies, the circular flow may be backed by repeated shipments and invoices.",
+      "suggested_data_source": "DS0036" }
   ]
 }

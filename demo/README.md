@@ -1,15 +1,30 @@
 # AMLTRIX ontology + JSON-LD demo
 
-Status: milestones M0 to M2 are done: dictionary lookup, and JSON-LD building and validation for scenarios 1 and 2.
-The checks that run SQL, the scenario logic and the text-to-SQL scenario are not built yet.
+Status: milestones M0 to M2 and M4 are done: dictionary lookup, JSON-LD building and validation for scenarios 1 and 2,
+and scenario 1 end to end (a model suggests where to look, and only suggestions that validate are kept).
+Scenario 1 does not query transaction data (the sample data is synthetic, so a data check would prove little).
+Report narrative (scenario 2 with a model) and text-to-SQL (scenario 3) are not built yet.
 
 ## Run
 
 ```
 cd demo
-../.venv/bin/python run_demo.py build                 # sample sources -> validated JSON-LD and Turtle in generated/
-../.venv/bin/python -m unittest discover -s tests     # 37 tests
+../.venv/bin/python run_demo.py build                          # sample sources -> validated JSON-LD and Turtle in generated/
+../.venv/bin/python run_demo.py advise --compare --llm mock    # scenario 1 with canned answers, with and without the dictionary
+../.venv/bin/python run_demo.py advise --compare --llm ollama  # the same with a model on this machine (default qwen3.5:9b)
+../.venv/bin/python -m unittest discover -s tests              # tests; none of them calls a real model
 ```
+
+Model settings go in `demo/.env` (git-ignored; copy `.env.example`). `mock` replays hand-written canned answers and is not a
+model. `zai` (GLM) is written but has not been tried against the real API.
+
+## What scenario 1 shows, and what it does not
+
+Shown: given the dictionary, a model's suggestions can be checked by code (real ids, indicator belongs to the suspected
+technique, data source is one AMLTRIX lists for it); without it, the same check rejects them.
+Not shown: that the advice is good. Validation checks membership in the dictionary, not whether the reasoning fits the alert,
+and a model given no dictionary could still give sensible advice in words that simply cannot be checked. One alert, one model
+and one run is an illustration, not a measurement.
 
 ## Idea
 
@@ -19,7 +34,7 @@ an LLM then receives only the parts of the dictionary it needs, with identifiers
 
 ## Planned scenarios
 
-1. **Investigation advice**: alert and suspected technique, then an indicator checklist, then checks run on the data.
+1. **Investigation advice**: alert and suspected technique, then a prioritised list of indicators to look into and where to look. No data is queried.
 2. **Report narrative**: findings (technique, indicator, status), then a draft in which every paragraph cites a finding.
 3. **Typology-driven text-to-SQL**: technique, then generated SQL, then execution, then evaluation against labels.
 

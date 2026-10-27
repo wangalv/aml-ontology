@@ -8,9 +8,9 @@ S1,Evidence item,evidence,inv:Evidence / inv:hasEvidence,extension,AMLO has no e
 S1,Kind of evidence,record_type,inv:recordType -> amx:DS####,transform,Points to an AMLTRIX data source. A data source is a TYPE of record (for example Transaction Logs); the evidence item is the instance
 S1,Checklist item,item_id,inv:ChecklistItem / inv:sourceId,extension,One indicator to check for this alert
 S1,Indicator to check,indicator,inv:indicator -> amx:IND#####,direct reuse,AMLTRIX indicator individual used as is
-S1,Can it be assessed now,assessability,inv:assessability,extension,"Two values enforced by SHACL: can-assess-now, needs-more-data"
-S1,Evidence to check with,check_with,inv:checkWith,extension,Required when assessability is can-assess-now (SHACL)
-S1,Records still needed,needs_record_type / needs_record_note,inv:needsRecordType -> amx:DS#### / inv:needsRecordNote,transform + extension,Data source where one fits; free text otherwise. A free-text need such as shipping and invoicing records only approximately matches DS0036 Trade Documentation
+S1,Order to look into,priority,inv:priority,extension,Whole number from 1 upwards (SHACL); 1 is first
+S1,Why it matters here,reason,inv:reason,extension,The adviser's reasoning for this alert. Advice only: nothing is queried or confirmed
+S1,Where to look,suggested_data_source,inv:suggestedDataSource -> amx:DS####,transform,Points to an AMLTRIX data source (a type of record). validate.py checks that AMLTRIX lists it for the suspected technique
 S2,Case,case_id / opened_at,inv:Case / inv:caseId / inv:openedAt,extension,AMLO has no case concept
 S2,Working hypothesis,hypothesis,inv:hypothesis -> amx:T####,transform,Same treatment as the suspected technique of an alert
 S2,Finding,findings / finding_id,inv:Finding / inv:hasFinding,extension,One assessment of one indicator

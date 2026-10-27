@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from rdflib import RDF  # noqa: E402
 
-from amldemo import adapters, config, jsonld_build, ontology, validate  # noqa: E402
+from amldemo import adapters, config, jsonld_build, lookup, ontology, validate  # noqa: E402
 
 ALERT = json.loads((config.SAMPLES_DIR / "alert_source.json").read_text())
 CASE = json.loads((config.SAMPLES_DIR / "case_source.json").read_text())
@@ -101,29 +101,39 @@ class BrokenAlerts(unittest.TestCase):
         report = alert_report(edited(ALERT, lambda a: a.update(raised_at="yesterday afternoon")))
         self.assertTrue(report.shacl, report.summary())
 
-    def test_can_assess_now_needs_evidence(self):
-        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].pop("check_with")))
-        self.assertTrue(mentions(report.shacl, "must name the evidence"), report.summary())
+    def test_checklist_item_needs_a_reason(self):
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].pop("reason")))
+        self.assertTrue(mentions(report.shacl, "needs a reason"), report.summary())
 
-    def test_needs_more_data_must_say_what(self):
-        def change(a):
-            a["checklist"][1].pop("needs_record_type")
-            a["checklist"][1].pop("needs_record_note")
-        report = alert_report(edited(ALERT, change))
-        self.assertTrue(mentions(report.shacl, "must say which records are needed"), report.summary())
+    def test_checklist_item_needs_a_data_source(self):
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].pop("suggested_data_source")))
+        self.assertTrue(mentions(report.shacl, "at least one data source"), report.summary())
 
-    def test_assessability_has_a_fixed_vocabulary(self):
-        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(assessability="maybe")))
-        self.assertTrue(mentions(report.shacl, "assessability must be"), report.summary())
+    def test_priority_starts_at_one(self):
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(priority=0)))
+        self.assertTrue(mentions(report.shacl, "priority"), report.summary())
+
+    def test_priority_must_be_a_number(self):
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(priority="first")))
+        self.assertTrue(mentions(report.shacl, "priority"), report.summary())
+
+    def test_suggested_data_source_must_be_a_data_source(self):
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(suggested_data_source="IND02191")))
+        self.assertTrue(mentions(report.shacl, "AMLTRIX data source"), report.summary())
+
+    def test_data_source_not_listed_for_the_technique(self):
+        listed = {d["key"] for d in lookup.data_sources_for("T0039")}
+        graph = ontology.load_graph()
+        unlisted = next(str(s)[len(str(ontology.AMX)):] for s in sorted(graph.subjects(RDF.type, ontology.AMLO.DataSource))
+                        if str(s)[len(str(ontology.AMX)):] not in listed)
+        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(suggested_data_source=unlisted)))
+        self.assertTrue(report.iris == [] and report.shacl == [] and mentions(report.consistency, "does not list for the alert's suspected technique"),
+                        report.summary())
 
     def test_indicator_of_another_technique(self):
         # IND01341 is a real indicator, but of Structuring (T0016), not of the suspected T0039
         report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(indicator="IND01341")))
         self.assertTrue(report.iris == [] and mentions(report.consistency, "does not belong to the alert's suspected technique"), report.summary())
-
-    def test_evidence_that_is_not_part_of_the_alert(self):
-        report = alert_report(edited(ALERT, lambda a: a["checklist"][0].update(check_with="EV-OTHER")))
-        self.assertTrue(report.shacl or report.consistency, report.summary())
 
     def test_unusable_identifier_is_refused_by_the_adapter(self):
         with self.assertRaises(adapters.SourceError):

@@ -33,16 +33,12 @@ invs:ChecklistItemShape a sh:NodeShape ;
                   sh:message "A checklist item belongs to exactly one alert." ] ;
     sh:property [ sh:path inv:indicator ; sh:minCount 1 ; sh:maxCount 1 ; sh:class amlo:Indicator ;
                   sh:message "A checklist item is about exactly one AMLTRIX indicator." ] ;
-    sh:property [ sh:path inv:assessability ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "can-assess-now" "needs-more-data" ) ;
-                  sh:message "assessability must be can-assess-now or needs-more-data." ] ;
-    sh:property [ sh:path inv:checkWith ; sh:class inv:Evidence ] ;
-    sh:property [ sh:path inv:needsRecordType ; sh:class amlo:DataSource ] ;
-    sh:or ( [ sh:not [ sh:property [ sh:path inv:assessability ; sh:hasValue "can-assess-now" ] ] ]
-            [ sh:property [ sh:path inv:checkWith ; sh:minCount 1 ] ] ) ;
-    sh:or ( [ sh:not [ sh:property [ sh:path inv:assessability ; sh:hasValue "needs-more-data" ] ] ]
-            [ sh:property [ sh:path inv:needsRecordType ; sh:minCount 1 ] ]
-            [ sh:property [ sh:path inv:needsRecordNote ; sh:minCount 1 ] ] ) ;
-    sh:message "A can-assess-now item must name the evidence to check with; a needs-more-data item must say which records are needed." .
+    sh:property [ sh:path inv:priority ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ; sh:minInclusive 1 ;
+                  sh:message "A checklist item needs exactly one priority, a whole number from 1 upwards." ] ;
+    sh:property [ sh:path inv:reason ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+                  sh:message "A checklist item needs a reason why the indicator matters for this alert." ] ;
+    sh:property [ sh:path inv:suggestedDataSource ; sh:minCount 1 ; sh:class amlo:DataSource ;
+                  sh:message "A checklist item must suggest at least one data source to look at, and it must be an AMLTRIX data source." ] .
 
 invs:CaseShape a sh:NodeShape ;
     sh:targetClass inv:Case ;

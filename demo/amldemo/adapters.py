@@ -62,7 +62,7 @@ def alert_doc(src):
     for item in src.get("checklist", []):
         _require(item, "item_id", "checklist item")
         node = _node(item, "check", "inv:ChecklistItem", "item_id",
-                     {"indicator": _amx, "needs_record_type": _amx, "check_with": _ref("evidence")}, blanks)
+                     {"indicator": _amx, "suggested_data_source": _amx}, blanks)
         node["for_alert"] = alert["@id"]
         graph.append(node)
     return {"@graph": graph}
