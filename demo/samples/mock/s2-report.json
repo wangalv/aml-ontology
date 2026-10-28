@@ -1,0 +1,9 @@
+{
+  "_note": "Canned illustration for tests and offline runs. This is not the output of a real model.",
+  "paragraphs": [
+    { "text": "Transaction records show funds leaving account A-01 and returning to it through four intermediate accounts within 5.2 days, which is consistent with Circular Transactions (T0039) and indicator IND02191.",
+      "based_on": ["F-1"] },
+    { "text": "Indicator IND02194 was not assessed, because no ownership or onboarding data was available to the investigator.",
+      "based_on": ["F-2"] }
+  ]
+}

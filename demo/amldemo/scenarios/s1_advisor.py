@@ -8,11 +8,9 @@ to look, not a check of whether the indicator is present.
 
 advise() returns plain dicts and lists and prints nothing, so a UI can call it directly.
 """
-import json
-import re
-
 from .. import adapters, jsonld_build, lookup, validate
 from ..llm import LLMError
+from ..replies import parse_reply
 
 MAX_SUGGESTIONS = 5
 KEPT_FIELDS = ("indicator", "priority", "reason", "data_source")
@@ -84,22 +82,7 @@ def build_prompt(alert, context, with_dictionary=True):
 
 def parse_suggestions(text):
     """Pull the list of suggestions out of the model's reply. Raises ValueError if there is none."""
-    candidate = text.strip()
-    candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate)
-    try:
-        data = json.loads(candidate)
-    except json.JSONDecodeError:
-        start, end = candidate.find("{"), candidate.rfind("}")
-        if start < 0 or end <= start:
-            raise ValueError("the reply contains no JSON object")
-        try:
-            data = json.loads(candidate[start:end + 1])
-        except json.JSONDecodeError as e:
-            raise ValueError(f"the reply is not valid JSON: {e.msg}") from e
-    items = data.get("suggestions") if isinstance(data, dict) else data
-    if not isinstance(items, list):
-        raise ValueError('the reply has no "suggestions" list')
-    return items
+    return parse_reply(text, "suggestions")
 
 
 def _as_item(suggestion, alert_id, number):
