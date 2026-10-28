@@ -142,10 +142,10 @@ function scenario1(root, repaint) {
     h('div', { class: 'card' },
       h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · suspected technique ${s1.technique.id} ${s1.technique.name}`),
       h('div', {}, alert.trigger_reason),
-      caption(`The agent is asked where an investigator should look first. With the dictionary it also receives the ${d.indicators} indicators and ` +
+      caption(`The agent is asked where an investigator should look first. With the AML typology it also receives the ${d.indicators} indicators and ` +
         `${d.data_sources} data sources AMLTRIX lists for the technique. Without it, it receives only the technique's name. No transaction data is read.`)),
     runChoice('s1', (v) => { AG.run.s1 = v; repaint(); }),
-    h('div', { class: 'cols2' }, adviceColumn(s1[run].with, 'With the dictionary'), adviceColumn(s1[run].without, 'Without the dictionary')),
+    h('div', { class: 'cols2' }, adviceColumn(s1[run].with, 'With AML Typology'), adviceColumn(s1[run].without, 'Without AML Typology')),
     caption('Each suggestion is kept only if its indicator is real and belongs to the suspected technique, and its data source is one AMLTRIX lists for ' +
       'that technique. Passing shows the ids are sound, not that the reasoning fits the alert: read the reasons yourself.'),
     docToggle('s1', 'Show the validated JSON-LD of the accepted advice', s1[run].with.doc, repaint));
@@ -158,10 +158,10 @@ function scenario2(root, repaint) {
       h('div', {}, h('strong', {}, `Case ${c.case_id}`), ` · investigating ${c.hypothesis.join(', ')} ${s2.technique.name || ''}`),
       h('div', { style: { margin: '8px 0' } }, dataTable(['Finding', 'Indicator', 'Status', 'Observation'],
         c.findings.map((f) => ({ key: f.finding_id, cells: [f.finding_id, f.indicator, f.status, f.observation] })), { maxHeight: 300 })),
-      caption('The agent writes the findings section of a report from these findings. With the dictionary it also receives what the technique and ' +
+      caption('The agent writes the findings section of a report from these findings. With the AML typology it also receives what the technique and ' +
         'indicators mean. Each paragraph must name the findings it rests on.')),
     runChoice('s2', (v) => { AG.run.s2 = v; repaint(); }),
-    h('div', { class: 'cols2' }, reportColumn(s2[run].with, 'With the dictionary'), reportColumn(s2[run].without, 'Without the dictionary')),
+    h('div', { class: 'cols2' }, reportColumn(s2[run].with, 'With AML Typology'), reportColumn(s2[run].without, 'Without AML Typology')),
     caption('A paragraph is kept only if it cites at least one real finding of this case and mentions only technique and indicator ids that belong to the ' +
       "findings it cites. Whether the wording is faithful to a finding is not checked, so the draft always needs the investigator's review."),
     docToggle('s2', 'Show the validated JSON-LD of the accepted draft', s2[run].with.doc, repaint));
