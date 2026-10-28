@@ -79,6 +79,20 @@ input[type=text], select { font: inherit; font-size: 0.92rem; color: var(--fg); 
 .metric .l { font-size: 0.82rem; color: var(--muted); }
 .skeleton { height: 8px; border-radius: 4px; background: rgba(128,128,128,.25); margin: 0 0 8px; }
 
+/* agents: what the typology gives the agent, and where its wording shows up */
+mark { background: rgba(255, 213, 79, 0.38); color: inherit; padding: 0 2px; border-radius: 3px; }
+.callout { border-left: 4px solid var(--accent); background: var(--card); border-radius: 0 8px 8px 0; padding: 8px 12px; margin: 10px 0; }
+.ctx-title { font-weight: 600; margin-bottom: 6px; }
+.ctx-box { max-height: 150px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 0.85rem; margin: 4px 0 8px; }
+.ctx-row { padding: 3px 0 3px 8px; border-left: 3px solid transparent; }
+.ctx-row.used { border-left-color: #2E9E6B; background: rgba(46, 158, 107, 0.12); }
+.ctx-row code { margin-right: 4px; }
+.quote { font-size: 0.82rem; color: var(--muted); margin: 3px 0; }
+.quote .tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0 6px; margin-right: 6px; border-radius: 4px; background: rgba(255, 213, 79, 0.3); color: var(--fg); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 8px; }
+.chip-row .used { border-color: #2E9E6B; background: rgba(46, 158, 107, 0.15); }
+.chip-row span { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+
 /* tables */
 .tbl-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
 table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }

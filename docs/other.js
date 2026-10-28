@@ -95,34 +95,36 @@ function renderInvestigation(root) {
 
 /* ---------- Agents ---------- */
 const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative'];
-const AG = { section: AG_SECTIONS[0], run: { s1: 'real', s2: 'real' }, doc: { s1: false, s2: false } };
+const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false } };
 
 function outcome(result) { return `Accepted ${result.accepted.length} · rejected ${result.rejected.length}`; }
 
-function runChoice(key, onChange) {
-  const meta = DATA.agent.meta;
-  return pills([['real', `Real model run (${meta.provider}/${meta.model})`], ['canned', 'Canned example (hand-written, not a model)']], AG.run[key], onChange);
-}
+function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
 
-function adviceColumn(result, title) {
-  const col = h('div', {}, h('strong', {}, title), caption(outcome(result)));
+function quote(text) { return h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'From the AML typology'), text); }
+
+function adviceColumn(result, grams) {
+  const col = h('div', {}, caption(outcome(result)));
   for (const a of result.accepted) {
     col.append(h('div', { class: 'card tight' },
       h('div', {}, h('strong', {}, `${a.priority}. ${a.indicator}`), ` · look at ${a.data_source} ${a.data_source_name}`),
-      caption(a.indicator_text), h('div', {}, a.reason)));
+      quote(a.indicator_text), h('div', {}, highlight(a.reason, grams).nodes)));
   }
   for (const r of result.rejected) {
     const s = r.suggestion && typeof r.suggestion === 'object' ? r.suggestion : {};
     col.append(h('div', { class: 'card tight' },
       h('div', {}, badge('red', 'rejected'), ' ', h('strong', {}, s.indicator || '?'), ` · ${s.data_source || '?'}`),
+      s.reason ? h('div', {}, highlight(s.reason, grams).nodes) : null,
       r.problems.map((p) => caption(p))));
   }
   return col;
 }
 
-function reportColumn(result, title) {
-  const col = h('div', {}, h('strong', {}, title), caption(outcome(result)));
-  for (const p of result.accepted) col.append(h('div', { class: 'card tight' }, h('div', {}, p.text), caption('Based on ' + p.based_on.join(', '))));
+function reportColumn(result, grams) {
+  const col = h('div', {}, caption(outcome(result)));
+  for (const p of result.accepted) {
+    col.append(h('div', { class: 'card tight' }, h('div', {}, highlight(p.text, grams).nodes), caption('Based on ' + p.based_on.join(', '))));
+  }
   for (const r of result.rejected) {
     const para = r.paragraph && typeof r.paragraph === 'object' ? r.paragraph : {};
     col.append(h('div', { class: 'card tight' }, badge('red', 'rejected'), h('div', {}, para.text || '(no text)'), r.problems.map((p) => caption(p))));
@@ -137,39 +139,61 @@ function docToggle(key, label, doc, repaint) {
 }
 
 function scenario1(root, repaint) {
-  const s1 = DATA.agent.s1, d = s1.dictionary, alert = s1.alert, run = AG.run.s1;
+  const s1 = DATA.agent.s1, alert = s1.alert, run = s1.real.with, t = s1.technique, ty = s1.typology;
+  const usedInd = new Set(run.accepted.map((a) => a.indicator)), usedDs = new Set(run.accepted.map((a) => a.data_source));
+  const grams = ngramSet([t.definition, ...ty.indicators.map((i) => i.text), ...ty.data_sources.map((d) => d.note)], GRAM);
   root.append(h('p', {}, 'When an alert comes in, the agent uses the AML typology and risk indicators to tell the investigator what to check first and where to look.'),
     h('div', { class: 'card' },
-      h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · suspected technique ${s1.technique.id} ${s1.technique.name}`),
+      h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · suspected technique ${t.id} ${t.name}`),
       h('div', {}, alert.trigger_reason),
-      caption(`The agent is asked where an investigator should look first. With the AML typology it also receives the ${d.indicators} indicators and ` +
-        `${d.data_sources} data sources AMLTRIX lists for the technique. Without it, it receives only the technique's name. No transaction data is read.`)),
-    runChoice('s1', (v) => { AG.run.s1 = v; repaint(); }),
-    h('div', { class: 'cols2' }, adviceColumn(s1[run].with, 'With AML Typology'), adviceColumn(s1[run].without, 'Without AML Typology')),
+      caption('The agent is asked where an investigator should look first. No transaction data is read.')),
+    h('h3', {}, '1. What the agent is given from the AML typology'),
+    h('div', { class: 'card' },
+      h('div', { class: 'ctx-title' }, `What AMLTRIX says about ${t.id} ${t.name}`),
+      caption('Definition'), definitionBox(t.definition),
+      caption(`${ty.indicators.length} risk indicators. Green: the agent used it below.`),
+      h('div', { class: 'ctx-box' }, ty.indicators.map((i) => h('div', { class: 'ctx-row' + (usedInd.has(i.id) ? ' used' : '') }, h('code', {}, i.id), i.text))),
+      caption(`${ty.data_sources.length} data sources where evidence can be found`),
+      h('div', { class: 'chip-row' }, ty.data_sources.map((d) => h('span', { class: usedDs.has(d.id) ? 'used' : '', title: d.note }, `${d.id} ${d.name}`)))),
+    h('h3', {}, '2. What it suggests'),
+    adviceColumn(run, grams),
+    h('div', { class: 'callout' },
+      `${run.accepted.length} of ${run.accepted.length + run.rejected.length} suggestions name an indicator and a data source from the list above.`,
+      caption(`Yellow marks wording that also appears in the AMLTRIX text above (${GRAM} or more words in a row).`)),
     caption('Each suggestion is kept only if its indicator is real and belongs to the suspected technique, and its data source is one AMLTRIX lists for ' +
       'that technique. Passing shows the ids are sound, not that the reasoning fits the alert: read the reasons yourself.'),
-    docToggle('s1', 'Show the validated JSON-LD of the accepted advice', s1[run].with.doc, repaint));
+    docToggle('s1', 'Show the validated JSON-LD of the accepted advice', run.doc, repaint));
 }
 
 function scenario2(root, repaint) {
-  const s2 = DATA.agent.s2, c = s2.case, run = AG.run.s2;
+  const s2 = DATA.agent.s2, c = s2.case, run = s2.real.with, t = s2.technique;
+  const grams = ngramSet([t.definition || '', ...Object.values(s2.indicator_text)], GRAM);
+  const reused = run.accepted.filter((p) => highlight(p.text, grams).hit).length;
   root.append(h('p', {}, 'Once the findings are in, the agent drafts the report, and every paragraph points back to the finding it rests on.'),
     h('div', { class: 'card' },
-      h('div', {}, h('strong', {}, `Case ${c.case_id}`), ` · investigating ${c.hypothesis.join(', ')} ${s2.technique.name || ''}`),
+      h('div', {}, h('strong', {}, `Case ${c.case_id}`), ` · investigating ${c.hypothesis.join(', ')} ${t.name || ''}`),
       h('div', { style: { margin: '8px 0' } }, dataTable(['Finding', 'Indicator', 'Status', 'Observation'],
         c.findings.map((f) => ({ key: f.finding_id, cells: [f.finding_id, f.indicator, f.status, f.observation] })), { maxHeight: 300 })),
-      caption('The agent writes the findings section of a report from these findings. With the AML typology it also receives what the technique and ' +
-        'indicators mean. Each paragraph must name the findings it rests on.')),
-    runChoice('s2', (v) => { AG.run.s2 = v; repaint(); }),
-    h('div', { class: 'cols2' }, reportColumn(s2[run].with, 'With AML Typology'), reportColumn(s2[run].without, 'Without AML Typology')),
+      caption('The agent writes the findings section of a report from these findings. Each paragraph must name the findings it rests on.')),
+    h('h3', {}, '1. What the agent is given from the AML typology'),
+    h('div', { class: 'card' },
+      h('div', { class: 'ctx-title' }, `What AMLTRIX says about ${t.id} ${t.name}`),
+      caption('Definition of the technique'), definitionBox(t.definition || ''),
+      caption('What the indicators in these findings mean'),
+      h('div', { class: 'ctx-box' }, Object.entries(s2.indicator_text).map(([id, text]) => h('div', { class: 'ctx-row' }, h('code', {}, id), text)))),
+    h('h3', {}, '2. What it writes'),
+    reportColumn(run, grams),
+    h('div', { class: 'callout' },
+      `${reused} of ${run.accepted.length} paragraphs reuse AMLTRIX wording.`,
+      caption(`Yellow marks wording that also appears in the AMLTRIX text above (${GRAM} or more words in a row). A rough marker that the typology was used, not proof that a paragraph is right.`)),
     caption('A paragraph is kept only if it cites at least one real finding of this case and mentions only technique and indicator ids that belong to the ' +
       "findings it cites. Whether the wording is faithful to a finding is not checked, so the draft always needs the investigator's review."),
-    docToggle('s2', 'Show the validated JSON-LD of the accepted draft', s2[run].with.doc, repaint));
+    docToggle('s2', 'Show the validated JSON-LD of the accepted draft', run.doc, repaint));
 }
 
 function renderInvestigationAgent(root) {
   const meta = DATA.agent.meta;
-  root.append(caption(`Saved run from ${meta.exported} against AMLTRIX ${meta.dictionary}: one alert and one case, one run of one model. ` +
+  root.append(caption(`Saved run from ${meta.exported} against AMLTRIX ${meta.dictionary}: one alert and one case, one run of one model (${meta.provider}/${meta.model}). ` +
     'An illustration, not a measurement. No model is called when you view this page.'));
   const pillBox = h('div'), body = h('div');
   root.append(pillBox, body);

@@ -151,3 +151,45 @@ function makeNet(slot, el, nodes, edges, options, onClick) {
 function setNet(net, nodes, edges) {
   net.setData({ nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) });
 }
+
+/* Mark wording that also appears in the AML typology text the agent was given: runs of four or more words in a row,
+   ignoring runs made up of little words. A rough marker of context in use, not a judgement of the text. */
+const STOP = new Set('the a an of and or to in on for with by from at as is are was were be been that this it its into than then not no any all'.split(' '));
+function wordsOf(text) {
+  const out = [], re = /[A-Za-z0-9']+/g;
+  let m;
+  while ((m = re.exec(text))) out.push({ w: m[0].toLowerCase(), start: m.index, end: m.index + m[0].length });
+  return out;
+}
+function ngramSet(texts, n) {
+  const set = new Set();
+  for (const t of texts) {
+    const ws = wordsOf(t).map((x) => x.w);
+    for (let i = 0; i + n <= ws.length; i++) {
+      const g = ws.slice(i, i + n);
+      if (g.filter((w) => !STOP.has(w)).length >= 2) set.add(g.join(' '));
+    }
+  }
+  return set;
+}
+const GRAM = 4; // words in a row that count as shared wording
+function highlight(text, grams, n) {
+  n = n || GRAM;
+  const ws = wordsOf(text), flags = new Array(ws.length).fill(false);
+  for (let i = 0; i + n <= ws.length; i++) {
+    if (grams.has(ws.slice(i, i + n).map((x) => x.w).join(' '))) for (let j = i; j < i + n; j++) flags[j] = true;
+  }
+  const nodes = [];
+  let pos = 0, i = 0;
+  while (i < ws.length) {
+    if (!flags[i]) { i++; continue; }
+    let j = i;
+    while (j + 1 < ws.length && flags[j + 1]) j++;
+    if (ws[i].start > pos) nodes.push(text.slice(pos, ws[i].start));
+    nodes.push(h('mark', {}, text.slice(ws[i].start, ws[j].end)));
+    pos = ws[j].end;
+    i = j + 1;
+  }
+  if (pos < text.length) nodes.push(text.slice(pos));
+  return { nodes, hit: flags.some(Boolean) };
+}
