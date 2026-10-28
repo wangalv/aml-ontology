@@ -83,14 +83,15 @@ function pills(options, selected, onChange) {
 /* rows: [{key, cells: [string | Node]}]; clicking a row calls onSelect(key). */
 function dataTable(columns, rows, opts) {
   opts = opts || {};
-  const head = h('tr', {}, columns.map((c) => h('th', {}, c)));
+  const head = h('tr', {}, columns.map((c, i) => h('th', { class: (opts.colClass || [])[i] }, c)));
+  const groups = opts.groups ? h('tr', {}, opts.groups.map(([label, span, cls]) => h('th', { colspan: span, class: 'grp ' + (cls || '') }, label))) : null;
   const body = rows.map((r) => h('tr', {
     'data-key': r.key,
     class: (opts.onSelect ? 'click ' : '') + (r.key === opts.selected ? 'sel' : ''),
     onclick: opts.onSelect ? () => opts.onSelect(r.key) : null,
-  }, r.cells.map((c) => h('td', {}, c))));
+  }, r.cells.map((c, i) => h('td', { class: (opts.colClass || [])[i] }, c))));
   const wrapEl = h('div', { class: 'tbl-wrap', style: { maxHeight: (opts.maxHeight || 420) + 'px' } },
-    h('table', {}, h('thead', {}, head), h('tbody', {}, body)));
+    h('table', { class: groups ? 'grouped' : '' }, h('thead', {}, groups, head), h('tbody', {}, body)));
   return wrapEl;
 }
 

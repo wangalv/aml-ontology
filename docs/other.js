@@ -97,14 +97,12 @@ function renderInvestigation(root) {
 const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative'];
 const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false } };
 
-function outcome(result) { return `Accepted ${result.accepted.length} · rejected ${result.rejected.length}`; }
-
 function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
 
 function quote(text) { return h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'From the AML typology'), text); }
 
 function adviceColumn(result, grams) {
-  const col = h('div', {}, caption(outcome(result)));
+  const col = h('div');
   for (const a of result.accepted) {
     col.append(h('div', { class: 'card tight' },
       h('div', {}, h('strong', {}, `${a.priority}. ${a.indicator}`), ` · look at ${a.data_source} ${a.data_source_name}`),
@@ -121,7 +119,7 @@ function adviceColumn(result, grams) {
 }
 
 function reportColumn(result, grams) {
-  const col = h('div', {}, caption(outcome(result)));
+  const col = h('div');
   for (const p of result.accepted) {
     col.append(h('div', { class: 'card tight' }, h('div', {}, highlight(p.text, grams).nodes), caption('Based on ' + p.based_on.join(', '))));
   }
@@ -231,10 +229,13 @@ const INT_INTRO = {
   investigation: 'How suggested checks, cases, findings and report drafts are written. The same shared terms let an agent read the records of any case system, ' +
     'and let code check them.',
 };
-const INT_SECTIONS = ['Field mapping', 'Source to JSON-LD'];
+const INT_SECTIONS = { int2: ['The alert and the ontology', 'Field mapping'], int3: ['The records and the ontology', 'Field mapping'] };
 const INT_SCENARIOS = [['s1', 'Scenario 1: suggested checks'], ['s2', 'Scenario 2: case and report']];
 const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds', transform: 'converted to a pointer into AMLTRIX', 'direct reuse': 'an AMLTRIX term used as is', unresolved: 'no term yet' };
 const INTS = { section: {}, scenario: 's1' };
+
+/* Spell out the prefixes in the tables; the JSON-LD blocks keep the short form. */
+function longTerm(text) { return String(text).replace(/\binv:/g, 'Investigation ontology: ').replace(/\bamx:/g, 'AMLTRIX: '); }
 
 function mappingView(area) {
   const rows = DATA.integ.mapping.filter((r) => r.Area === area);
@@ -242,7 +243,7 @@ function mappingView(area) {
   rows.forEach((r) => counts.set(r['Mapping type'], (counts.get(r['Mapping type']) || 0) + 1));
   const summary = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${n} ${k} (${TYPE_NOTE[k] || ''})`).join(' · ');
   return h('div', {}, caption(summary), dataTable(['Business concept', 'Source field', 'Ontology term', 'Type', 'Why'],
-    rows.map((r, i) => ({ key: i, cells: [r['Business concept'], r['Source field'], r['Ontology term'], r['Mapping type'], r.Rationale] })), { maxHeight: 460 }));
+    rows.map((r, i) => ({ key: i, cells: [r['Business concept'], r['Source field'], longTerm(r['Ontology term']), r['Mapping type'], r.Rationale] })), { maxHeight: 460 }));
 }
 
 function jsonKeys(value, found) {
@@ -252,44 +253,124 @@ function jsonKeys(value, found) {
   return found;
 }
 
+const CONVERTED = { '@id': 'a pointer (IRI)', 'xsd:dateTime': 'a date and time', 'xsd:integer': 'a whole number' };
+const HOW_TO_READ = [
+  '**How to read the mapping**',
+  '',
+  '- **Field** is the name in the source record. **Term** is the shared term it is mapped to, with the ontology it comes from: the Investigation ontology or AMLTRIX. The same term is used whichever system the record comes from. In the JSON-LD on the right the ontology is shortened to a prefix: `inv:` for the Investigation ontology and `amx:` for AMLTRIX.',
+  '- **Converted to** is what happens to the field\'s value.',
+  '- **a pointer (IRI):** the value stops being plain text and becomes a link to another record or to an AMLTRIX entry. For example `T0039` in `suspected_technique` becomes `amx:T0039`, which points to the technique Circular Transactions. This is what lets code check the value and lets records from different systems connect.',
+  '- **a date and time, a whole number:** the value is kept, and marked with its type so that it is read as a date or a number rather than as text.',
+  '- **kept as text:** the value stays as it is; only the field name is replaced by the shared term.',
+].join('\n');
+
 function termRows(context, source) {
   const keys = [...jsonKeys(source)].filter((k) => k in context).sort();
   return keys.map((field) => {
     const entry = context[field];
     const term = typeof entry === 'string' ? entry : entry['@id'] || '';
     const kind = typeof entry === 'string' ? '' : entry['@type'] || '';
-    return { key: field, cells: [field, term, kind === '@id' ? 'an IRI (a pointer)' : kind] };
+    return { key: field, cells: [field, longTerm(term), CONVERTED[kind] || kind || 'kept as text'] };
   });
 }
 
 function sourceView(source, graph, contextName) {
   const rows = termRows(DATA.integ.contexts[contextName], source);
-  return h('div', { class: 'cols3 src' },
+  return h('div', {}, h('div', { class: 'cols3 src' },
     h('div', {}, h('strong', {}, 'Source record'), caption("In the source system's own field names."), jsonBlock(source, 420)),
     h('div', {}, h('strong', {}, 'Mapping (JSON-LD context)'), caption('Each field to the term it means.'),
       dataTable(['Field', 'Term', 'Converted to'], rows, { maxHeight: 420 })),
-    h('div', {}, h('strong', {}, 'JSON-LD'), caption('The record in shared terms, ready to check.'), jsonBlock({ '@graph': graph }, 420)));
+    h('div', {}, h('strong', {}, 'JSON-LD'), caption('The record in shared terms, ready to check.'), jsonBlock({ '@graph': graph }, 420))),
+    h('div', { class: 'card', style: { marginTop: '12px' } }, md(HOW_TO_READ)));
+}
+
+const INT_WHY = '**Why this layer exists**\n\nThis layer is where a use case meets the semantic layer. A record from the use case is written as **JSON-LD**, a form of linked data: its fields keep the source system\'s names, and a mapping turns each one into a shared term that points into the semantic layer, for example a technique or an indicator in AMLTRIX.\n\n- **One mapping per system, not one per pair.** Without it, every system and every agent is wired to the ontology by hand. With it, a system is mapped once and any agent can read it.\n- **The same word means the same thing everywhere.** An alert\'s suspected technique and an investigator\'s finding both point to the same technique, so they can be joined and compared.\n- **Records can be checked.** The values are pointers into the dictionary, so code can test them (does the indicator exist, does it belong to the technique) before anyone relies on the record.\n- **Agents get one contract.** Through an API or an MCP tool, an agent reads and writes records in these shared terms, whichever system holds them.';
+
+/* A record field by field: its value, the ontology term it is mapped to, and what a pointer leads to in AMLTRIX. */
+function flatten(value, path, leaf, out) {
+  if (Array.isArray(value)) value.forEach((v, i) => flatten(v, `${path}[${i}]`, leaf, out));
+  else if (value && typeof value === 'object') Object.entries(value).forEach(([k, v]) => flatten(v, path ? `${path}.${k}` : k, k, out));
+  else out.push({ path, leaf, value });
+}
+
+function linkedTo(value) {
+  const snap = DATA.snap, v = String(value);
+  if (/^T\d{4}(\.\d{3})?$/.test(v) && snap.techniques[v]) {
+    const t = snap.techniques[v];
+    return { label: `AMLTRIX ${t.id} ${t.name}`, detail: `${tacticNames(t).join(', ')} · ${t.indicators.length} risk indicators · ${t.dataSources.length} data sources` };
+  }
+  if (/^DS\d+$/.test(v) && snap.dimensions.dataSources[v]) {
+    const d = snap.dimensions.dataSources[v];
+    return { label: `AMLTRIX ${d.id} ${d.name}`, detail: 'A data source: a record where evidence can be found' };
+  }
+  if (/^IND\d+$/.test(v) && snap.indicators[v]) return { label: `AMLTRIX risk indicator ${v}`, detail: shorten(snap.indicators[v], 130) };
+  return null;
+}
+
+function recordView(source, contextName, intro, outro, held) {
+  const ctx = DATA.integ.contexts[contextName], items = [];
+  flatten(source, '', '', items);
+  const rows = items.filter((r) => r.leaf in ctx).map((r, i) => {
+    const entry = ctx[r.leaf];
+    const term = typeof entry === 'string' ? entry : entry['@id'] || '';
+    const kind = typeof entry === 'string' ? '' : entry['@type'] || '';
+    const link = kind === '@id' ? linkedTo(r.value) : null;
+    const target = link ? h('div', { class: 'ba-target' }, h('strong', {}, link.label), h('div', { class: 'muted' }, link.detail))
+      : h('span', { class: 'muted' }, kind === '@id' ? 'another record in the same data' : '–');
+    return { key: i, cells: [h('code', {}, r.path), String(r.value), longTerm(term), CONVERTED[kind] || 'kept as text', target] };
+  });
+  return h('div', {}, caption(intro),
+    dataTable([`Field in the ${held.noun}`, `Value in the ${held.noun}`, 'Term in the ontology', 'Becomes', 'Linked to in the AML ontology'], rows,
+      { maxHeight: 520, colClass: ['recv', 'recv', 'link', 'link', 'link'],
+        groups: [[held.group, 2, 'recv'], ['How the mapping links it to the AML ontology', 3, 'link']] }), outro);
+}
+
+const REC_INTRO = {
+  int2: "The alert the investigator receives from the detection system. The first two columns are the data in the alert, exactly as it arrives: the " +
+    "system's own field names and values. The other three show how the mapping links each field to the AML ontology: the term it becomes, and, where a value " +
+    'is a pointer, what it points to in AMLTRIX.',
+  s1: 'The suggested checks for an alert, as a case system would hold them, one check per indicator. The first two columns are the data as the case system holds it; ' +
+    'the other three show how the mapping links it to the AML ontology.',
+  s2: 'A case with its findings and report draft, as the case system holds it. The first two columns are the data as the case system holds it; the other three ' +
+    'show how the mapping links it to the AML ontology.',
+};
+
+function rawView(source, graph, contextName) {
+  return h('details', { class: 'card', style: { marginTop: '12px' } },
+    h('summary', {}, 'Show the record as JSON, the mapping table and the resulting JSON-LD'),
+    h('div', { style: { marginTop: '10px' } }, sourceView(source, graph, contextName)));
 }
 
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
-  root.append(caption(INT_INTRO[area]));
+  root.append(h('div', { class: 'card' }, md(INT_WHY),
+    caption('In this demo the mapping and the checks are real. There is no API or MCP server behind them yet.')), caption(INT_INTRO[area]));
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
     const pillBox = h('div'), body = h('div');
     root.append(pillBox, body);
+    const names = INT_SECTIONS[id];
     const show = () => {
-      const section = INTS.section[id] || INT_SECTIONS[0];
-      pillBox.replaceChildren(pills(INT_SECTIONS.map((s) => [s, s]), section, (s) => { INTS.section[id] = s; show(); }));
-      if (section === INT_SECTIONS[0]) body.replaceChildren(mappingView(area));
-      else if (id === 'int2') body.replaceChildren(sourceView(snap.alerts.source, snap.alerts.graph, 'alert'));
-      else {
-        const s = snap.investigation[INTS.scenario];
-        body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), sourceView(s.source, s.graph, s.context));
+      const section = INTS.section[id] || names[0];
+      fill(pillBox, pills(names.map((n) => [n, n]), section, (n) => { INTS.section[id] = n; show(); }));
+      if (section === names[1]) { body.replaceChildren(mappingView(area)); return; }
+      if (id === 'int2') {
+        const t = DATA.agent.s1.technique, ty = DATA.agent.s1.typology;
+        const outro = h('div', { class: 'callout' },
+          `The detection system said only "${snap.alerts.source.suspected_technique}". As a pointer into AMLTRIX it lets the investigator's agent take the ${ty.indicators.length} risk indicators and ` +
+          `${ty.data_sources.length} data sources listed for ${t.name}, and suggest what to check first.`,
+          h('div', { style: { marginTop: '6px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
+        body.replaceChildren(recordView(snap.alerts.source, 'alert', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph, 'alert'));
+      } else {
+        const sc = snap.investigation[INTS.scenario];
+        const outro = h('div', { class: 'callout' }, 'Every indicator, technique and data source is a pointer into AMLTRIX, so code can check each one before anyone relies on the record: ' +
+          'does it exist, and does it belong to the suspected technique?');
+        body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }),
+          recordView(sc.source, sc.context, REC_INTRO[INTS.scenario], outro, { noun: 'record', group: 'As the case system holds it' }), rawView(sc.source, sc.graph, sc.context));
       }
     };
     show();
   }
-  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records are synthetic.`));
+  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records are synthetic: they stand for what a detection system and a case system would send, and are not read from the IBM data.`));
 }
