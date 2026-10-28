@@ -47,11 +47,8 @@ function detailView(id) {
   const it = ITEMS[id];
   const root = h('div');
   const uses = it.relies.length ? 'Relies on: ' + it.relies.map((k) => SEMANTIC[k]).join(', ') : 'Part of the semantic layer';
-  root.append(h('h2', {}, it.name), h('div', {}, badge(BADGE[it.kind], it.kind), ' ', h('span', { class: 'muted' }, uses)),
-    h('div', { class: 'cards2' },
-      h('div', { class: 'card' }, caption('Without a semantic layer'), h('div', {}, it.without)),
-      h('div', { class: 'card' }, caption('With a semantic layer'), h('div', {}, it.with))));
-  const body = h('div');
+  root.append(h('h2', {}, it.name), h('div', {}, badge(BADGE[it.kind], it.kind), ' ', h('span', { class: 'muted' }, uses)));
+  const body = h('div', { style: { marginTop: '10px' } });
   root.append(body);
   if (id in INT_AREA) renderIntegration(body, id);
   else if (id === 'ag2') renderIdentificationAgent(body);
