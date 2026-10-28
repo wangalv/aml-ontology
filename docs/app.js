@@ -30,7 +30,7 @@ function buildArchitecture() {
     panel('Data asset', ['acct', 'party', 'tx', 'other']),
     panel('FinCrime data management', ['er', 'fs', 'lm']),
     panel('FinCrime identification systems', ['ml', 'rule', 'graph', 'osol']),
-    panel('Investigation systems', ['ucm', 'ucm2']),
+    panel('Investigation systems', ['ucm']),
     h('div'), ...['ag1', 'ag2', 'ag3'].map((id) => makeBox(id, 'Agent', 'agent')),
     h('div', { class: 'side-note' }, 'Reads and writes through the integration layer'),
     ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration (MCP, API)')),
