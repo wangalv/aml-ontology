@@ -2,13 +2,13 @@
   "_note": "Canned illustration of the kinds of mistake a model can make without the dictionary. Written by hand for tests and offline runs. It is not the output of a real model and is no evidence about any model.",
   "suggestions": [
     { "indicator": "IND02191", "priority": 1, "data_source": "DS0019",
-      "reason": "The alert describes funds returning to the origin account." },
+      "reason": "The alert describes a cycle that returns to the origin account." },
     { "indicator": "IND99999", "priority": 2, "data_source": "DS0019",
       "reason": "Circular flows often involve rapid movement of funds between related accounts." },
     { "indicator": "IND01341", "priority": 3, "data_source": "DS0019",
       "reason": "Many small transfers just under a reporting threshold would point to splitting amounts." },
     { "indicator": "IND02194", "priority": 4, "data_source": "DS0001",
-      "reason": "Account activity logs would show how the five accounts behave over time." },
+      "reason": "Account activity logs would show how the three accounts behave over time." },
     { "indicator": "IND02195", "priority": 5, "data_source": "DS9999",
       "reason": "Cross-border routing records would show convoluted paths." }
   ]

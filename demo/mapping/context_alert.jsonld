@@ -8,6 +8,7 @@
     "alert_id":            "inv:alertId",
     "raised_at":           { "@id": "inv:raisedAt", "@type": "xsd:dateTime" },
     "trigger_reason":      "inv:triggerReason",
+    "facts":               "inv:fact",
     "suspected_technique": { "@id": "inv:suspectedTechnique", "@type": "@id" },
     "evidence":            { "@id": "inv:hasEvidence", "@type": "@id" },
 

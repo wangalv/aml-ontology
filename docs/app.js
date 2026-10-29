@@ -97,7 +97,7 @@ async function main() {
   document.getElementById('footer').replaceChildren(
     h('p', {}, `AMLTRIX ${meta.version} (${meta.url}), snapshot exported ${meta.exported}. ${meta.rights} `,
       h('a', { href: 'AMLTRIX_LICENSE.txt' }, 'License terms'), ' · ', h('a', { href: 'AMLTRIX_NOTICE.txt' }, 'Notice'), '.'),
-    h('p', {}, 'The typology-to-technique mapping is a first draft that has not been reviewed by a domain expert. Sample records are synthetic. ' +
+    h('p', {}, 'The typology-to-technique mapping is a first draft that has not been reviewed by a domain expert. The sample alert and case are built from one payment in the synthetic IBM AML data. ' +
       'The agent results are one saved run of one model on one alert and one case: an illustration, not a measurement.'));
 }
 

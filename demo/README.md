@@ -39,7 +39,7 @@ the findings section of a report. Each paragraph must name the findings it rests
 cites at least one finding, every cited finding is a finding of this case, and every technique or indicator id it
 mentions belongs to the findings it cites. A reviewer can trace each paragraph to a finding, and each finding to its
 evidence and to the dictionary. The draft is always marked as needing investigator review.
-Not shown: that the wording is faithful. Code does not check that "5.2 days" in a paragraph matches the finding, or
+Not shown: that the wording is faithful. Code does not check that "6.92 days" in a paragraph matches the finding, or
 that a "not assessed" finding is not written up as established. The sample run on a local model (qwen3.5:9b, one case,
 one run) had no rejected paragraphs with or without the dictionary, so the checks did not matter for that model; the
 difference was that with the dictionary the text used the indicator's own definition. One paragraph also added

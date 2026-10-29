@@ -1,7 +1,7 @@
 {
   "_note": "Canned illustration of the kinds of mistake a model can make without the dictionary. Written by hand for tests and offline runs. It is not the output of a real model and is no evidence about any model.",
   "paragraphs": [
-    { "text": "Funds left account A-01 and returned to it through four intermediate accounts within 5.2 days.",
+    { "text": "Funds left account 8060BA880 and returned to it through two other accounts within 6.92 days.",
       "based_on": ["F-1"] },
     { "text": "The customer's source of funds was verified and found to be legitimate.",
       "based_on": ["F-9"] },

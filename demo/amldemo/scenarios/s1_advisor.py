@@ -3,7 +3,7 @@
 An alert names a suspected AMLTRIX technique. The adviser gives the model that technique's indicators and data
 sources from the dictionary and asks where the investigator should look first. The model's answer is plain
 JSON; this code wraps it as JSON-LD and runs the five validation layers on it. A suggestion that fails
-validation is rejected and never shown as advice. No transaction data is read: this is advice about where
+validation is rejected and never shown as advice. No records beyond the alert's own facts are read: this is advice about where
 to look, not a check of whether the indicator is present.
 
 advise() returns plain dicts and lists and prints nothing, so a UI can call it directly.
@@ -25,7 +25,7 @@ FORMAT = (
     'Reply with JSON of this shape: {"suggestions": [{"indicator": "IND#####", "priority": 1, '
     '"reason": "one or two sentences tied to facts in the alert", "data_source": "DS####"}]}. '
     "Priority 1 is the first thing to look into; use whole numbers with no repeats. "
-    "Say where to look, not what you found: you have not seen any transactions."
+    "Say where to look, not what you found: you have only the facts in the alert and have not seen any other records."
 )
 
 
@@ -43,13 +43,15 @@ def _alert_block(alert, data_source_names):
     evidence = ", ".join(
         f"{e['record_type']} ({data_source_names.get(e['record_type'], 'unlisted')})" for e in alert.get("evidence", [])
     ) or "none"
+    facts = "\n".join(f"- {fact}" for fact in alert.get("facts", []))
     return (
         "<alert>\n"
         f"alert_id: {alert['alert_id']}\n"
         f"raised_at: {alert['raised_at']}\n"
         f"trigger_reason: {alert['trigger_reason']}\n"
         f"types of record already attached: {evidence}\n"
-        "</alert>"
+        + (f"facts attached by the monitoring systems:\n{facts}\n" if facts else "")
+        + "</alert>"
     )
 
 

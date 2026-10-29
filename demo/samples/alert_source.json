@@ -1,20 +1,42 @@
 {
-  "alert_id": "ALT-1001",
-  "raised_at": "2022-09-12T14:54:00Z",
-  "trigger_reason": "Graph analysis: funds moved through 5 accounts and returned to the origin within 5.2 days",
+  "alert_id": "ALT-5007762",
+  "raised_at": "2022-09-10T15:19:00Z",
+  "trigger_reason": "Graph analysis: payment 5007762 closes a verified time-ordered cycle of 3 payments that returns to the originating account within 6.92 days",
   "suspected_technique": "T0039",
+  "facts": [
+    "Rule engine: rule_money_mule fired. What this rule detects: An inflow of at least $3,000 followed within 3 days by an outflow of at least 85% of it from the same account (rapid pass-through).",
+    "Rule engine: rule_high_risk_country fired. What this rule detects: Payment currency is Ruble or Mexican Peso, used as a jurisdiction proxy because the dataset has no country field.",
+    "ML model: score 0.695. The model gives a probability and names no reason.",
+    "Transaction graph: this payment closes a verified time-ordered cycle of 3 payments that returns to the originating account 8060BA880, over 6.92 days. The payments: 2022-09-03 17:09 8060BA880 to 8060A62F0 68,647.24; 2022-09-08 15:50 8060A62F0 to 8060AF460 100,578.47; 2022-09-10 15:19 8060AF460 to 8060BA880 196,999.50.",
+    "The payment: 196,999.50 Ruble by ACH, from 8060AF460 to 8060BA880 on 2022-09-10 15:19. Cross-currency: no. Same bank: no. Between the same account: no."
+  ],
   "evidence": [
-    { "evidence_id": "EV-TXLOG-1001", "record_type": "DS0019" }
+    {
+      "evidence_id": "EV-TXLOG-5007762",
+      "record_type": "DS0019"
+    }
   ],
   "checklist": [
-    { "item_id": "CHK-1001-1", "indicator": "IND02191", "priority": 1,
-      "reason": "The alert itself describes funds returning to the origin account, which is the core of this indicator.",
-      "suggested_data_source": "DS0019" },
-    { "item_id": "CHK-1001-2", "indicator": "IND02194", "priority": 2,
-      "reason": "A ring of five accounts raises the question of who owns them and whether they were opened close together.",
-      "suggested_data_source": "DS0039" },
-    { "item_id": "CHK-1001-3", "indicator": "IND02197", "priority": 3,
-      "reason": "If the accounts belong to trading companies, the circular flow may be backed by repeated shipments and invoices.",
-      "suggested_data_source": "DS0036" }
+    {
+      "item_id": "CHK-5007762-1",
+      "indicator": "IND02191",
+      "priority": 1,
+      "reason": "The graph found a verified cycle that returns to the originating account, which is the core of this indicator.",
+      "suggested_data_source": "DS0019"
+    },
+    {
+      "item_id": "CHK-5007762-2",
+      "indicator": "IND02194",
+      "priority": 2,
+      "reason": "Three accounts form the ring, which raises the question of who owns them and when they were opened.",
+      "suggested_data_source": "DS0039"
+    },
+    {
+      "item_id": "CHK-5007762-3",
+      "indicator": "IND02195",
+      "priority": 3,
+      "reason": "The payment currency is Ruble, which the rule engine treats as a high-risk jurisdiction proxy; the routing of the ring is worth checking.",
+      "suggested_data_source": "DS0047"
+    }
   ]
 }

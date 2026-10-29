@@ -52,7 +52,7 @@ class ValidSamples(unittest.TestCase):
     def test_alert_points_into_the_dictionary(self):
         doc = jsonld_build.attach_context(adapters.alert_doc(ALERT), jsonld_build.load_context("context_alert.jsonld"))
         graph = jsonld_build.to_graph(doc)
-        alert = ontology.DATA["alert/ALT-1001"]
+        alert = ontology.DATA["alert/ALT-5007762"]
         self.assertIn((alert, ontology.INV.suspectedTechnique, ontology.AMX.T0039), graph)
         self.assertIn((alert, RDF.type, ontology.INV.Alert), graph)
         items = list(graph.subjects(RDF.type, ontology.INV.ChecklistItem))
@@ -61,10 +61,10 @@ class ValidSamples(unittest.TestCase):
     def test_paragraph_order_is_kept(self):
         doc = jsonld_build.attach_context(adapters.case_doc(CASE), jsonld_build.load_context("context_case.jsonld"))
         graph = jsonld_build.to_graph(doc)
-        head = graph.value(ontology.DATA["report/RD-0007"], ontology.INV.paragraphs)
+        head = graph.value(ontology.DATA["report/RD-5007762"], ontology.INV.paragraphs)
         from rdflib.collection import Collection
-        first, second = [graph.value(p, ontology.INV.basedOn) for p in Collection(graph, head)]
-        self.assertEqual((first, second), (ontology.DATA["finding/F-1"], ontology.DATA["finding/F-2"]))
+        first, second = [set(graph.objects(p, ontology.INV.basedOn)) for p in Collection(graph, head)]
+        self.assertEqual((first, second), ({ontology.DATA["finding/F-1"]}, {ontology.DATA["finding/F-2"], ontology.DATA["finding/F-3"]}))
 
     def test_validation_does_not_change_the_dictionary(self):
         before = len(ontology.load_graph())

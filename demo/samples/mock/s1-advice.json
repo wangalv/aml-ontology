@@ -2,10 +2,10 @@
   "_note": "Canned illustration for tests and offline runs. This is not the output of a real model.",
   "suggestions": [
     { "indicator": "IND02191", "priority": 1, "data_source": "DS0019",
-      "reason": "The alert says funds moved through 5 accounts and returned to the origin within 5.2 days, which is the pattern this indicator describes. The transaction log is already attached." },
+      "reason": "The alert says the payment closes a verified cycle of 3 payments that returns to the originating account within 6.92 days, which is the pattern this indicator describes. The transaction log is already attached." },
     { "indicator": "IND02194", "priority": 2, "data_source": "DS0039",
-      "reason": "A ring of five accounts raises the question of who owns them and whether they were opened close together; the customer due diligence records would show this." },
+      "reason": "A ring of three accounts raises the question of who owns them and whether they were opened close together; the customer due diligence records would show this." },
     { "indicator": "IND02195", "priority": 3, "data_source": "DS0047",
-      "reason": "If any hop in the ring crosses a border, the routing and intermediary banks would show whether the path is unusually convoluted." }
+      "reason": "The rule engine treats the Ruble as a high-risk jurisdiction proxy, so the routing and intermediary banks of the ring would show whether the path is unusually convoluted." }
   ]
 }

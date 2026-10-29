@@ -95,23 +95,11 @@ function renderInvestigation(root) {
 
 /* ---------- Agents ---------- */
 const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative', 'Scenario 3: typology-driven query'];
-const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false }, open: { s1: false } };
+const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false }, open: { s1: false, s2: false } };
 
 function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
 
 function quote(text) { return h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'From the AML typology'), text); }
-
-function reportColumn(result, grams) {
-  const col = h('div');
-  for (const p of result.accepted) {
-    col.append(h('div', { class: 'card tight' }, h('div', {}, highlight(p.text, grams).nodes), caption('Based on ' + p.based_on.join(', '))));
-  }
-  for (const r of result.rejected) {
-    const para = r.paragraph && typeof r.paragraph === 'object' ? r.paragraph : {};
-    col.append(h('div', { class: 'card tight' }, badge('red', 'rejected'), h('div', {}, para.text || '(no text)'), r.problems.map((p) => caption(p))));
-  }
-  return col;
-}
 
 function docToggle(key, label, doc, repaint) {
   if (!doc) return null;
@@ -133,11 +121,13 @@ function scenario1(root, repaint) {
       h('div', { class: 'big-label' }, '1  The alert the investigator receives'),
       h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · raised ${when} · suspected technique `, badge('blue', `${t.id} ${t.name}`)),
       h('div', { class: 'alert-line' }, alert.trigger_reason),
-      caption('It says what was detected. It does not say what to check or where to look.')),
+      caption('What the monitoring systems attached to this payment'),
+      h('ul', { class: 'fact-list' }, (alert.facts || []).map((f) => h('li', {}, f))),
+      caption('Facts from the rule engine, the ML model and the transaction graph. They say what was detected, not what to check or where to look.')),
     h('div', { class: 'flow-arrow' }, `▼  the LLM reads what the AML typology says about ${t.id}: its definition, ${ty.indicators.length} risk indicators and ${ty.data_sources.length} data sources`),
     h('div', { class: 'llm-box' },
       h('div', { class: 'big-label' }, '2  What the LLM suggests the investigator checks'),
-      caption(`Every indicator and data source below is taken from the AML typology; the LLM adds why each one fits this alert. No transaction data is read.`),
+      caption(`Every indicator and data source below is taken from the AML typology; the LLM adds why each one fits this alert. It sees only the alert, no other records.`),
       items,
       caption(`Checked by code: ${run.accepted.length} of ${run.accepted.length + run.rejected.length} suggestions name a real indicator of ${t.id} and a data source the AML typology lists for it. Not checked: whether a reason fits the alert.`)),
     h('details', { class: 'card', open: detailsOpen, ontoggle: (e) => { AG.open.s1 = e.target.open; } },
@@ -155,26 +145,33 @@ function scenario2(root, repaint) {
   const s2 = DATA.agent.s2, c = s2.case, run = s2.real.with, t = s2.technique;
   const grams = ngramSet([t.definition || '', ...Object.values(s2.indicator_text)], GRAM);
   const reused = run.accepted.filter((p) => highlight(p.text, grams).hit).length;
-  root.append(h('p', {}, 'Once the findings are in, the agent drafts the report, and every paragraph points back to the finding it rests on.'),
+  const STATUS = { supported: 'green', 'not-supported': 'red', inconclusive: 'orange', 'not-assessable': 'gray' };
+  const findings = c.findings.map((f) => h('div', { class: 'llm-row' },
+    h('div', {}, h('strong', {}, `${f.finding_id}  `), badge(STATUS[f.status] || 'gray', f.status), ' ', h('code', {}, f.indicator)),
+    h('div', { class: 'alert-line' }, f.observation)));
+  const paragraphs = run.accepted.map((p) => h('div', { class: 'llm-row' },
+    h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), highlight(p.text, grams).nodes),
+    h('div', { class: 'llm-quote' }, 'Based on ', p.based_on.map((b) => badge('gray', b)))));
+  root.append(h('p', {}, 'When the investigation is done, the LLM drafts the findings section of the report, using the AML typology to say what each finding means.'),
     h('div', { class: 'card' },
-      h('div', {}, h('strong', {}, `Case ${c.case_id}`), ` · investigating ${c.hypothesis.join(', ')} ${t.name || ''}`),
-      h('div', { style: { margin: '8px 0' } }, dataTable(['Finding', 'Indicator', 'Status', 'Observation'],
-        c.findings.map((f) => ({ key: f.finding_id, cells: [f.finding_id, f.indicator, f.status, f.observation] })), { maxHeight: 300 })),
-      caption('The agent writes the findings section of a report from these findings. Each paragraph must name the findings it rests on.')),
-    h('h3', {}, '1. What the agent is given from the AML typology'),
-    h('div', { class: 'card' },
-      h('div', { class: 'ctx-title' }, `What AML typology says about ${t.id} ${t.name}`),
+      h('div', { class: 'big-label' }, '1  What the investigator has: the findings of the case'),
+      h('div', {}, h('strong', {}, `Case ${c.case_id}`), ' · investigating ', badge('blue', `${t.id} ${t.name || ''}`)),
+      findings,
+      caption('Written by code from the same payment, as a stand-in for an investigator\'s notes. No report wording, and nothing says what the indicators mean.')),
+    h('div', { class: 'flow-arrow' }, `▼  the LLM reads what the AML typology says about ${t.id} and the ${Object.keys(s2.indicator_text).length} indicators in these findings`),
+    h('div', { class: 'llm-box' },
+      h('div', { class: 'big-label' }, '2  What the LLM writes: the findings section of the report'),
+      caption('Each paragraph says which finding it rests on. Yellow: wording that also appears in the AML typology text.'),
+      paragraphs,
+      caption(`${reused} of ${run.accepted.length} paragraphs reuse AML typology wording (${GRAM} or more words in a row): a rough sign that the typology was used, not proof that a paragraph is right. ` +
+        'Checked by code: every paragraph cites a real finding of this case and names only technique and indicator ids that belong to it. Not checked: whether the wording is faithful to a finding.')),
+    h('details', { class: 'card', open: AG.open.s2, ontoggle: (e) => { AG.open.s2 = e.target.open; } },
+      h('summary', {}, 'What the LLM was given from the AML typology, and the JSON-LD of the draft'),
+      h('div', { class: 'ctx-title', style: { marginTop: '8px' } }, `What AML typology says about ${t.id} ${t.name}`),
       caption('Definition of the technique'), definitionBox(t.definition || ''),
       caption('What the indicators in these findings mean'),
-      h('div', { class: 'ctx-box' }, Object.entries(s2.indicator_text).map(([id, text]) => h('div', { class: 'ctx-row' }, h('code', {}, id), text)))),
-    h('h3', {}, '2. What it writes'),
-    reportColumn(run, grams),
-    h('div', { class: 'callout' },
-      `${reused} of ${run.accepted.length} paragraphs reuse AML typology wording.`,
-      caption(`Yellow marks wording that also appears in the AML typology text above (${GRAM} or more words in a row). A rough marker that the typology was used, not proof that a paragraph is right.`)),
-    caption('A paragraph is kept only if it cites at least one real finding of this case and mentions only technique and indicator ids that belong to the ' +
-      "findings it cites. Whether the wording is faithful to a finding is not checked, so the draft always needs the investigator's review."),
-    docToggle('s2', 'Show the validated JSON-LD of the accepted draft', run.doc, repaint));
+      h('div', { class: 'ctx-box' }, Object.entries(s2.indicator_text).map(([id, text]) => h('div', { class: 'ctx-row' }, h('code', {}, id), text))),
+      docToggle('s2', 'Show the validated JSON-LD of the accepted draft', run.doc, repaint)));
 }
 
 function scenario3(root) {
@@ -483,5 +480,5 @@ function renderIntegration(root, id) {
     };
     show();
   }
-  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records are synthetic: they stand for what a detection system and a case system would send, and are not read from the IBM data.`));
+  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one payment in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`));
 }

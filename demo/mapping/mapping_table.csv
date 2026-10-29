@@ -3,6 +3,7 @@ S1,Alert,(record),inv:Alert,extension,AMLO has no alert concept; defined in the 
 S1,Alert id,alert_id,inv:alertId,extension,Identifier from the monitoring system
 S1,Alert time,raised_at,inv:raisedAt,transform,ISO-8601 string coerced to xsd:dateTime by the context; source timestamps must be normalised to UTC before this step
 S1,Trigger reason,trigger_reason,inv:triggerReason,extension,Free text from the monitoring system; deliberately not mapped to a technique automatically (rule-to-technique mapping is a separate table that needs expert review)
+S1,Facts attached to the alert,facts,inv:fact,extension,"Plain-text facts from the monitoring systems: the rules that fired, the model score, the cycle and its payments. Kept as text because the AML ontology has no concept of account, payment or amount to map them to"
 S1,Suspected typology,suspected_technique,inv:suspectedTechnique -> amx:T####,transform,The id string is prefixed into an AML typology IRI in adapters.py. A technique is an individual of amlo:Technique so it is referenced as a value and never used as @type. It is a hypothesis
 S1,Evidence item,evidence,inv:Evidence / inv:hasEvidence,extension,AMLO has no evidence concept
 S1,Kind of evidence,record_type,inv:recordType -> amx:DS####,transform,Points to an AML typology data source. A data source is a TYPE of record (for example Transaction Logs); the evidence item is the instance

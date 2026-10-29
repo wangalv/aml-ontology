@@ -154,6 +154,12 @@ inv:triggerReason a owl:DatatypeProperty ;
     rdfs:domain inv:Alert ;
     rdfs:range xsd:string .
 
+inv:fact a owl:DatatypeProperty ;
+    rdfs:label "fact"@en ;
+    rdfs:comment "One fact the monitoring systems attached to the alert, as plain text: a rule that fired, a model score, a cycle with its payments."@en ;
+    rdfs:domain inv:Alert ;
+    rdfs:range xsd:string .
+
 inv:priority a owl:DatatypeProperty ;
     rdfs:label "priority"@en ;
     rdfs:comment "Order in which to look into the suggestions for one alert. 1 is first."@en ;

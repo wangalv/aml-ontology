@@ -1,25 +1,58 @@
 {
-  "case_id": "CASE-0007",
-  "opened_at": "2022-09-13T09:00:00Z",
-  "hypothesis": ["T0039"],
+  "case_id": "CASE-5007762",
+  "opened_at": "2022-09-10T23:59:00Z",
+  "hypothesis": [
+    "T0039"
+  ],
   "evidence": [
-    { "evidence_id": "EV-TXLOG-1001", "record_type": "DS0019" }
+    {
+      "evidence_id": "EV-TXLOG-5007762",
+      "record_type": "DS0019"
+    }
   ],
   "findings": [
-    { "finding_id": "F-1", "technique": "T0039", "indicator": "IND02191", "status": "supported",
-      "observation": "Funds left account A-01 and returned to it through four intermediate accounts within 5.2 days.",
-      "supported_by": ["EV-TXLOG-1001"] },
-    { "finding_id": "F-2", "technique": "T0039", "indicator": "IND02194", "status": "not-assessable",
-      "observation": "No ownership or onboarding data was available, so this indicator was not assessed." }
+    {
+      "finding_id": "F-1",
+      "technique": "T0039",
+      "indicator": "IND02191",
+      "status": "supported",
+      "observation": "In the transaction log, 3 payments take funds from 8060BA880 through 2 other accounts and back to it within 6.92 days: 8060BA880 to 8060A62F0 68,647.24; 8060A62F0 to 8060AF460 100,578.47; 8060AF460 to 8060BA880 196,999.50.",
+      "supported_by": [
+        "EV-TXLOG-5007762"
+      ]
+    },
+    {
+      "finding_id": "F-2",
+      "technique": "T0039",
+      "indicator": "IND02194",
+      "status": "not-assessable",
+      "observation": "Ownership and onboarding records were not part of this case's evidence, so this indicator was not assessed."
+    },
+    {
+      "finding_id": "F-3",
+      "technique": "T0039",
+      "indicator": "IND02195",
+      "status": "not-assessable",
+      "observation": "The payment currency is Ruble, which the rule engine treats as a proxy for a high-risk country, but the data has no country field, so cross-border routing could not be assessed."
+    }
   ],
   "report_draft": {
-    "draft_id": "RD-0007",
+    "draft_id": "RD-5007762",
     "review_status": "draft, requires investigator review",
     "paragraphs": [
-      { "text": "Transaction records show a circular movement of funds consistent with Circular Transactions (T0039): the funds returned to the originating account within 5.2 days (IND02191).",
-        "based_on": ["F-1"] },
-      { "text": "Indicator IND02194 could not be assessed because ownership and onboarding data was not available.",
-        "based_on": ["F-2"] }
+      {
+        "text": "Transaction records show funds leaving account 8060BA880 and returning to it within 6.92 days, consistent with Circular Transactions (T0039) and indicator IND02191; the last payment is 196,999.50 Ruble.",
+        "based_on": [
+          "F-1"
+        ]
+      },
+      {
+        "text": "Indicators IND02194 and IND02195 could not be assessed, because ownership records and country data were not available.",
+        "based_on": [
+          "F-2",
+          "F-3"
+        ]
+      }
     ]
   }
 }
