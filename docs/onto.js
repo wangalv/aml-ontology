@@ -321,7 +321,7 @@ function renderOntology(root) {
   const nTech = Object.values(snap.techniques).filter((t) => t.kind === 'technique').length;
   const typBox = h('div'), tableBox = h('div'), detailBox = h('div');
 
-  root.append(h('p', {}, 'All ', h('strong', {}, `${nTech} AMLTRIX techniques`),
+  root.append(h('p', {}, 'All ', h('strong', {}, `${nTech} AML typology techniques`),
     '. Click a row to see its indicators, relationships, mitigations and data sources. Filter by tactic, or by a typology the portal detects to see which techniques it corresponds to.'),
     h('div', { class: 'warn' }, '⚠️ The typology → technique mapping is a ', h('strong', {}, 'draft'),
       ` (${tmap.status.split(' - ').slice(1).join(' - ') || tmap.status}). Match strength: strong = AMLTRIX's definition describes the behaviour the rule detects; medium = overlapping but framed differently; weak = related context only.`));

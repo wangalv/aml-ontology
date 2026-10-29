@@ -89,5 +89,10 @@
     "pattern": "Money that an account receives and passes on to another account within one hour (a different pattern from the one you are asked about).",
     "sql": "SELECT t1.tx_id FROM txs t1 JOIN txs t2 ON t2.from_account = t1.to_account AND t2.ts > t1.ts AND t2.ts <= t1.ts + INTERVAL 1 HOUR WHERE t1.from_account <> t1.to_account LIMIT 1000",
     "note": "It only shows the syntax and the expected output: each flagged payment is returned by its tx_id."
+  },
+  "data_source": {
+    "id": "DS0019",
+    "name": "Transaction Logs",
+    "note": "The AMLTRIX data source this table stands for. A first draft written by people: of the data sources AMLTRIX lists for a technique, the payments table is the one that holds transaction records."
   }
 }

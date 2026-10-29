@@ -102,6 +102,11 @@ runs read-only and is judged with the labels, which the model never sees. Result
   payments but never checks that the money returns to where it started, so it flags 10,000 payments (the LIMIT) of which 0.11% are laundering,
   the same as any payment, and finds none of the 107 payments in verified round trips. Its query for IND02195 never gets past the guard: it
   resubmits the same query three times. The guard says a query is safe, not that it is right; the judging step is what shows the difference.
+- **What the pages show:** one thread, from the investigator's intent to SQL: the technique and the indicator (AML typology), the data
+  dictionary as the link between the indicator's words and the table's columns (`data_dictionary.json`, including a `data_source` field that
+  names the AMLTRIX data source the table stands for, a draft by people), and the query that passed the guard and ran (IND02191), each part
+  of it with the words of the indicator it is said to come from and the columns it uses. The refused attempts, the query that never passed
+  the guard (IND02195), the coverage table and the rest are not displayed or exported; the full run stays in `generated/hunt.json`.
 - **Not shown:** that a stronger model would do better (only qwen3.5:9b is installed; the GLM key is not set), that the typology helps (no
   with/without comparison), or anything about real data (the dataset is synthetic and the period is about two and a half days).
 - The quotes a model gives for each part of its SQL are checked against the indicator text: a quote that is not in the indicator is flagged.

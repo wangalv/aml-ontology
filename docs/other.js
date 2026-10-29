@@ -189,73 +189,25 @@ function scenario2(root, repaint) {
     docToggle('s2', 'Show the validated JSON-LD of the accepted draft', run.doc, repaint));
 }
 
-const VERDICT = { yes: 'green', partly: 'orange', no: 'gray', 'not-answered': 'red' };
-
-function s3Attempt(a, n, last) {
-  const run = a.run;
-  const status = a.guard.length ? badge('red', 'refused by the guard')
-    : (run && run.error ? badge('red', 'could not be used') : (run ? badge('green', `ran: ${fmt(run.n_rows)} rows in ${run.seconds} s`) : null));
-  return h('div', { class: 'card tight' },
-    h('div', {}, h('strong', {}, `Attempt ${n}`), ' ', status),
-    h('pre', { style: { maxHeight: '260px' } }, a.sql || '(no SQL in the reply)'),
-    a.guard.map((p) => caption('Refused: ' + p)),
-    run && run.error ? caption('Problem: ' + run.error) : null,
-    last && a.conditions.length ? h('div', {}, caption('What each part of the SQL is meant to check, and the words of the indicator the model says it comes from'),
-      dataTable(['What it checks', 'Words quoted from the indicator', 'Quote found in the indicator?'],
-        a.conditions.map((c, i) => ({ key: i, cells: [c.condition, c.from_indicator, c.quote_found ? badge('green', 'yes') : badge('red', 'no')] })), { maxHeight: 260 })) : null,
-    last && run && !run.error && run.n_rows >= 10000 ? caption('The query returned exactly as many rows as the most the guard allows, so the result is cut off: these are an arbitrary part of what matched, and a rerun can return different rows.') : null,
-    last && run && !run.error && run.sample.length ? h('div', {}, caption(`First ${run.sample.length} of ${fmt(run.n_rows)} rows returned`),
-      dataTable(run.columns, run.sample.map((r, i) => ({ key: i, cells: r.map(String) })), { maxHeight: 200 })) : null);
-}
-
 function scenario3(root) {
-  const s3 = DATA.agent.s3, w = s3.window, t = s3.technique, dict = s3.dictionary;
-  root.append(caption(`Saved run from ${s3.exported}: one technique, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only ` +
-    `(${fmt(w.rows)} payments, ${w.from.slice(0, 16)} to ${w.to.slice(0, 16)}). An illustration, not a measurement. No model or database is used when you view this page.`),
-    h('p', {}, 'While working a case, an investigator picks a technique to test. The agent turns its risk indicators into queries over the payments data; code checks each query before it runs and judges the result afterwards.'),
-    h('h3', {}, '1. What the agent is given'),
-    h('div', { class: 'card' },
-      h('div', { class: 'ctx-title' }, `What AMLTRIX says about ${t.id} ${t.name}`),
-      caption('Definition'), definitionBox(t.short),
-      caption(`${s3.coverage.length} risk indicators`),
-      h('div', { class: 'ctx-box' }, s3.coverage.map((c) => h('div', { class: 'ctx-row' }, h('code', {}, c.indicator), c.indicator_text))),
-      caption(`Data dictionary: the one table it may query (${dict.table}). ${dict.description}`),
-      dataTable(['Column', 'Type', 'Meaning'], dict.columns.map((c) => ({ key: c.name, cells: [h('code', {}, c.name), c.type, c.meaning] })), { maxHeight: 260 }),
-      h('ul', {}, dict.notes.map((n) => h('li', {}, n))),
-      dict.example ? h('div', {}, caption(`One example query is shown to the model, only to illustrate the syntax and the expected output. Its pattern: ${dict.example.pattern}`),
-        h('pre', { style: { maxHeight: '160px' } }, dict.example.sql)) : null,
-      caption('The laundering label and every column derived from it are not in the table: the model cannot see them.')),
-    h('h3', {}, '2. Which indicators can the data show?'));
-  const count = (k) => s3.coverage.filter((c) => c.queryable === k).length;
-  root.append(dataTable(['Indicator', 'What it describes', 'Can the table show it?', 'Columns it would use', 'Reason the model gives'],
-    s3.coverage.map((c) => ({ key: c.indicator, cells: [h('code', {}, c.indicator), shorten(c.indicator_text, 110), badge(VERDICT[c.queryable] || 'gray', c.queryable),
-      c.columns.join(', ') || '–', c.reason] })), { maxHeight: 420 }),
-    h('div', { class: 'callout' }, `${count('yes')} yes, ${count('partly')} partly, ${count('no')} no.`,
-      caption("These verdicts are the model's own judgement. Code checks only that the indicator ids and the columns it names are real; whether a yes is right needs an analyst.")),
-    h('h3', {}, '3. The queries it wrote'));
-  for (const q of s3.queries) {
-    root.append(h('div', { class: 'card' },
-      h('div', {}, h('strong', {}, q.indicator), ' ', badge(VERDICT[q.queryable] || 'gray', q.queryable),
-        ' ', q.accepted ? badge('green', 'passed the guard and ran') : badge('red', 'never produced a usable query')),
-      quote(q.indicator_text)),
-      ...q.attempts.map((a, n) => s3Attempt(a, n + 1, n === q.attempts.length - 1)));
-  }
-  root.append(caption('The guard accepts only one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts. A refused or failing query is sent back to the model with the reason, up to three attempts. ' +
-    'Passing the guard shows a query is safe to run, not that it finds the pattern.'), h('h3', {}, '4. How it did'));
-  const done = s3.queries.filter((q) => q.evaluation && !q.evaluation.error);
-  if (!done.length) {
-    root.append(h('div', { class: 'callout' }, 'No query got past the guard and ran, so there is nothing to judge.'));
-  } else {
-    const rows = done.map((q) => ({ key: q.indicator, cells: [`Query for ${q.indicator}`, fmt(q.evaluation.rows), fmt(q.evaluation.laundering), pct(q.evaluation.laundering, q.evaluation.rows),
-      `${fmt(q.evaluation.in_verified_cycles)} of ${fmt(w.in_verified_cycles)}`] }));
-    rows.push({ key: 'graph', cells: ['Existing graph detection (verified round trips)', fmt(w.in_verified_cycles), fmt(w.in_verified_cycles_laundering), pct(w.in_verified_cycles_laundering, w.in_verified_cycles), `${fmt(w.in_verified_cycles)} of ${fmt(w.in_verified_cycles)}`] });
-    rows.push({ key: 'base', cells: ['Any payment in the period (base rate)', fmt(w.rows), fmt(w.laundering), pct(w.laundering, w.rows), '–'] });
-    root.append(dataTable(['', 'Payments flagged', 'Of them laundering', 'Share laundering', 'Verified round-trip payments found'], rows, { maxHeight: 300 }),
-      h('div', { class: 'callout' }, done.map((q) => `The query for ${q.indicator} flagged ${fmt(q.evaluation.rows)} payments; ${pct(q.evaluation.laundering, q.evaluation.rows)} of them are laundering, against ${pct(w.laundering, w.rows)} for any payment in the period, ` +
-        `and ${fmt(q.evaluation.in_verified_cycles)} of the ${fmt(w.in_verified_cycles)} payments in verified round trips were found. `)));
-  }
-  root.append(caption('The labels were used only here, after the query was written; the model never saw them. The verified round trips are loops found earlier by the graph analysis of AML Triage Demo: a reference, not the whole truth, and a loop is not always laundering. ' +
-    'The data is synthetic and the period is about two and a half days.'));
+  const s3 = DATA.agent.s3, r = s3.result, meaning = Object.fromEntries(s3.dictionary.columns.map((c) => [c.name, c.meaning]));
+  const svg = document.importNode(new DOMParser().parseFromString(s3.diagram, 'image/svg+xml').documentElement, true);
+  root.append(caption(`Saved run from ${s3.exported}: one technique, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only. ` +
+      'An illustration, not a measurement. No model or database is used when you view this page.'),
+    h('p', {}, 'An investigator wants to test a hypothesis, here that funds are being round-tripped. The LLM turns the indicator in the AML typology into SQL. ' +
+      "The data dictionary, which people write, is the link between the indicator's words and the columns of the table."),
+    h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
+    h('h3', {}, 'The SQL it wrote, and how each part links back'),
+    h('pre', { style: { maxHeight: '300px' } }, s3.query.sql),
+    dataTable(['Part of the SQL', 'Words of the indicator the LLM says it comes from', 'Columns it uses, as the data dictionary describes them'],
+      s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
+        h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
+        h('div', {}, c.columns.map((n) => h('div', {}, h('code', {}, n), ` ${meaning[n]}`)))] })), { maxHeight: 420 }),
+    h('div', { class: 'callout' }, `The query ran in ${s3.query.seconds} s and flagged ${fmt(r.flagged)} payments (the most the guard allows), and ${pct(r.laundering, r.flagged)} of them are laundering, ` +
+      `the same as for any payment in the period (${pct(r.period_laundering, r.period_payments)}). It follows chains of three or more payments without checking that the money returns to where it started, ` +
+      `and it found none of the ${fmt(r.verified_cycle_payments)} payments on verified round trips: a query that runs and is safe is not yet a query that is right.`),
+    caption('Checked by code: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
+      'The laundering label was used only afterwards, to judge the result; the LLM never saw it. Queries the guard refused are not shown.'));
 }
 
 function renderInvestigationAgent(root) {
@@ -357,7 +309,7 @@ const INT_INTRO = {
   investigation: 'How suggested checks, cases, findings and report drafts are written. The same shared terms let an agent read the records of any case system, ' +
     'and let code check them.',
 };
-const INT_SCENARIOS = [['s1', 'Scenario 1: suggested checks'], ['s2', 'Scenario 2: case and report']];
+const INT_SCENARIOS = [['s1', 'Scenario 1: suggested checks'], ['s2', 'Scenario 2: case and report'], ['s3', 'Scenario 3: typology-driven query']];
 const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds', transform: 'the value is converted to another form, such as a pointer into AMLTRIX or a date', 'direct reuse': 'an AMLTRIX term used as is', unresolved: 'no term yet' };
 const INTS = { scenario: 's1' };
 
@@ -433,7 +385,7 @@ function mappingDiagram(scenario) {
     h('strong', {}, 'How the investigation data schema maps onto the ontology'),
     caption('Left: the records of the case system, with their own field names. Right: the ontology they are mapped to. Middle: what the integration layer ' +
       'does to each record. Each record sits on the same row as its ontology class. The mapping is defined by people and applied by code; no model is involved.'),
-    h('div', { class: 'diagram' }, svg),
+    h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg),
     h('p', {}, d.records), h('p', {}, d.checks));
 }
 
@@ -443,10 +395,10 @@ function identificationDiagram() {
   const svg = document.importNode(new DOMParser().parseFromString(d.svg, 'image/svg+xml').documentElement, true);
   return h('div', { class: 'card' },
     h('strong', {}, 'How the alerts of the monitoring systems meet the ontology'),
-    caption('Left: what the three monitoring systems raise, each in its own terms. Middle: the integration layer, a mapping table that says which AMLTRIX techniques a flag points to. ' +
+    caption('Left: what the three monitoring systems raise, each in its own terms. Middle: the integration layer, a mapping table that says which AML typology techniques a flag points to. ' +
       'Right: those techniques, each with its risk indicators. The mapping is defined by people and applied by code; no model is involved. It maps concepts (flag to technique), ' +
       'not fields: the three alert formats have no JSON-LD context in this demo.'),
-    h('div', { class: 'diagram s4', style: { maxWidth: '830px' } }, svg),
+    h('div', { class: 'diagram s4', style: { maxWidth: '1245px' } }, svg),
     h('ol', {}, d.steps.map((t) => h('li', {}, t))),
     d.example ? h('div', {}, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, `See payment ${d.example} in Agent (identification)`)) : null);
 }
@@ -525,6 +477,14 @@ function renderIntegration(root, id) {
           `${ty.data_sources.length} data sources listed for ${t.name}, and suggest what to check first.`,
           h('div', { style: { marginTop: '6px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
         body.replaceChildren(identificationDiagram(), recordView(snap.alerts.source, 'alert', 'alerts', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph));
+      } else if (INTS.scenario === 's3') {
+        /* Scenario 3 has no record to map: the integration layer is the data dictionary of the table. */
+        const dic = snap.dictionary;
+        body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), mappingDiagram('s3'),
+          h('h3', {}, `The data dictionary of the table ${dic.table}`),
+          caption('What the LLM is given about the table: for each column its type and what it means in words. Written by people.'),
+          dataTable(['Column', 'Type', 'Meaning'], dic.columns.map((c) => ({ key: c.name, cells: [h('code', {}, c.name), c.type, c.meaning] })), { maxHeight: 420 }),
+          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
       } else {
         const sc = snap.investigation[INTS.scenario];
         const outro = h('div', { class: 'callout' }, 'Every indicator, technique and data source is a pointer into AMLTRIX, so code can check each one before anyone relies on the record: ' +
