@@ -4,7 +4,8 @@ Status: milestones M0 to M2, M4 and M7 are done: dictionary lookup, JSON-LD buil
 scenario 1 end to end (a model suggests where to look, and only suggestions that validate are kept), and scenario 2 end
 to end (a model drafts the findings section of a report, and only paragraphs that cite real findings are kept).
 Neither scenario queries transaction data (the sample data is synthetic, so a data check would prove little).
-Text-to-SQL (scenario 3) is not built yet.
+Scenario 3 (text-to-SQL) and scenario 4 (why monitoring systems alerted on a payment) read the AML Triage
+Demo database. On the pages, scenarios 1 to 3 are the Investigation agent and scenario 4 is the Identification agent.
 
 ## Run
 
@@ -15,7 +16,9 @@ cd demo
 ../.venv/bin/python run_demo.py advise --compare --llm ollama  # the same with a model on this machine (default qwen3.5:9b)
 ../.venv/bin/python run_demo.py report --compare --llm mock     # scenario 2 with canned answers, with and without the dictionary
 ../.venv/bin/python run_demo.py report --llm ollama             # scenario 2 with a model on this machine
-../.venv/bin/python -m unittest discover -s tests              # tests; none of them calls a real model
+AML_DB=... AML_DB_PYTHON=... ../.venv/bin/python run_demo.py hunt --llm ollama   # scenario 3; needs the transaction database (see below)
+AML_DB=... AML_DB_PYTHON=... ../.venv/bin/python run_demo.py reason --llm ollama   # scenario 4; needs the database
+../.venv/bin/python -m unittest discover -s tests              # tests; none of them calls a real model or opens the database
 ```
 
 Model settings go in `demo/.env` (git-ignored; copy `.env.example`). `mock` replays hand-written canned answers and is not a
@@ -42,6 +45,66 @@ one run) had no rejected paragraphs with or without the dictionary, so the check
 difference was that with the dictionary the text used the indicator's own definition. One paragraph also added
 "lacks a legitimate business rationale", which comes from the dictionary's definition, not from the finding.
 The canned baseline shows what the checks catch if a model does make those mistakes; it is not evidence about any model.
+
+## What scenario 4 shows, and what it does not
+
+A payment that several monitoring systems alerted on (a rule engine, an ML model, a graph check) carries a reason from each, in its own
+terms. `scenarios/s4_reason.py` builds each system's evidence from the data (`sqlrun.py` action `payments`): the fired rule flags with the
+rule's own definition, the ML score (it names no reason), the verified cycle with its legs and amounts, and the payment itself. The model
+is given the AMLTRIX techniques that the payment's flags point to (`mapping/alert_sources.json`, the draft typology mapping) with their risk
+indicators, and is asked, **for each system's evidence on its own** (`explain_lanes`), which indicators that evidence supports, citing it.
+The ML model is not asked: a score with no reason is nothing to judge. `lamps()` then reads off, for each technique and each system,
+whether that system's evidence supports one of its indicators, and whether the system's own flag points to that technique. A technique lit
+by more than one system is one that independent systems agree on. Code checks each note: every indicator was listed, every match cites
+evidence that exists, the numbers and dollar amounts in a reason (digits, and number words such as "four payments") appear in the evidence
+it cites, technique ids were listed; a failed note is sent back once. The label is used only afterwards.
+Run: `run_demo.py reason --llm ollama`; result: `generated/reason.json`. The pages show it as one diagram (systems on the left, LLM + AMLTRIX
+in the middle, a matrix of lamps on the right; `ontology/s4_diagram.py` in AML Triage Demo draws it from the saved result; resting on a lamp shows
+the model's reason, and clicking a technique shows it in the AML typology, with the same detail and relationship graph as the AML typology box).
+
+- **Shown:** the figures by number of systems are computed by code with no model: of the payments alerted on by all three systems (64 in the
+  test period), 50% are laundering, against 0.14% of those only one system alerted on.
+- **One payment, one run (qwen3.5:9b):** T0011 (Money Mule Exploitation) is lit by the rule engine and by the graph check, T0039 by the
+  graph, T0141 partly by the rule engine, T0083 by none. Only the rule engine's own flag points to T0011; the graph's lamp is the model's
+  reading of the cycle's evidence, and its reason ("rapidly moving funds") does not hold up against the dates in the evidence (a 6.92-day
+  cycle), and another graph reason speaks of cross-border transfers where the evidence says cross-currency no. The checks cannot catch
+  that (they check ids, citations and numbers, not what a reason claims); the pages say so in the line on what is not checked, and carry no
+  reviewer's notes. The example payment is not laundering.
+- **Not shown:** that a lamp lit by two systems means more than a lamp lit by one (one payment; the 50% figure above is about the number of
+  systems that alerted, not about the lamps), that the indicators are the true reason for the alert (the rules are code and their reason is
+  known; this restates it in AMLTRIX terms), that it works across payments, or that the ontology improves anything (no run without the
+  indicators: without them there is nothing to judge).
+- Earlier versions of scenario 4 are kept but not shown: one request with all the evidence (`explain`), and an account-level version
+  (`scenarios/s4_cases.py`, `run_demo.py consolidate`, the account actions in `sqlrun.py`) with link facts computed by code. A version that
+  asked the model for a route (priority, standard, defer) gave priority to 73 of 100 accounts and found no more laundering than a ranking
+  by number of systems, and was dropped.
+- The model window is set to 16,384 tokens (`num_ctx`) because the prompt lists many indicators; the default would cut it off.
+
+## What scenario 3 shows, and what it does not
+
+Shown on the Investigation agent page (third scenario): an investigator working a case picks a technique to test, a hunting task rather
+than monitoring, which is why it is not under the Identification agent.
+
+The model is given a technique (default T0039 Circular Transactions), its indicators, and a data dictionary of one table of payments,
+and does two things: says which indicators that table can show at all, and writes a query for the ones it says it can.
+Code does the rest: `sqlguard.py` refuses anything that is not one read-only SELECT over the listed columns, with a LIMIT, a `tx_id`
+column and the time column; a refused or failing query goes back to the model with the reason, up to three attempts; an accepted query
+runs read-only and is judged with the labels, which the model never sees. Result: `generated/hunt.json`.
+
+- **The database is not copied.** `AML_DB` points at AML Triage Demo's `data/features.duckdb`. Only `amldemo/sqlrun.py` opens it, as
+  a subprocess; if the file was written by a newer DuckDB than this environment has (it was: file format 999 vs this venv's duckdb 1.4.5,
+  Python 3.9), `AML_DB_PYTHON` names a Python that can read it. The queries run on a view `txs` of the test period (not the tail) that
+  holds only the columns in `mapping/data_dictionary.json`: no label, no round-trip flag, no rule flags, no whole-dataset degrees.
+- **One example query is in the dictionary**, for a different and simpler pattern (money passed on within an hour). Without it the first run
+  of qwen3.5:9b returned account ids under the name `tx_id` and ignored the refusals. With it, it writes queries that run.
+- **The saved real run (qwen3.5:9b, one run) is a failure, shown as such.** It correctly says only IND02191 can really be seen in a table of
+  payments (it also says yes to IND02195, which a payments table can only approximate). Its query for IND02191 follows chains of three or more
+  payments but never checks that the money returns to where it started, so it flags 10,000 payments (the LIMIT) of which 0.11% are laundering,
+  the same as any payment, and finds none of the 107 payments in verified round trips. Its query for IND02195 never gets past the guard: it
+  resubmits the same query three times. The guard says a query is safe, not that it is right; the judging step is what shows the difference.
+- **Not shown:** that a stronger model would do better (only qwen3.5:9b is installed; the GLM key is not set), that the typology helps (no
+  with/without comparison), or anything about real data (the dataset is synthetic and the period is about two and a half days).
+- The quotes a model gives for each part of its SQL are checked against the indicator text: a quote that is not in the indicator is flagged.
 
 ## Idea
 
@@ -71,7 +134,7 @@ The dictionary under `ontology/` and `data/` is read-only for the demo.
 
 ## Configuration
 
-Environment variables: `AML_DB` (path to a read-only transaction database), `LLM_PROVIDER` (default `mock`),
+Environment variables: `AML_DB` (path to a read-only transaction database), `AML_DB_PYTHON` (a Python whose duckdb can read it), `LLM_PROVIDER` (default `mock`),
 `LLM_MODEL`, `LLM_API_KEY`. Nothing machine-specific is stored in the repository.
 
 ## Attribution

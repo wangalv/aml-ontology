@@ -33,6 +33,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .side-note { align-self: center; font-size: 0.85rem; color: var(--muted); }
 .box { font: inherit; color: var(--fg); background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: center; width: 100%; }
 .box:hover { background: var(--btn-hover); border-color: var(--muted); }
+.box:disabled { cursor: default; opacity: .55; pointer-events: none; }
 .box.agent { background: var(--agent); }
 .box.sel { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 
@@ -122,3 +123,28 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 
 .diagram { overflow-x: auto; margin-top: 8px; }
 .diagram svg { min-width: 760px; }
+
+/* S4: one row per matched indicator, from the evidence to the technique to the indicator */
+.chain-card { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; }
+.chain { display: grid; grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1.2fr) auto minmax(0, 1.5fr); gap: 10px; align-items: start; }
+.chain .arrow { align-self: center; font-size: 20px; color: var(--muted); }
+.chain-h { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
+.chain-reason { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.chain-card details { margin-top: 6px; }
+@media (max-width: 760px) { .chain { grid-template-columns: minmax(0, 1fr); } .chain .arrow { transform: rotate(90deg); justify-self: start; } }
+
+/* S4: the technique headers of the diagram are clickable */
+.diagram .tech-head:hover rect { fill: rgba(128, 128, 128, .18); }
+.diagram .tech-head.sel rect { fill: rgba(66, 133, 244, .22); stroke: rgb(66, 133, 244); stroke-width: 1.5; }
+
+/* S4: the diagram is drawn for about 1085px; on a wide page it is not scaled up beyond that */
+.diagram.s4 { max-width: 1085px; margin: 0 auto; }
+
+/* S4: the box that shows what the LLM concluded */
+.llm-box { border: 2px solid rgba(66, 133, 244, .6); background: rgba(66, 133, 244, .07); border-radius: 10px; padding: 10px 14px; margin: 12px 0; }
+.llm-row { border-top: 1px dashed var(--line); padding: 8px 0 4px; }
+.llm-reason { margin: 4px 0; }
+.llm-quote { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.llm-quote .tag { margin-right: 6px; }
+.llm-row { padding: 6px 0 3px; }
+.llm-reason { margin: 2px 0; }

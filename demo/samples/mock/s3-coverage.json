@@ -1,0 +1,68 @@
+{
+  "_note": "Canned illustration for tests and offline runs. This is not the output of a real model.",
+  "indicators": [
+    {
+      "indicator": "IND02191",
+      "queryable": "yes",
+      "columns": [
+        "tx_id",
+        "ts",
+        "from_account",
+        "to_account"
+      ],
+      "reason": "Cycles of payments that return to the origin account can be found by joining payments on account ids in time order."
+    },
+    {
+      "indicator": "IND02192",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs intra-group transfers and supporting documents, which are not in this table."
+    },
+    {
+      "indicator": "IND02193",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs VAT invoices."
+    },
+    {
+      "indicator": "IND02194",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs company formation and ownership records."
+    },
+    {
+      "indicator": "IND02195",
+      "queryable": "partly",
+      "columns": [
+        "is_cross_currency",
+        "from_account",
+        "to_account"
+      ],
+      "reason": "Only cross-currency payments can be seen, not routing paths or jurisdictions."
+    },
+    {
+      "indicator": "IND02196",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs reported trade volumes."
+    },
+    {
+      "indicator": "IND02197",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs shipping and invoicing records."
+    },
+    {
+      "indicator": "IND02198",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs entity registration history."
+    },
+    {
+      "indicator": "IND02199",
+      "queryable": "no",
+      "columns": [],
+      "reason": "Needs logistics evidence."
+    }
+  ]
+}

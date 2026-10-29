@@ -1,0 +1,19 @@
+{
+  "_note": "Canned illustration for tests and offline runs. This is not the output of a real model.",
+  "queries": [
+    {
+      "indicator": "IND02191",
+      "sql": "SELECT t1.tx_id FROM txs t1 JOIN txs t2 ON t2.from_account = t1.to_account AND t2.ts >= t1.ts JOIN txs t3 ON t3.from_account = t2.to_account AND t3.ts >= t2.ts AND t3.to_account = t1.from_account WHERE t1.from_account <> t1.to_account AND t1.ts >= TIMESTAMP '2022-09-08 16:12:00' LIMIT 10000",
+      "conditions": [
+        {
+          "condition": "payment 2 starts where payment 1 ended, later in time",
+          "from_indicator": "funds ... across multiple accounts"
+        },
+        {
+          "condition": "payment 3 sends the money back to the account that made payment 1",
+          "from_indicator": "ultimately revert to the same origin"
+        }
+      ]
+    }
+  ]
+}

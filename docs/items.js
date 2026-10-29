@@ -3,7 +3,9 @@ const SEMANTIC = {
   typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', inv: 'Investigation ontology', kmg: 'Knowledge management',
 };
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
-const DEFAULT_ITEM = 'ml';
+const DEFAULT_ITEM = 'ag2';
+/* Boxes whose detail has real content. The others are placeholders: they are drawn but cannot be clicked. */
+const CLICKABLE = new Set(['int1', 'int2', 'int3', 'ag2', 'ag3', 'typ', 'ind', 'inv', 'ent']);
 
 /* id: name, kind, relies on, preview title, preview text, without a semantic layer, with a semantic layer */
 function item(name, kind, relies, preview, text, without, withSL) {
@@ -50,12 +52,12 @@ const ITEMS = {
   ag1: item('Agent (data management)', 'Design only', ['inv'], 'Note',
     'An agent that proposes entity links and list matches.',
     'It guesses without shared meaning.', 'It works from the shared terms and records why.'),
-  ag2: item('Agent (identification)', 'Design only', ['typ', 'ind'], 'Note',
-    'Scenario 3: turns a typology and its indicators into a detection query, and measures it against labels.',
-    'Detection logic is written by hand for each typology.',
-    "The agent writes the query from the typology's indicators, and a guard checks it."),
-  ag3: item('Agent (investigation)', 'Sample', ['typ', 'ind', 'inv', 'kmg'], 'Advice and report draft',
-    'Scenarios 1 and 2: suggested next checks for an alert, then a report draft that cites findings.',
+  ag2: item('Agent (identification)', 'Sample', ['typ', 'ind'], 'Reason for an alert',
+    'Scenario 4: for a payment that several monitoring systems alerted on, says which AMLTRIX risk indicators their evidence supports.',
+    'Each system gives its reason in its own terms.',
+    'The reasons meet in one set of indicators, and every match cites its evidence.'),
+  ag3: item('Agent (investigation)', 'Sample', ['typ', 'ind', 'inv', 'kmg'], 'Advice, report draft and query',
+    'Scenarios 1 to 3: suggested next checks for an alert, a report draft that cites findings, and a typology-driven query over the payments data.',
     'The agent invents ids and cannot be checked.', 'Every suggestion and citation is checked by code.'),
   int1: item('Integration (data management)', 'Design only', ['inv'], 'Mapping table',
     'How source data (accounts, parties, transactions) reaches the semantic layer: one JSON-LD interface per source, ' +

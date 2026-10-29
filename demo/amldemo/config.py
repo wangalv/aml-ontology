@@ -24,6 +24,9 @@ GENERATED_DIR = DEMO_DIR / "generated"
 # when unset or missing, the demo falls back to the small bundled sample.
 AML_DB = Path(os.environ["AML_DB"]) if os.environ.get("AML_DB") else None
 SAMPLE_DB = DEMO_DIR / "samples" / "mini.duckdb"
+# The Python that opens AML_DB. The file may have been written by a newer DuckDB than this project's own environment has;
+# then point this at a Python whose duckdb can read it. Empty: the Python running this code.
+AML_DB_PYTHON = os.environ.get("AML_DB_PYTHON", "")
 
 def _load_env_file(path):
     """Read KEY=VALUE lines from demo/.env into os.environ. Real environment variables win. The file is git-ignored."""

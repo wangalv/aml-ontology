@@ -94,7 +94,7 @@ function renderInvestigation(root) {
 }
 
 /* ---------- Agents ---------- */
-const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative'];
+const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative', 'Scenario 3: typology-driven query'];
 const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false } };
 
 function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
@@ -189,6 +189,75 @@ function scenario2(root, repaint) {
     docToggle('s2', 'Show the validated JSON-LD of the accepted draft', run.doc, repaint));
 }
 
+const VERDICT = { yes: 'green', partly: 'orange', no: 'gray', 'not-answered': 'red' };
+
+function s3Attempt(a, n, last) {
+  const run = a.run;
+  const status = a.guard.length ? badge('red', 'refused by the guard')
+    : (run && run.error ? badge('red', 'could not be used') : (run ? badge('green', `ran: ${fmt(run.n_rows)} rows in ${run.seconds} s`) : null));
+  return h('div', { class: 'card tight' },
+    h('div', {}, h('strong', {}, `Attempt ${n}`), ' ', status),
+    h('pre', { style: { maxHeight: '260px' } }, a.sql || '(no SQL in the reply)'),
+    a.guard.map((p) => caption('Refused: ' + p)),
+    run && run.error ? caption('Problem: ' + run.error) : null,
+    last && a.conditions.length ? h('div', {}, caption('What each part of the SQL is meant to check, and the words of the indicator the model says it comes from'),
+      dataTable(['What it checks', 'Words quoted from the indicator', 'Quote found in the indicator?'],
+        a.conditions.map((c, i) => ({ key: i, cells: [c.condition, c.from_indicator, c.quote_found ? badge('green', 'yes') : badge('red', 'no')] })), { maxHeight: 260 })) : null,
+    last && run && !run.error && run.n_rows >= 10000 ? caption('The query returned exactly as many rows as the most the guard allows, so the result is cut off: these are an arbitrary part of what matched, and a rerun can return different rows.') : null,
+    last && run && !run.error && run.sample.length ? h('div', {}, caption(`First ${run.sample.length} of ${fmt(run.n_rows)} rows returned`),
+      dataTable(run.columns, run.sample.map((r, i) => ({ key: i, cells: r.map(String) })), { maxHeight: 200 })) : null);
+}
+
+function scenario3(root) {
+  const s3 = DATA.agent.s3, w = s3.window, t = s3.technique, dict = s3.dictionary;
+  root.append(caption(`Saved run from ${s3.exported}: one technique, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only ` +
+    `(${fmt(w.rows)} payments, ${w.from.slice(0, 16)} to ${w.to.slice(0, 16)}). An illustration, not a measurement. No model or database is used when you view this page.`),
+    h('p', {}, 'While working a case, an investigator picks a technique to test. The agent turns its risk indicators into queries over the payments data; code checks each query before it runs and judges the result afterwards.'),
+    h('h3', {}, '1. What the agent is given'),
+    h('div', { class: 'card' },
+      h('div', { class: 'ctx-title' }, `What AMLTRIX says about ${t.id} ${t.name}`),
+      caption('Definition'), definitionBox(t.short),
+      caption(`${s3.coverage.length} risk indicators`),
+      h('div', { class: 'ctx-box' }, s3.coverage.map((c) => h('div', { class: 'ctx-row' }, h('code', {}, c.indicator), c.indicator_text))),
+      caption(`Data dictionary: the one table it may query (${dict.table}). ${dict.description}`),
+      dataTable(['Column', 'Type', 'Meaning'], dict.columns.map((c) => ({ key: c.name, cells: [h('code', {}, c.name), c.type, c.meaning] })), { maxHeight: 260 }),
+      h('ul', {}, dict.notes.map((n) => h('li', {}, n))),
+      dict.example ? h('div', {}, caption(`One example query is shown to the model, only to illustrate the syntax and the expected output. Its pattern: ${dict.example.pattern}`),
+        h('pre', { style: { maxHeight: '160px' } }, dict.example.sql)) : null,
+      caption('The laundering label and every column derived from it are not in the table: the model cannot see them.')),
+    h('h3', {}, '2. Which indicators can the data show?'));
+  const count = (k) => s3.coverage.filter((c) => c.queryable === k).length;
+  root.append(dataTable(['Indicator', 'What it describes', 'Can the table show it?', 'Columns it would use', 'Reason the model gives'],
+    s3.coverage.map((c) => ({ key: c.indicator, cells: [h('code', {}, c.indicator), shorten(c.indicator_text, 110), badge(VERDICT[c.queryable] || 'gray', c.queryable),
+      c.columns.join(', ') || '–', c.reason] })), { maxHeight: 420 }),
+    h('div', { class: 'callout' }, `${count('yes')} yes, ${count('partly')} partly, ${count('no')} no.`,
+      caption("These verdicts are the model's own judgement. Code checks only that the indicator ids and the columns it names are real; whether a yes is right needs an analyst.")),
+    h('h3', {}, '3. The queries it wrote'));
+  for (const q of s3.queries) {
+    root.append(h('div', { class: 'card' },
+      h('div', {}, h('strong', {}, q.indicator), ' ', badge(VERDICT[q.queryable] || 'gray', q.queryable),
+        ' ', q.accepted ? badge('green', 'passed the guard and ran') : badge('red', 'never produced a usable query')),
+      quote(q.indicator_text)),
+      ...q.attempts.map((a, n) => s3Attempt(a, n + 1, n === q.attempts.length - 1)));
+  }
+  root.append(caption('The guard accepts only one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts. A refused or failing query is sent back to the model with the reason, up to three attempts. ' +
+    'Passing the guard shows a query is safe to run, not that it finds the pattern.'), h('h3', {}, '4. How it did'));
+  const done = s3.queries.filter((q) => q.evaluation && !q.evaluation.error);
+  if (!done.length) {
+    root.append(h('div', { class: 'callout' }, 'No query got past the guard and ran, so there is nothing to judge.'));
+  } else {
+    const rows = done.map((q) => ({ key: q.indicator, cells: [`Query for ${q.indicator}`, fmt(q.evaluation.rows), fmt(q.evaluation.laundering), pct(q.evaluation.laundering, q.evaluation.rows),
+      `${fmt(q.evaluation.in_verified_cycles)} of ${fmt(w.in_verified_cycles)}`] }));
+    rows.push({ key: 'graph', cells: ['Existing graph detection (verified round trips)', fmt(w.in_verified_cycles), fmt(w.in_verified_cycles_laundering), pct(w.in_verified_cycles_laundering, w.in_verified_cycles), `${fmt(w.in_verified_cycles)} of ${fmt(w.in_verified_cycles)}`] });
+    rows.push({ key: 'base', cells: ['Any payment in the period (base rate)', fmt(w.rows), fmt(w.laundering), pct(w.laundering, w.rows), '–'] });
+    root.append(dataTable(['', 'Payments flagged', 'Of them laundering', 'Share laundering', 'Verified round-trip payments found'], rows, { maxHeight: 300 }),
+      h('div', { class: 'callout' }, done.map((q) => `The query for ${q.indicator} flagged ${fmt(q.evaluation.rows)} payments; ${pct(q.evaluation.laundering, q.evaluation.rows)} of them are laundering, against ${pct(w.laundering, w.rows)} for any payment in the period, ` +
+        `and ${fmt(q.evaluation.in_verified_cycles)} of the ${fmt(w.in_verified_cycles)} payments in verified round trips were found. `)));
+  }
+  root.append(caption('The labels were used only here, after the query was written; the model never saw them. The verified round trips are loops found earlier by the graph analysis of AML Triage Demo: a reference, not the whole truth, and a loop is not always laundering. ' +
+    'The data is synthetic and the period is about two and a half days.'));
+}
+
 function renderInvestigationAgent(root) {
   const meta = DATA.agent.meta;
   root.append(caption(`Saved run from ${meta.exported} against AMLTRIX ${meta.dictionary}: one alert and one case, one run of one model (${meta.provider}/${meta.model}). ` +
@@ -199,24 +268,83 @@ function renderInvestigationAgent(root) {
     pillBox.replaceChildren(pills(AG_SECTIONS.map((s) => [s, s]), AG.section, (s) => { AG.section = s; show(); }));
     const inner = h('div');
     body.replaceChildren(inner);
-    (AG.section === AG_SECTIONS[0] ? scenario1 : scenario2)(inner, show);
+    [scenario1, scenario2, scenario3][AG_SECTIONS.indexOf(AG.section)](inner, show);
   }
   show();
 }
 
+const fmt = (n) => Number(n).toLocaleString('en-US');
+const pct = (a, b) => (b ? (100 * a / b).toFixed(2) + '%' : '–');
+const money = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const SYS_COLOR = { rule: 'blue', ml: 'orange', graph: 'green' };
+const SYS_NAME = { rule: 'rule engine', ml: 'ML model', graph: 'transaction graph' };
+const sysBadge = (k) => badge(SYS_COLOR[k], SYS_NAME[k]);
+const joinNames = (list) => list.map((k) => SYS_NAME[k]).join(' and the ');
+
 function renderIdentificationAgent(root) {
-  const steps = [
-    ['Pick a typology', 'A technique from the AML typology, for example circular transactions.'],
-    ['Take its indicators', 'The risk indicators AMLTRIX lists for that technique.'],
-    ['Write the query', 'The agent turns the indicators into SQL, using a data dictionary of the transaction columns.'],
-    ['Guard the query', 'Code rejects anything that is not a read-only query over allowed columns with a time range. The label column is never allowed in a query.'],
-    ['Run it', 'The query runs on the transaction data and returns candidate transactions.'],
-    ['Measure it', 'The candidates are compared with the known labels, on the test period only.'],
-  ];
-  root.append(h('p', {}, h('strong', {}, 'Scenario 3: typology-driven query')), caption('Design only: this scenario is not built yet.'),
-    steps.map(([t, text], i) => h('div', { class: 'card tight' }, h('div', {}, h('strong', {}, `${i + 1}. ${t}`)), h('div', {}, text))),
-    caption('The point to show: the typology and its indicators are what the agent writes the query from, and a guard and a measurement make the result ' +
-      'checkable. The labels are used only to judge the query, never to write it.'));
+  const s4 = DATA.agent.s4, e = s4.examples[0], p = e.payment, snap = DATA.snap;
+  const tiers = s4.payments_by_sources, three = tiers.find((t) => t.sources === 3), one = tiers.find((t) => t.sources === 1);
+  const svg = document.importNode(new DOMParser().parseFromString(e.diagram, 'image/svg+xml').documentElement, true);
+  const agree = e.lamps.filter((r) => r.systems.length > 1);
+  const verdict = agree.length
+    ? agree.map((r) => {
+      const own = r.systems.filter((k) => r.cells[k].pointed), read = r.systems.filter((k) => !r.cells[k].pointed);
+      return `${r.id} ${r.name} is lit by the ${joinNames(r.systems)}: independent systems agree. ` +
+        (read.length ? `Only the ${joinNames(own)}'s own flag points to it; for the ${joinNames(read)} it is the model's reading of the evidence.` : "Each system's own flag points to it.");
+    }).join(' ')
+    : 'No technique is lit by more than one system for this payment.';
+  const techBox = h('div');
+  const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'payment details')]));
+  const llmBox = h('div', { class: 'llm-box' },
+    h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
+    caption(`Given ${total} risk indicators written as free text, from ${e.techniques.length} techniques, and each system's evidence on its own, it picked the ${e.rows.length} indicators below as supported, ` +
+      'with a reason and the evidence it relies on. Code only checks the ids, the citations and the numbers.'),
+    ...e.rows.map((r) => h('div', { class: 'llm-row' },
+      h('div', {}, sysBadge(r.system), ' → ', h('code', {}, r.technique || '–'), ` ${r.technique_name} → `, h('code', {}, r.indicator), ` ${r.support === 'yes' ? 'supported' : 'partly supported'} `,
+        r.pointed ? null : badge('orange', "read from the evidence, not the system's own flag")),
+      h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), r.reason, ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)),
+      h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AMLTRIX'), shorten(r.indicator_text, 125)))));
+
+  /* Click a technique at the top of the diagram: where it sits in the AML typology, with the same detail and relationship graph as the AML typology box. */
+  function showTech() {
+    dropNet('rel');
+    svg.querySelectorAll('.tech-head').forEach((g) => g.classList.toggle('sel', g.dataset.tech === O.sel));
+    if (!O.sel) { techBox.replaceChildren(caption('Click a technique at the top of the diagram to see where it sits in the AML typology. Rest on a lamp to read the model\'s reason.')); return; }
+    const focus = O.focus || O.sel, parts = [], row = e.lamps.find((r) => r.id === O.sel);
+    if (focus !== O.sel) {
+      const origin = snap.techniques[O.sel];
+      parts.push(h('button', { class: 'btn', type: 'button', onclick: () => { O.focus = null; O.expanded = []; O.node = null; O.section = 'rel'; showTech(); } }, `← Back to ${origin.id} · ${origin.name}`));
+    } else if (row) {
+      const lit = e.rows.filter((r) => r.technique === row.id);
+      parts.push(h('div', { class: 'card tight' }, h('strong', {}, `What lit ${row.id} for this payment`),
+        lit.length ? lit.map((r) => h('div', { class: 'ctx-row' }, sysBadge(r.system), ' ', h('code', {}, r.indicator), ` ${r.support}: ${r.reason} `,
+          r.pointed ? caption("The system's own flag points to this technique.") : badge('orange', "not the system's own flag: the model read it from the evidence")))
+          : caption('No system\'s evidence supports an indicator of this technique.')));
+    }
+    parts.push(techDetail(focus));
+    techBox.replaceChildren(...parts);
+  }
+  refreshDetail = showTech;
+  svg.querySelectorAll('.tech-head').forEach((g) => g.addEventListener('click', () => {
+    O.sel = g.dataset.tech; O.focus = null; O.expanded = []; O.node = null; O.section = 'rel'; showTech();
+  }));
+  O.sel = null; O.focus = null;
+  showTech();
+
+  root.append(caption(`Saved run from ${s4.exported}: one example payment, one run of one model (${s4.provider}/${s4.model}), on the synthetic IBM AML data, test period only. ` +
+      'An illustration, not a measurement. No model or database is used when you view this page.'),
+    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same payment, each gives its reason in its own terms. ' +
+      "The agent judges each system's evidence against AMLTRIX risk indicators, and a technique that more than one system supports is a strong, linked signal. The investigator decides."),
+    h('div', { class: 'card' },
+      h('div', {}, h('strong', {}, `Payment ${p.tx_id}`), ' ', p.sources.map((k) => [sysBadge(k), ' '])),
+      caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first payment, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
+      h('div', { class: 'diagram s4' }, svg)),
+    llmBox,
+    h('div', { class: 'callout' }, verdict, caption(`Afterwards, with the label (the model never saw it): this payment ${e.laundering ? 'is' : 'is not'} laundering. ` +
+      `Of the ${fmt(three.payments)} payments alerted on by all three systems, ${pct(three.laundering, three.payments)} are laundering, against ${pct(one.laundering, one.payments)} of those only one system alerted on (computed by code).`)),
+    techBox,
+    caption('Checked by code: every indicator is one that was listed under the techniques the flags point to; every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
+      `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));
 }
 
 /* ---------- Integration ---------- */
@@ -309,6 +437,20 @@ function mappingDiagram(scenario) {
     h('p', {}, d.records), h('p', {}, d.checks));
 }
 
+/* How the identification side's alerts meet AMLTRIX: the flags of the three monitoring systems, the mapping table, the techniques. */
+function identificationDiagram() {
+  const d = DATA.integ.diagram_identification;
+  const svg = document.importNode(new DOMParser().parseFromString(d.svg, 'image/svg+xml').documentElement, true);
+  return h('div', { class: 'card' },
+    h('strong', {}, 'How the alerts of the monitoring systems meet the ontology'),
+    caption('Left: what the three monitoring systems raise, each in its own terms. Middle: the integration layer, a mapping table that says which AMLTRIX techniques a flag points to. ' +
+      'Right: those techniques, each with its risk indicators. The mapping is defined by people and applied by code; no model is involved. It maps concepts (flag to technique), ' +
+      'not fields: the three alert formats have no JSON-LD context in this demo.'),
+    h('div', { class: 'diagram s4', style: { maxWidth: '830px' } }, svg),
+    h('ol', {}, d.steps.map((t) => h('li', {}, t))),
+    d.example ? h('div', {}, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, `See payment ${d.example} in Agent (identification)`)) : null);
+}
+
 /* The Investigation ontology entry (class or property) behind a term such as inv:alertId. */
 function investigationTerm(term) {
   const inv = DATA.inv, cls = inv.classes.find((c) => c.id === term);
@@ -382,7 +524,7 @@ function renderIntegration(root, id) {
           `The detection system said only "${snap.alerts.source.suspected_technique}". As a pointer into AMLTRIX it lets the investigator's agent take the ${ty.indicators.length} risk indicators and ` +
           `${ty.data_sources.length} data sources listed for ${t.name}, and suggest what to check first.`,
           h('div', { style: { marginTop: '6px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
-        body.replaceChildren(recordView(snap.alerts.source, 'alert', 'alerts', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph));
+        body.replaceChildren(identificationDiagram(), recordView(snap.alerts.source, 'alert', 'alerts', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph));
       } else {
         const sc = snap.investigation[INTS.scenario];
         const outro = h('div', { class: 'callout' }, 'Every indicator, technique and data source is a pointer into AMLTRIX, so code can check each one before anyone relies on the record: ' +

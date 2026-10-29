@@ -1,0 +1,93 @@
+{
+  "_note": "The data dictionary the language model is given in scenario 3. It describes the view `txs`, not the real table: the view holds only the columns listed here, for the test period of the IBM AML data (the synthetic dataset HI-Small), so a query can never see the laundering label or any answer-bearing column.",
+  "table": "txs",
+  "description": "One row per payment from one account to another. The data is synthetic.",
+  "columns": [
+    {
+      "name": "tx_id",
+      "type": "BIGINT",
+      "meaning": "Identifier of the payment. Unique."
+    },
+    {
+      "name": "ts",
+      "type": "TIMESTAMP",
+      "meaning": "When the payment was made, to the minute."
+    },
+    {
+      "name": "from_account",
+      "type": "VARCHAR",
+      "meaning": "The account the money leaves. An account id such as 80308DE40."
+    },
+    {
+      "name": "to_account",
+      "type": "VARCHAR",
+      "meaning": "The account the money arrives in."
+    },
+    {
+      "name": "amount_log",
+      "type": "DOUBLE",
+      "meaning": "ln(1 + amount paid). This is a natural logarithm, NOT the amount: an amount of 1000 is stored as about 6.9. Compare amounts with each other through this column, or avoid comparing amounts."
+    },
+    {
+      "name": "is_cross_currency",
+      "type": "BOOLEAN",
+      "meaning": "True when the payment currency differs from the receiving currency."
+    },
+    {
+      "name": "is_self_transfer",
+      "type": "BOOLEAN",
+      "meaning": "True when from_account and to_account are the same account."
+    },
+    {
+      "name": "is_same_bank",
+      "type": "BOOLEAN",
+      "meaning": "True when both accounts are at the same bank."
+    },
+    {
+      "name": "fmt_wire",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is a wire transfer, else 0."
+    },
+    {
+      "name": "fmt_ach",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is ACH, else 0."
+    },
+    {
+      "name": "fmt_cheque",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is a cheque, else 0."
+    },
+    {
+      "name": "fmt_cash",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is cash, else 0."
+    },
+    {
+      "name": "fmt_credit_card",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is a credit card, else 0."
+    },
+    {
+      "name": "fmt_bitcoin",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is bitcoin, else 0."
+    },
+    {
+      "name": "fmt_reinvestment",
+      "type": "INTEGER",
+      "meaning": "1 when the payment format is a reinvestment, else 0."
+    }
+  ],
+  "notes": [
+    "There is no table of accounts, customers, companies, invoices, shipments or jurisdictions: only these payments.",
+    "A column or table that is not listed here does not exist for you.",
+    "The data covers a short period of about two and a half days, so only patterns that complete within that period can be found.",
+    "The dialect is DuckDB SQL. Timestamps can be compared with each other and shifted with INTERVAL, for example ts + INTERVAL 2 DAY."
+  ],
+  "example": {
+    "pattern": "Money that an account receives and passes on to another account within one hour (a different pattern from the one you are asked about).",
+    "sql": "SELECT t1.tx_id FROM txs t1 JOIN txs t2 ON t2.from_account = t1.to_account AND t2.ts > t1.ts AND t2.ts <= t1.ts + INTERVAL 1 HOUR WHERE t1.from_account <> t1.to_account LIMIT 1000",
+    "note": "It only shows the syntax and the expected output: each flagged payment is returned by its tx_id."
+  }
+}

@@ -58,7 +58,7 @@ class OllamaLLM:
             "stream": False,
             "think": False,          # a reasoning model would otherwise spend minutes thinking
             "format": "json",
-            "options": {"temperature": 0},
+            "options": {"temperature": 0, "num_ctx": 16384},   # the default window (4096) cuts off a prompt that lists many indicators
         })
         text = (data.get("message") or {}).get("content")
         if not isinstance(text, str) or not text.strip():

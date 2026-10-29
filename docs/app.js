@@ -4,7 +4,8 @@ let selected = DEFAULT_ITEM;
 const boxes = {};
 
 function makeBox(id, label, extraClass) {
-  const btn = h('button', { class: 'box ' + (extraClass || ''), type: 'button', 'data-item': id, onclick: () => select(id) });
+  const live = CLICKABLE.has(id);
+  const btn = h('button', { class: 'box ' + (extraClass || ''), type: 'button', 'data-item': id, ...(live ? { onclick: () => select(id) } : { disabled: true }) });
   boxes[id] = boxes[id] || [];
   boxes[id].push({ btn, label: label || ITEMS[id].name });
   return btn;
@@ -57,8 +58,7 @@ function detailView(id) {
   else if (id === 'inv') renderInvestigation(body);
   else if (id === 'typ') renderOntology(body);
   else {
-    body.append(h('div', { class: 'card' }, caption('Preview: ' + it.preview), h('p', {}, it.text),
-      [90, 70, 80, 55].map((w) => h('div', { class: 'skeleton', style: { width: w + '%' } }))));
+    body.append(h('div', { class: 'card' }, caption('Preview: ' + it.preview), h('p', {}, it.text)));
   }
   return root;
 }
@@ -86,10 +86,10 @@ async function main() {
     return;
   }
   const hash = location.hash.slice(1);
-  if (ITEMS[hash]) selected = hash;
+  if (ITEMS[hash] && CLICKABLE.has(hash)) selected = hash;
   app.replaceChildren(
-    caption('Click any box. The selected box is highlighted; ● marks the semantic layer parts it relies on. Draft layout: apart from AML typology, ' +
-      'Risk indicators, Investigation ontology and the two agents, previews are placeholders and show no real data yet.'),
+    caption('Click a box to see its detail. Greyed-out boxes are placeholders with nothing to show yet and cannot be clicked. The selected box is highlighted; ● marks the ' +
+      'semantic layer parts it relies on. Draft layout.'),
     buildArchitecture(), h('hr'), h('div', { id: 'detail' }));
   paintBoxes();
   document.getElementById('detail').replaceChildren(detailView(selected));

@@ -10,6 +10,7 @@ A worked example of turning the AMLTRIX money-laundering framework into a valida
 | `shapes/amlo-shapes.ttl` | SHACL integrity rules |
 | `scripts/validate.py` | Validates the data, then proves the rules catch broken copies |
 | `scripts/run_queries.py` | SPARQL competency questions |
+| `scripts/import_neo4j.py` | Loads `data/amltrix.ttl` into Neo4j as a property graph (optional, for visual exploration) |
 | `vendor/amltrix/` | Unmodified AMLTRIX 1.0-beta.4 CSV export, licence and notice |
 
 Run in order, from this folder:
@@ -18,6 +19,15 @@ Run in order, from this folder:
 .venv/bin/python scripts/build_abox.py
 .venv/bin/python scripts/validate.py
 .venv/bin/python scripts/run_queries.py
+```
+
+Optional: view the graph in Neo4j. The connection settings are read from the environment
+(`NEO4J_PASSWORD` is required; `NEO4J_URI`, `NEO4J_USER`, `NEO4J_DATABASE` default to
+`bolt://localhost:7687`, `neo4j`, `neo4j`). Re-running is safe; `--clear` removes only the imported `:AMLO` nodes.
+
+```
+.venv/bin/python scripts/import_neo4j.py --dry-run
+NEO4J_PASSWORD=... .venv/bin/python scripts/import_neo4j.py
 ```
 
 ## Attribution
