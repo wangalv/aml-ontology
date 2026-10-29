@@ -5,7 +5,7 @@ const SEMANTIC = {
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
 const DEFAULT_ITEM = 'ag2';
 /* Boxes whose detail has real content. The others are placeholders: they are drawn but cannot be clicked. */
-const CLICKABLE = new Set(['int1', 'int2', 'int3', 'ag2', 'ag3', 'typ', 'ind', 'inv', 'ent']);
+const CLICKABLE = new Set(['int2', 'int3', 'ag2', 'ag3', 'typ', 'ind', 'inv']);
 
 /* id: name, kind, relies on, preview title, preview text, without a semantic layer, with a semantic layer */
 function item(name, kind, relies, preview, text, without, withSL) {
@@ -86,7 +86,7 @@ const ITEMS = {
     "The bank's central, shared definitions of terms such as customer, account, product and jurisdiction, owned " +
     'outside financial crime. The FinCrime semantic layer would build on them and add only what is specific to ' +
     'financial crime. This is also where party, account and transaction would come from: AMLO has none of them, ' +
-    'which is the gap shown under Integration (data management).',
+    'so source data has no mapping to the ontology yet.',
     'Each domain defines customer and account for itself, so the same word means different things.',
     'Domains share one definition and add only their own terms.'),
   kmg: item('Knowledge management', 'Placeholder', [], 'Policies and cases',
