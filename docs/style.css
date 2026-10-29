@@ -93,6 +93,7 @@ mark { background: rgba(255, 213, 79, 0.38); color: inherit; padding: 0 2px; bor
 .chip-row .used { border-color: #2E9E6B; background: rgba(46, 158, 107, 0.15); }
 .chip-row span { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
 
+.ba-target .part { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; opacity: .65; }
 .ba-target { margin: 8px 0; padding: 6px 10px; border-left: 4px solid #2E9E6B; background: rgba(46, 158, 107, 0.12); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
 
 /* tables */
@@ -118,3 +119,6 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
   .cols2, .cols3.rel, .cols3.invg, .cols3.src, .cols2.typg { grid-template-columns: minmax(0, 1fr); }
   .metrics { gap: 18px; }
 }
+
+.diagram { overflow-x: auto; margin-top: 8px; }
+.diagram svg { min-width: 760px; }
