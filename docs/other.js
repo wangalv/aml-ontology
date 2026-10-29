@@ -312,8 +312,6 @@ function mappingView(area) {
 
 const CONVERTED = { '@id': 'a pointer (IRI)', 'xsd:dateTime': 'a date and time', 'xsd:integer': 'a whole number' };
 const HOW_TO_READ = [
-  '**How to read the table**',
-  '',
   '- **Term in the ontology** is the shared term the field is mapped to, with the ontology it comes from: the Investigation ontology or AML typology. The same term is used whichever system the record comes from. In the JSON-LD the ontology is shortened to a prefix: `inv:` for the Investigation ontology and `amx:` for AML typology.',
   '- **Linked to in the AML ontology** shows what the field connects to in the semantic layer. Every mapped field links to its term in the Investigation ontology, with the definition. When the value is a pointer into AML typology, the cell also shows the entry it leads to and which part of the semantic layer it belongs to: a technique (AML typology), a risk indicator, or a data source. Risk scenarios are not defined yet, so no field links to one.',
   '- **The mapping:** the bold line is what the field\'s value becomes. The line under it is the mapping type, which says where the term comes from: an extension is a term the Investigation ontology adds, a direct reuse is an AML typology term used as is, and a transform converts the value to another form, such as a pointer into AML typology or a date. The possible values are:',
@@ -329,7 +327,7 @@ function sourceView(source, graph) {
     h('div', {}, h('strong', {}, 'JSON-LD'), caption('The same record in shared terms, ready to check.'), jsonBlock({ '@graph': graph }, 420)));
 }
 
-const INT_WHY = '**Why this layer exists**\n\nThis layer is where a use case meets the semantic layer. A record from the use case is written as **JSON-LD**, a form of linked data: its fields keep the source system\'s names, and a mapping turns each one into a shared term that points into the semantic layer, for example a technique or an indicator in AML typology.\n\n- **One mapping per system, not one per pair.** Without it, every system and every agent is wired to the ontology by hand. With it, a system is mapped once and any agent can read it.\n- **The same word means the same thing everywhere.** An alert\'s suspected technique and an investigator\'s finding both point to the same technique, so they can be joined and compared.\n- **Records can be checked.** The values are pointers into the dictionary, so code can test them (does the indicator exist, does it belong to the technique) before anyone relies on the record.\n- **Agents get one contract.** Through an API or an MCP tool, an agent reads and writes records in these shared terms, whichever system holds them.';
+const INT_WHY = 'This layer is where a use case meets the semantic layer. A record from the use case is written as **JSON-LD**, a form of linked data: its fields keep the source system\'s names, and a mapping turns each one into a shared term that points into the semantic layer, for example a technique or an indicator in AML typology.\n\n- **One mapping per system, not one per pair.** Without it, every system and every agent is wired to the ontology by hand. With it, a system is mapped once and any agent can read it.\n- **The same word means the same thing everywhere.** An alert\'s suspected technique and an investigator\'s finding both point to the same technique, so they can be joined and compared.\n- **Records can be checked.** The values are pointers into the dictionary, so code can test them (does the indicator exist, does it belong to the technique) before anyone relies on the record.\n- **Agents get one contract.** Through an API or an MCP tool, an agent reads and writes records in these shared terms, whichever system holds them.';
 
 /* A record field by field: its value, the ontology term it is mapped to, and what a pointer leads to in AML typology. */
 function flatten(value, path, leaf, out) {
@@ -426,7 +424,7 @@ function recordView(source, contextName, area, intro, outro, held) {
     dataTable([`Field in the ${held.noun}`, `Value in the ${held.noun}`, 'Term in the ontology', 'Linked to in the AML ontology', 'The mapping', 'Why'], rows,
       { maxHeight: 520, colClass: ['recv', 'recv', 'link', 'link', 'link', 'link'],
         groups: [[held.group, 2, 'recv'], ['Mapping to the AML ontology', 2, 'link'], ['Why the mapping is this way', 2, 'link']] }),
-    h('div', { class: 'card', style: { marginTop: '12px' } }, md(HOW_TO_READ)), outro);
+    h('details', { class: 'card', style: { marginTop: '12px' } }, h('summary', {}, 'How to read the table'), h('div', { style: { marginTop: '10px' } }, md(HOW_TO_READ))), outro);
 }
 
 const REC_INTRO = {
@@ -447,8 +445,8 @@ function rawView(source, graph) {
 
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
-  root.append(h('div', { class: 'card' }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real. There is no API or MCP server behind them yet.')), caption(INT_INTRO[area]));
+  root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
+    caption('In this demo the mapping and the checks are real. There is no API or MCP server behind them yet.'))), caption(INT_INTRO[area]));
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
