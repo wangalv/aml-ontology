@@ -33,7 +33,7 @@
             {
               "id": "T0083",
               "strength": "medium",
-              "basis": "Funnel accounts also receive then rapidly move funds on, but AMLTRIX frames this geographically (deposit in one region, withdraw in another)."
+              "basis": "Funnel accounts also receive then rapidly move funds on, but AML typology frames this geographically (deposit in one region, withdraw in another)."
             },
             {
               "id": "T0140",
@@ -49,7 +49,7 @@
             {
               "id": "T0083",
               "strength": "medium",
-              "basis": "Collection accounts that aggregate then move funds on; AMLTRIX's framing is geographic rather than purely many-to-one."
+              "basis": "Collection accounts that aggregate then move funds on; AML typology's framing is geographic rather than purely many-to-one."
             },
             {
               "id": "T0011",
@@ -70,7 +70,7 @@
             {
               "id": "T0051",
               "strength": "medium",
-              "basis": "AMLTRIX names PEPs in connection with corruption proceeds; the link is predicate-offence exposure, not observed behaviour."
+              "basis": "AML typology names PEPs in connection with corruption proceeds; the link is predicate-offence exposure, not observed behaviour."
             },
             {
               "id": "T0006",
@@ -154,7 +154,7 @@
             {
               "id": "T0039",
               "strength": "strong",
-              "basis": "AMLTRIX describes round-tripping: cycling funds through connected parties to obscure origin."
+              "basis": "AML typology describes round-tripping: cycling funds through connected parties to obscure origin."
             },
             {
               "id": "T0071",

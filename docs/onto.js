@@ -1,4 +1,4 @@
-/* AML typology box (the AMLTRIX technique browser) and the Risk indicators box. Mirrors portal/ontology_tab.py. */
+/* AML typology box (the AML typology technique browser) and the Risk indicators box. Mirrors portal/ontology_tab.py. */
 const STRENGTH_COLOR = { strong: '#2E9E6B', medium: '#E8C34D', weak: '#9AA0A6' };
 const STRENGTH_ORDER = { strong: 0, medium: 1, weak: 2 };
 /* field on the technique, label, ontology predicate, direction, node colour.
@@ -106,8 +106,8 @@ function typologyGraph(typology) {
   const graphEl = h('div', { class: 'graph', style: { height: TYP_H + 'px' } });
   const legend = h('div', { class: 'legend' }, h('b', {}, 'Legend'), h('div', { style: { height: '8px' } }),
     legendEntry(CENTER_COLOR, typology.name, 'typology', 'A pattern the portal detects, e.g. via a rule or graph analysis.'),
-    [['strong', "AMLTRIX's definition describes the behaviour the rule detects."],
-     ['medium', 'Overlapping behaviour, but AMLTRIX frames it differently.'],
+    [['strong', "AML typology's definition describes the behaviour the rule detects."],
+     ['medium', 'Overlapping behaviour, but AML typology frames it differently.'],
      ['weak', 'Related context only; needs extra evidence.']].map(([s, text]) => {
       const n = typology.techniques.filter((m) => m.strength === s).length;
       return n ? legendEntry(STRENGTH_COLOR[s], s[0].toUpperCase() + s.slice(1) + ' match', `(${n})`, 'Technique. ' + text) : null;
@@ -128,7 +128,7 @@ function nodeDetails(key, node) {
   if (prefix in REL_LABEL && dims[prefix][ref]) {
     const e = dims[prefix][ref];
     box.append(caption(REL_LABEL[prefix]), h('div', {}, h('strong', {}, e.name), ' ', h('code', {}, e.id)));
-    if (e.url) box.append(h('p', {}, h('a', { href: e.url, target: '_blank', rel: 'noopener' }, 'AMLTRIX page')));
+    if (e.url) box.append(h('p', {}, h('a', { href: e.url, target: '_blank', rel: 'noopener' }, 'AML typology page')));
     box.append(md(e.definition || e.short));
     const note = (tech[prefix].find((x) => x.ref === ref) || {}).note;
     if (note) box.append(h('p', {}, h('strong', {}, `Why it applies to ${tech.id}`)), md(note));
@@ -142,7 +142,7 @@ function nodeDetails(key, node) {
     box.append(caption(t.kind === 'subtechnique' ? 'Sub-technique' : 'Technique'),
       h('div', {}, h('strong', {}, t.name), ' ', h('code', {}, t.id)),
       h('div', {}, tacticNames(t).map((n) => badge('violet', n))));
-    if (t.url) box.append(h('p', {}, h('a', { href: t.url, target: '_blank', rel: 'noopener' }, 'AMLTRIX page')));
+    if (t.url) box.append(h('p', {}, h('a', { href: t.url, target: '_blank', rel: 'noopener' }, 'AML typology page')));
     box.append(md(t.definition || t.short),
       caption(`${t.subs.length} sub-techniques · ${t.indicators.length} indicators · ${t.mitigations.length} mitigations · ${t.dataSources.length} data sources`));
     if (ref !== key) {
@@ -276,7 +276,7 @@ function techDetail(key) {
   const root = h('div');
   root.append(h('h3', {}, `${tech.id} · ${tech.name}`),
     h('div', {}, tacticNames(tech).map((n) => badge('violet', n)), ' ',
-      tech.url ? h('a', { href: tech.url, target: '_blank', rel: 'noopener' }, 'AMLTRIX page') : null));
+      tech.url ? h('a', { href: tech.url, target: '_blank', rel: 'noopener' }, 'AML typology page') : null));
   if (tech.kind === 'subtechnique') {
     const parent = snap.techniques[tech.parent];
     root.append(caption(`Sub-technique of ${parent.id} · ${parent.name}`));
@@ -324,7 +324,7 @@ function renderOntology(root) {
   root.append(h('p', {}, 'All ', h('strong', {}, `${nTech} AML typology techniques`),
     '. Click a row to see its indicators, relationships, mitigations and data sources. Filter by tactic, or by a typology the portal detects to see which techniques it corresponds to.'),
     h('div', { class: 'warn' }, '⚠️ The typology → technique mapping is a ', h('strong', {}, 'draft'),
-      ` (${tmap.status.split(' - ').slice(1).join(' - ') || tmap.status}). Match strength: strong = AMLTRIX's definition describes the behaviour the rule detects; medium = overlapping but framed differently; weak = related context only.`));
+      ` (${tmap.status.split(' - ').slice(1).join(' - ') || tmap.status}). Match strength: strong = AML typology's definition describes the behaviour the rule detects; medium = overlapping but framed differently; weak = related context only.`));
 
   const query = h('input', { type: 'text', placeholder: 'e.g. mule, shell, structuring', value: O.query,
     oninput: (e) => { O.query = e.target.value.trim().toLowerCase(); refreshTable(); } });
@@ -407,8 +407,8 @@ function indicatorRows() {
 function renderIndicators(root) {
   const snap = DATA.snap, all = indicatorRows();
   const tableBox = h('div');
-  root.append(h('p', {}, 'All ', h('strong', {}, `${all.length.toLocaleString()} AMLTRIX risk indicators`),
-    '. Search the description, or narrow by technique or tactic. "Where to look" lists the data sources AMLTRIX gives for the technique.'));
+  root.append(h('p', {}, 'All ', h('strong', {}, `${all.length.toLocaleString()} AML typology risk indicators`),
+    '. Search the description, or narrow by technique or tactic. "Where to look" lists the data sources AML typology gives for the technique.'));
   const query = h('input', { type: 'text', placeholder: 'e.g. cash, cross-border, ownership', value: IND.query,
     oninput: (e) => { IND.query = e.target.value.trim().toLowerCase(); IND.limit = 200; refresh(); } });
   const tech = h('select', { onchange: (e) => { IND.tech = e.target.value; IND.limit = 200; refresh(); } },

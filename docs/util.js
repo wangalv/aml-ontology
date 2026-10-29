@@ -29,7 +29,7 @@ function inline(text) {
   return out;
 }
 
-/* The AMLTRIX texts use paragraphs, "- " bullets and **bold**; nothing else. */
+/* The AML typology texts use paragraphs, "- " bullets and **bold**; nothing else. */
 function md(text) {
   const box = h('div', { class: 'md' });
   let list = null, para = [];

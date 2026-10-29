@@ -148,3 +148,11 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .llm-quote .tag { margin-right: 6px; }
 .llm-row { padding: 6px 0 3px; }
 .llm-reason { margin: 2px 0; }
+
+/* S1: two parts, the alert and what the LLM suggests */
+.big-label { font-weight: 700; font-size: 1.02rem; margin-bottom: 6px; }
+.alert-line { font-size: 1.05rem; margin: 8px 0 2px; }
+.flow-arrow { text-align: center; color: var(--muted); font-size: 0.86rem; margin: 8px 0; }
+.quote .tag.llm, .llm-reason .tag.llm, .tag.llm { background: rgba(66, 133, 244, 0.28); }
+.llm-reason .tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0 6px; margin-right: 6px; border-radius: 4px; color: var(--fg); }
+.llm-box .llm-row .tag:not(.llm) { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0 6px; margin-right: 6px; border-radius: 4px; background: rgba(255, 213, 79, 0.3); color: var(--fg); }

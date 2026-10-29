@@ -93,6 +93,6 @@
   "data_source": {
     "id": "DS0019",
     "name": "Transaction Logs",
-    "note": "The AMLTRIX data source this table stands for. A first draft written by people: of the data sources AMLTRIX lists for a technique, the payments table is the one that holds transaction records."
+    "note": "The AML typology data source this table stands for. A first draft written by people: of the data sources AML typology lists for a technique, the payments table is the one that holds transaction records."
   }
 }

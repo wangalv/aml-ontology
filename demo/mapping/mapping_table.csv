@@ -3,23 +3,23 @@ S1,Alert,(record),inv:Alert,extension,AMLO has no alert concept; defined in the 
 S1,Alert id,alert_id,inv:alertId,extension,Identifier from the monitoring system
 S1,Alert time,raised_at,inv:raisedAt,transform,ISO-8601 string coerced to xsd:dateTime by the context; source timestamps must be normalised to UTC before this step
 S1,Trigger reason,trigger_reason,inv:triggerReason,extension,Free text from the monitoring system; deliberately not mapped to a technique automatically (rule-to-technique mapping is a separate table that needs expert review)
-S1,Suspected typology,suspected_technique,inv:suspectedTechnique -> amx:T####,transform,The id string is prefixed into an AMLTRIX IRI in adapters.py. A technique is an individual of amlo:Technique so it is referenced as a value and never used as @type. It is a hypothesis
+S1,Suspected typology,suspected_technique,inv:suspectedTechnique -> amx:T####,transform,The id string is prefixed into an AML typology IRI in adapters.py. A technique is an individual of amlo:Technique so it is referenced as a value and never used as @type. It is a hypothesis
 S1,Evidence item,evidence,inv:Evidence / inv:hasEvidence,extension,AMLO has no evidence concept
-S1,Kind of evidence,record_type,inv:recordType -> amx:DS####,transform,Points to an AMLTRIX data source. A data source is a TYPE of record (for example Transaction Logs); the evidence item is the instance
+S1,Kind of evidence,record_type,inv:recordType -> amx:DS####,transform,Points to an AML typology data source. A data source is a TYPE of record (for example Transaction Logs); the evidence item is the instance
 S1,Checklist item,item_id,inv:ChecklistItem / inv:sourceId,extension,One indicator to check for this alert
-S1,Indicator to check,indicator,inv:indicator -> amx:IND#####,direct reuse,AMLTRIX indicator individual used as is
+S1,Indicator to check,indicator,inv:indicator -> amx:IND#####,direct reuse,AML typology indicator individual used as is
 S1,Order to look into,priority,inv:priority,extension,Whole number from 1 upwards (SHACL); 1 is first
 S1,Why it matters here,reason,inv:reason,extension,The adviser's reasoning for this alert. Advice only: nothing is queried or confirmed
-S1,Where to look,suggested_data_source,inv:suggestedDataSource -> amx:DS####,transform,Points to an AMLTRIX data source (a type of record). validate.py checks that AMLTRIX lists it for the suspected technique
+S1,Where to look,suggested_data_source,inv:suggestedDataSource -> amx:DS####,transform,Points to an AML typology data source (a type of record). validate.py checks that AML typology lists it for the suspected technique
 S2,Case,case_id / opened_at,inv:Case / inv:caseId / inv:openedAt,extension,AMLO has no case concept
 S2,Working hypothesis,hypothesis,inv:hypothesis -> amx:T####,transform,Same treatment as the suspected technique of an alert
 S2,Finding,findings / finding_id,inv:Finding / inv:hasFinding,extension,One assessment of one indicator
-S2,Finding technique and indicator,technique / indicator,inv:technique / inv:indicator,direct reuse,AMLTRIX individuals used as values
+S2,Finding technique and indicator,technique / indicator,inv:technique / inv:indicator,direct reuse,AML typology individuals used as values
 S2,Finding status,status,inv:status,extension,"Four values enforced by SHACL: supported, not-supported, inconclusive, not-assessable"
 S2,Observation,observation,inv:observation,extension,Investigator's wording
 S2,Evidence relied on,supported_by,inv:supportedBy,extension,Required when status is supported (SHACL)
 S2,Report draft,report_draft / draft_id,inv:ReportDraft / inv:forCase,extension,A draft only; review_status says it needs an investigator
 S2,Ordered paragraphs,paragraphs,inv:paragraphs (rdf:List) / inv:Paragraph,extension,Order matters in a narrative so an RDF list is used
 S2,Paragraph source,based_on,inv:basedOn,extension,Every paragraph must rest on at least one finding
--,Investigated person / account / transaction,(none),(none),unresolved,"AMLO has no party, account or transaction concepts. AMLTRIX Actor and ProductService are role and product TYPES, not individuals. Out of scope for this demo"
--,Disposition and filed report,(none),(none),unresolved,AMLTRIX M0018 is a mitigation (a control) and not a report event; mapping a filing to it would confuse a control with an event
+-,Investigated person / account / transaction,(none),(none),unresolved,"AMLO has no party, account or transaction concepts. AML typology Actor and ProductService are role and product TYPES, not individuals. Out of scope for this demo"
+-,Disposition and filed report,(none),(none),unresolved,AML typology M0018 is a mitigation (a control) and not a report event; mapping a filing to it would confuse a control with an event
