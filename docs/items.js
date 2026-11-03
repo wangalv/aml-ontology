@@ -1,6 +1,6 @@
 /* The boxes of the architecture map. Mirrors ITEMS in portal/semantic_tab.py. */
 const SEMANTIC = {
-  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios & Detection rules', inv: 'Investigation ontology', kmg: 'Knowledge management',
+  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', det: 'Detection rules', inv: 'Investigation ontology', kmg: 'Knowledge management',
 };
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
 const DEFAULT_ITEM = 'ag2';
@@ -37,7 +37,7 @@ const ITEMS = {
   ml: item('ML based detection', 'Placeholder', ['typ', 'ind'], 'Alert, side by side',
     'One ML alert in its native format, next to the same alert as JSON-LD.',
     'The alert carries a score and column names only.', 'The alert names a typology and indicators others can read.'),
-  rule: item('Rule based detection', 'Placeholder', ['typ', 'ind', 'scn'], 'Alert, side by side',
+  rule: item('Rule based detection', 'Placeholder', ['typ', 'ind', 'scn', 'det'], 'Alert, side by side',
     'One rule alert in its native format, next to the same alert as JSON-LD.',
     'A rule id and a threshold.', 'The rule is linked to the typology and scenario it covers.'),
   graph: item('Graph based detection', 'Placeholder', ['typ', 'ind'], 'Alert, side by side',
@@ -63,7 +63,7 @@ const ITEMS = {
     'How source data (accounts, parties, transactions) reaches the semantic layer: one JSON-LD interface per source, ' +
     'exposed through an API or an MCP tool.',
     'Every source is wired to every consumer by hand.', 'Each source is mapped once to shared terms and reused.'),
-  int2: item('Integration (identification)', 'Live data', ['typ', 'ind', 'scn'], 'Mapping table',
+  int2: item('Integration (identification)', 'Live data', ['typ', 'ind', 'scn', 'det'], 'Mapping table',
     'How detection systems send alerts in, and ask the semantic layer for typologies and indicators.',
     'Each detection system speaks its own alert format.', 'Alerts and typologies meet through one shared set of terms.'),
   int3: item('Integration (investigation)', 'Live data', ['typ', 'ind', 'inv', 'kmg'], 'Mapping table',
@@ -76,9 +76,12 @@ const ITEMS = {
   ind: item('Risk indicators', 'Live data', [], 'Indicator list',
     'The indicators for a chosen technique, with data sources.',
     'Indicators sit in policy documents.', 'Indicators are identifiable and linkable.'),
-  scn: item('Risk scenarios & Detection rules', 'Placeholder', [], 'Note',
+  scn: item('Risk scenarios', 'Placeholder', [], 'Note',
     'To be defined: how typologies combine with country, product or customer type.',
     'Scenarios live in spreadsheets.', 'Scenarios link to typologies and indicators.'),
+  det: item('Detection rules', 'Placeholder', [], 'Note',
+    'To be defined: what each transaction monitoring rule detects, and which techniques it covers.',
+    'Rules live in the monitoring systems.', 'Rules link to the techniques they cover.'),
   inv: item('Investigation ontology', 'Live data', [], 'Classes and shapes',
     'Alerts, cases, findings and reports, and the rules for a valid record.',
     'Case data has no agreed shape.', 'Records can be checked before anyone relies on them.'),

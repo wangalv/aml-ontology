@@ -37,7 +37,7 @@ function buildArchitecture() {
     ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration (MCP, API)')),
     h('div'),
     h('div', { class: 'layer' }, h('div', { class: 'title' }, 'FinCrime Semantic Layer'),
-      h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'inv'].map((id) => makeBox(id))), makeBox('kmg')),
+      h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'det', 'inv'].map((id) => makeBox(id))), makeBox('kmg')),
     h('div', { class: 'side-note' }, "The bank's central definitions, shared by every domain"),
     h('div', { class: 'base' }, makeBox('ent')),
   );
