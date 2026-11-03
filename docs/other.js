@@ -184,7 +184,7 @@ function scenario3(root) {
       "The data dictionary, which people write, is the link between the indicator's words and the columns of the table."),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
     h('h3', {}, 'The SQL it wrote, and how each part links back'),
-    h('pre', { style: { maxHeight: '300px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, s3.query.sql),
+    h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, s3.query.sql_pretty || s3.query.sql),
     dataTable(['Part of the SQL', 'Words of the indicator the LLM says it comes from', 'Columns it uses, as the data dictionary describes them'],
       s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
         h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
