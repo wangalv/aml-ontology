@@ -145,13 +145,14 @@ function scenario2(root, repaint) {
   const s2 = DATA.agent.s2, c = s2.case, run = s2.real.with, t = s2.technique;
   const grams = ngramSet([t.definition || '', ...Object.values(s2.indicator_text)], GRAM);
   const reused = run.accepted.filter((p) => highlight(p.text, grams).hit).length;
+  const findingName = (id) => 'Finding ' + id.replace(/^F-/, '');
   const STATUS = { supported: 'green', 'not-supported': 'red', inconclusive: 'orange', 'not-assessable': 'gray' };
   const findings = c.findings.map((f) => h('div', { class: 'llm-row' },
-    h('div', {}, h('strong', {}, `${f.finding_id}  `), badge(STATUS[f.status] || 'gray', f.status), ' ', h('code', {}, f.indicator)),
+    h('div', {}, h('strong', {}, `${findingName(f.finding_id)}  `), badge(STATUS[f.status] || 'gray', f.status), ' ', h('code', {}, f.indicator)),
     h('div', { class: 'alert-line' }, f.observation)));
   const paragraphs = run.accepted.map((p) => h('div', { class: 'llm-row' },
     h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), highlight(p.text, grams).nodes),
-    h('div', { class: 'llm-quote' }, 'Based on ', p.based_on.map((b) => badge('gray', b)))));
+    h('div', { class: 'llm-quote' }, 'Based on ', p.based_on.map((b) => badge('gray', findingName(b))))));
   root.append(h('p', {}, 'When the investigation is done, the LLM drafts the findings section of the report, using the AML typology to say what each finding means.'),
     h('div', { class: 'card' },
       h('div', { class: 'big-label' }, '1  What the investigator has: the findings of the case'),
