@@ -189,11 +189,13 @@ function scenario3(root) {
       s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
         h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
         h('div', {}, c.columns.map((n) => h('div', {}, h('code', {}, n), ` ${meaning[n]}`)))] })), { maxHeight: 420 }),
-    h('div', { class: 'callout' }, `The query ran in ${s3.query.seconds} s and flagged ${fmt(r.flagged)} transactions (the most the guard allows), and ${pct(r.laundering, r.flagged)} of them are laundering, ` +
-      `the same as for any transaction in the period (${pct(r.period_laundering, r.period_payments)}). It follows chains of three or more transactions without checking that the money returns to where it started, ` +
-      `and it found none of the ${fmt(r.verified_cycle_payments)} transactions on verified round trips: a query that runs and is safe is not yet a query that is right.`),
-    caption('Checked by code: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
-      'The laundering label was used only afterwards, to judge the result; the LLM never saw it. Queries the guard refused are not shown.'));
+    h('div', { class: 'callout' }, (s3.query.attempts > 1
+      ? `The LLM wrote this SQL on attempt ${s3.query.attempts}; the earlier ${s3.query.attempts - 1} ${s3.query.attempts > 2 ? 'were' : 'was'} refused by the checks and sent back with the reason. `
+      : 'The LLM wrote this SQL on its first attempt. ') +
+      'Each part of it is tied to words of the indicator above. This page shows the query the LLM wrote and the checks it passed, not what the query returns.'),
+    caption('Checked by code before it ran: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
+      'Because this indicator says the funds return to where they started, the code also tried the query on a small made-up table: it had to flag the transactions of a loop and none of a straight chain. ' +
+      'The laundering label is not in the table the LLM can query. Queries the checks refused are not shown.'));
 }
 
 function renderInvestigationAgent(root) {
@@ -296,7 +298,7 @@ const INT_INTRO = {
     'and let code check them.',
 };
 const INT_SCENARIOS = [['s1', 'Scenario 1: suggested checks'], ['s2', 'Scenario 2: case and report'], ['s3', 'Scenario 3: typology-driven query']];
-const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds', transform: 'the value is converted to another form, such as a pointer into AML typology or a date', 'direct reuse': 'an AML typology term used as is', unresolved: 'no term yet' };
+const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds; the value is kept as it is', transform: 'the value is converted to another form, such as a pointer to an AML typology entry or to another record, or a date', unresolved: 'no term yet' };
 const INTS = { scenario: 's1' };
 
 /* Spell out the prefixes in the tables; the JSON-LD blocks keep the short form. */
@@ -315,7 +317,7 @@ const CONVERTED = { '@id': 'a pointer (IRI)', 'xsd:dateTime': 'a date and time',
 const HOW_TO_READ = [
   '- **Term in the ontology** is the shared term the field is mapped to, with the ontology it comes from: the Investigation ontology or AML typology. The same term is used whichever system the record comes from. In the JSON-LD the ontology is shortened to a prefix: `inv:` for the Investigation ontology and `amx:` for AML typology.',
   '- **Linked to in the AML ontology** shows what the field connects to in the semantic layer. Every mapped field links to its term in the Investigation ontology, with the definition. When the value is a pointer into AML typology, the cell also shows the entry it leads to and which part of the semantic layer it belongs to: a technique (AML typology), a risk indicator, or a data source. Risk scenarios are not defined yet, so no field links to one.',
-  '- **The mapping:** the bold line is what the field\'s value becomes. The line under it is the mapping type, which says where the term comes from: an extension is a term the Investigation ontology adds, a direct reuse is an AML typology term used as is, and a transform converts the value to another form, such as a pointer into AML typology or a date. The possible values are:',
+  '- **The mapping:** the bold line is what the field\'s value becomes. The line under it is the mapping type: an extension is a term the Investigation ontology adds, with the value kept as it is, and a transform converts the value to another form, such as a pointer to an AML typology entry or to another record, or a date. The possible values are:',
   '- **a pointer (IRI):** the value stops being plain text and becomes a link to another record or to an AML typology entry. For example `T0039` in `suspected_technique` becomes `amx:T0039`, which points to the technique Circular Transactions. This is what lets code check the value and lets records from different systems connect.',
   '- **a date and time, a whole number:** the value is kept, and marked with its type so that it is read as a date or a number rather than as text.',
   '- **kept as text:** the value stays as it is; only the field name is replaced by the shared term.',

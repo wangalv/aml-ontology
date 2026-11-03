@@ -14,10 +14,35 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from amldemo import dbrun, sqlguard  # noqa: E402
-from amldemo.scenarios import s3_hunting  # noqa: E402
+from amldemo.scenarios import s1_advisor, s3_hunting  # noqa: E402
 
 DICTIONARY = s3_hunting.load_dictionary()
 GOOD = "SELECT tx_id FROM txs WHERE ts >= '2022-09-09' AND is_self_transfer LIMIT 100"
+# Follows a chain of payments in time and keeps it only if it comes back to the account it started from, through at least two others.
+LOOP = """WITH RECURSIVE walk AS (
+  SELECT [tx_id] AS legs, from_account AS origin, to_account AS cur, ts AS last_ts, [from_account, to_account] AS seen
+  FROM txs
+  WHERE from_account <> to_account
+  UNION ALL
+  SELECT w.legs || [t.tx_id], w.origin, t.to_account, t.ts, w.seen || [t.to_account]
+  FROM walk w
+  JOIN txs t ON t.from_account = w.cur AND t.ts > w.last_ts
+  WHERE w.cur <> w.origin
+    AND len(w.legs) < 4
+    AND (t.to_account = w.origin OR NOT list_contains(w.seen, t.to_account))
+)
+SELECT DISTINCT unnest(legs) AS tx_id
+FROM walk
+WHERE cur = origin AND len(legs) >= 3
+LIMIT 10000"""
+# The query the model first wrote for IND02191 in the saved run: any chain of three payments or more, whether or not it returns.
+CHAIN = """WITH RECURSIVE cycle AS (
+  SELECT tx_id, from_account, to_account, ts, 1 as depth FROM txs WHERE is_self_transfer = FALSE
+  UNION ALL
+  SELECT t.tx_id, t.from_account, t.to_account, t.ts, c.depth + 1
+  FROM cycle c JOIN txs t ON t.from_account = c.to_account AND t.ts > c.ts AND t.ts <= c.ts + INTERVAL '2' DAY
+  WHERE t.from_account <> t.to_account)
+SELECT DISTINCT tx_id FROM cycle WHERE depth >= 3 LIMIT 10000"""
 WINDOW = {"rows": 1000, "laundering": 10, "from": "a", "to": "b", "in_verified_cycles": 20, "in_verified_cycles_laundering": 5}
 
 
@@ -92,7 +117,7 @@ def coverage(overrides=None):
     return {"indicators": rows}
 
 
-def query(sql=GOOD):
+def query(sql=LOOP):
     return {"queries": [{"indicator": "IND02191", "sql": sql, "conditions": [{"condition": "c", "from_indicator": "f"}]}]}
 
 
@@ -107,6 +132,38 @@ def fake_run(rows=None, error=None):
 def fake_score(tx_ids):
     ids = list(tx_ids)
     return {"window": WINDOW, "flagged": {"rows": len(ids), "laundering": 1, "in_verified_cycles": 2, "in_verified_cycles_laundering": 1, "outside_window": 0}}
+
+
+class ClosedLoopTests(unittest.TestCase):
+    def check(self, sql):
+        return sqlguard.check_closed_loop(sql, DICTIONARY)
+
+    def test_a_query_that_follows_the_chain_and_closes_the_loop_passes(self):
+        self.assertEqual(problems(LOOP), [])
+        self.assertEqual(self.check(LOOP), [])
+
+    def test_a_chain_query_that_never_checks_the_return_is_refused(self):
+        found = self.check(CHAIN)
+        self.assertEqual(problems(CHAIN), [])  # it is a fine query for the guard; only its behaviour is wrong
+        self.assertTrue(any("straight chain" in p for p in found))
+
+    def test_a_query_that_flags_nothing_in_the_loop_is_refused(self):
+        self.assertTrue(any("did not flag the payments of a loop" in p for p in self.check(GOOD)))
+
+    def test_a_query_that_fails_on_the_made_up_table_is_sent_back_with_a_hint(self):
+        alias = ("WITH RECURSIVE w AS (SELECT tx_id, from_account AS origin, to_account AS cur, ts AS first_ts FROM txs "
+                 "UNION ALL SELECT t.tx_id, w.origin, t.to_account, t.ts FROM w JOIN txs t ON t.from_account = w.cur WHERE t.ts > w.ts) "
+                 "SELECT tx_id FROM w WHERE cur = origin LIMIT 10")
+        found = self.check(alias)
+        self.assertEqual(len(found), 1)
+        self.assertIn("made-up table", found[0])
+        self.assertIn("AS alias", found[0])  # the hint on how names work in a WITH query
+
+    def test_only_an_indicator_about_funds_returning_to_their_origin_needs_it(self):
+        texts = {i["id"]: i["text"] for i in s1_advisor.dictionary_context("T0039")["indicators"]}
+        self.assertTrue(s3_hunting.returns_to_origin(texts["IND02191"]))
+        for other in ("IND02192", "IND02193", "IND02194", "IND02195"):
+            self.assertFalse(s3_hunting.returns_to_origin(texts[other]), other)
 
 
 class HuntTests(unittest.TestCase):
@@ -132,6 +189,21 @@ class HuntTests(unittest.TestCase):
         self.assertEqual(q["evaluation"]["rows"], 3)
         self.assertEqual(result["window"]["in_verified_cycles"], 20)
 
+    def test_a_chain_that_does_not_return_is_sent_back_and_rewritten(self):
+        llm = FakeLLM(coverage(), [query(CHAIN), query(LOOP)])
+        result = self.hunt(llm)
+        q = result["queries"][0]
+        self.assertTrue(q["accepted"])
+        self.assertEqual(len(q["attempts"]), 2)
+        self.assertTrue(any("straight chain" in p for p in q["attempts"][0]["guard"]))
+        self.assertIsNone(q["attempts"][0]["run"])  # refused before it reached the database
+        self.assertIn("made-up table", llm.calls[2][1])  # the reason went back to the model with its previous query
+
+    def test_the_prompt_says_the_loop_must_close_only_for_that_indicator(self):
+        llm = FakeLLM(coverage(), [query()])
+        self.hunt(llm)
+        self.assertIn("come back to where they started", llm.calls[1][1])
+
     def test_the_model_is_never_told_about_the_label_or_the_answers(self):
         llm = FakeLLM(coverage(), [query()])
         self.hunt(llm)
@@ -141,7 +213,7 @@ class HuntTests(unittest.TestCase):
 
     def test_a_refused_query_is_sent_back_with_the_reason_and_may_be_rewritten(self):
         bad = "SELECT tx_id, label FROM txs WHERE ts > 'x' LIMIT 5"
-        llm = FakeLLM(coverage(), [query(bad), query(GOOD)])
+        llm = FakeLLM(coverage(), [query(bad), query(LOOP)])
         result = self.hunt(llm)
         attempts = result["queries"][0]["attempts"]
         self.assertEqual(len(attempts), 2)
@@ -175,7 +247,7 @@ class HuntTests(unittest.TestCase):
             rows = [["80308DE40"], ["80308F520"]] if len(calls) == 1 else [[11], [12]]
             return {"columns": ["tx_id"], "rows": rows, "truncated": False, "seconds": 0.1}
 
-        llm = FakeLLM(coverage(), [query(), query(GOOD + " ")])
+        llm = FakeLLM(coverage(), [query(), query(LOOP + " ")])
         result = self.hunt(llm, run=run_query)
         q = result["queries"][0]
         self.assertEqual(len(q["attempts"]), 2)

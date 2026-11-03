@@ -22,6 +22,8 @@ QUERYABLE = ("yes", "partly", "no")
 MAX_QUERIES = 2        # indicators turned into a query in one run
 MAX_ATTEMPTS = 3       # first try plus rewrites after a refusal or an error
 SAMPLE_ROWS = 10
+# An indicator whose words say that funds come back to where they started. Written by people, a draft: it is read from the indicator text.
+RETURNS_TO_ORIGIN = re.compile(r"\b(revert|return)s?\b[^.;]*\b(origin|source)\b", re.IGNORECASE)
 
 SYSTEM = (
     "You help a financial-crime analyst turn a typology into database queries. "
@@ -68,12 +70,24 @@ def coverage_prompt(context, dictionary):
     return f"{technique_block(context)}{dictionary_block(dictionary)}\n\n{task}{COVERAGE_FORMAT}"
 
 
+def returns_to_origin(indicator_text):
+    """True when the indicator says that the funds end up where they started, so that a query must close the loop."""
+    return bool(RETURNS_TO_ORIGIN.search(indicator_text))
+
+
+LOOP_NOTE = ("The indicator says the funds come back to where they started. The query must therefore flag the payments of a chain only when "
+             "its last payment goes back to the account the first payment left from. "
+             "A chain that ends at another account is not a match. The code tries every query on a small made-up table to check this.\n")
+
+
 def query_prompt(context, dictionary, indicators, problems=None, previous_sql=None):
     wanted = "\n".join(f"{i['id']}: {i['text']}" for i in indicators)
     task = (f"Write a DuckDB SQL query over the table {dictionary['table']} that returns the tx_id of every payment that takes part in "
             "the pattern described by each indicator below, using only the listed columns. The query must end with LIMIT 10000 or "
             "less, return a tx_id column, and use the time column ts. In conditions, say what each part of the SQL checks and "
             f"quote the words of the indicator it comes from.\n<wanted>\n{wanted}\n</wanted>\n")
+    if any(returns_to_origin(i["text"]) for i in indicators):
+        task += LOOP_NOTE
     retry = ""
     if problems:
         retry = (f"\nYour previous query was:\n{previous_sql}\nIt could not be used: {'; '.join(problems)}. Write a corrected query.\n")
@@ -131,9 +145,12 @@ def _first_query(raw, indicator, indicator_text):
     raise ValueError(f"the reply has no query for {indicator}")
 
 
-def _try(sql, dictionary):
-    """Guard, then run. Returns {"guard": [...], "run": {...} or None}."""
+def _try(sql, dictionary, closed_loop=False):
+    """Guard (and, for an indicator about funds returning to their origin, the made-up-table check), then run.
+    Returns {"guard": [...], "run": {...} or None}."""
     problems = sqlguard.check(sql, dictionary)
+    if not problems and closed_loop:
+        problems = sqlguard.check_closed_loop(sql, dictionary)
     if problems:
         return {"guard": problems, "run": None}
     result = dbrun.run_query(sql, max_rows=sqlguard.MAX_ROWS)
@@ -194,10 +211,10 @@ def hunt(technique_id, llm, dictionary=None):
                 attempts.append({"sql": "", "conditions": [], "guard": [str(e)], "run": None})
                 problems, previous = [str(e)], ""
                 continue
-            tried = _try(sql, dictionary)
+            tried = _try(sql, dictionary, returns_to_origin(entry["indicator_text"]))
             attempts.append({"sql": sql, "conditions": conditions, "guard": tried["guard"],
                              "run": _summary(tried["run"]) if tried["run"] else None, "_rows": tried["run"]})
-            failure = tried["guard"] or ([tried["run"]["error"]] if tried["run"] and "error" in tried["run"] else None)
+            failure = tried["guard"] or ([sqlguard.explain_error(tried["run"]["error"])] if tried["run"] and "error" in tried["run"] else None)
             if not failure:
                 _, others = _payment_ids(tried["run"])
                 if others:

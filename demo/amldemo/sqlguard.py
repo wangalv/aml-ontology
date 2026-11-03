@@ -7,6 +7,8 @@ asks four things of the tree:
   - it reads only the table in the data dictionary (or a WITH name defined in the query), never a table function;
   - it names only columns the dictionary lists (or names the query itself defines), and never `SELECT *`;
   - it ends in a LIMIT of at most MAX_ROWS, returns a tx_id column, and uses the time column ts at least once.
+For an indicator whose words say that funds come back to where they started, check_closed_loop adds a fifth thing: the query is tried on a small
+made-up table and must flag the payments of a loop and none of a straight chain. That judges what the SQL does, not how it is written.
 The database is a second line of defence: the query runs on a view that holds only the listed columns, so a column the
 guard missed still does not exist there. The laundering label is not in that view at all.
 """
@@ -83,3 +85,55 @@ def check(sql, dictionary, max_rows=MAX_ROWS):
     if not any(n.get("class") == "COLUMN_REF" and n["column_names"][-1] == "ts" for n in nodes):
         problems.append("the query never uses the time column ts: the payments of a pattern have to be tied together in time")
     return list(dict.fromkeys(problems))
+
+
+# A small made-up table for check_closed_loop: (tx_id, from, to, minutes). The loop returns to the account it started from; the chain
+# never does; in the backwards loop the payments happen in the wrong order, so no payment can follow the one before it.
+_FIXTURE = [
+    (1, "L1", "L2", 0), (2, "L2", "L3", 5), (3, "L3", "L1", 10),
+    (11, "C1", "C2", 0), (12, "C2", "C3", 5), (13, "C3", "C4", 10), (14, "C4", "C5", 15),
+    (21, "B1", "B2", 10), (22, "B2", "B3", 5), (23, "B3", "B1", 0),
+]
+_LOOP, _NOT_LOOPS = {1, 2, 3}, {11, 12, 13, 14, 21, 22, 23}
+_DEFAULT = {"BIGINT": 0, "VARCHAR": "", "DOUBLE": 7.0, "BOOLEAN": False, "INTEGER": 0}
+
+
+BINDER_HINT = ("The columns of a WITH name are the names its first SELECT gives them, including any AS alias: after the first step "
+               "use that name, not the original column name.")
+
+
+def explain_error(message):
+    """A database error as a sentence for the model. The database's own words can be hard to read (a column hidden by an alias is
+    reported as a missing column of a 'values list'), so a Binder Error gets a hint on how names work in a WITH query."""
+    return f"{message}. {BINDER_HINT}" if "Binder Error" in message else message
+
+
+def check_closed_loop(sql, dictionary):
+    """Problems found by running `sql` on the made-up table, as sentences. An empty list means it flags the loop and no chain.
+    A query that fails here is sent back with the database's error, before it reaches the real database."""
+    columns = {c["name"]: c["type"] for c in dictionary["columns"]}
+    con = duckdb.connect()
+    try:
+        con.execute(f"CREATE TABLE {dictionary['table']} ({', '.join(f'{n} {t}' for n, t in columns.items())})")
+        for tx_id, source, target, minutes in _FIXTURE:
+            row = {n: _DEFAULT.get(t) for n, t in columns.items()}
+            row.update(tx_id=tx_id, from_account=source, to_account=target, ts=f"2022-09-09 10:{minutes:02d}:00")
+            con.execute(f"INSERT INTO {dictionary['table']} VALUES ({', '.join('?' * len(row))})", list(row.values()))
+        cursor = con.execute(sql)
+        names = [d[0] for d in cursor.description]
+        if "tx_id" not in names:
+            return []
+        index = names.index("tx_id")
+        flagged = {row[index] for row in cursor.fetchall()}
+    except duckdb.Error as e:
+        return ["the query failed on a small made-up table with the same columns: " + explain_error(str(e).splitlines()[0])]
+    finally:
+        con.close()
+    problems = []
+    if not flagged & _LOOP:
+        problems.append("tried on a small made-up table, the query did not flag the payments of a loop in which money leaves account L1, "
+                        "passes through L2 and L3 and comes back to L1; it must flag payments only when the chain returns to the account it started from")
+    if flagged & _NOT_LOOPS:
+        problems.append("tried on a small made-up table, the query also flagged payments of a straight chain C1 to C2 to C3 to C4 to C5, "
+                        "or of payments in the wrong time order, that never return to the starting account; it must not")
+    return problems
