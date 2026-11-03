@@ -53,11 +53,11 @@ const ITEMS = {
     'An agent that proposes entity links and list matches.',
     'It guesses without shared meaning.', 'It works from the shared terms and records why.'),
   ag2: item('Agent (Risk identification)', 'Sample', ['typ', 'ind'], 'Reason for an alert',
-    'Scenario 4: for a payment that several monitoring systems alerted on, says which AML typology risk indicators their evidence supports.',
+    'Scenario 4: for a transaction that several monitoring systems alerted on, says which AML typology risk indicators their evidence supports.',
     'Each system gives its reason in its own terms.',
     'The reasons meet in one set of indicators, and every match cites its evidence.'),
   ag3: item('Agent (investigation)', 'Sample', ['typ', 'ind', 'inv', 'kmg'], 'Advice, report draft and query',
-    'Scenarios 1 to 3: suggested next checks for an alert, a report draft that cites findings, and a typology-driven query over the payments data.',
+    'Scenarios 1 to 3: suggested next checks for an alert, a report draft that cites findings, and a typology-driven query over the transactions data.',
     'The agent invents ids and cannot be checked.', 'Every suggestion and citation is checked by code.'),
   int1: item('Integration (data management)', 'Design only', ['inv'], 'Mapping table',
     'How source data (accounts, parties, transactions) reaches the semantic layer: one JSON-LD interface per source, ' +

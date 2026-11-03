@@ -121,7 +121,7 @@ function scenario1(root, repaint) {
       h('div', { class: 'big-label' }, '1  The alert the investigator receives'),
       h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · raised ${when} · suspected technique `, badge('blue', `${t.id} ${t.name}`)),
       h('div', { class: 'alert-line' }, alert.trigger_reason),
-      caption('What the monitoring systems attached to this payment'),
+      caption('What the monitoring systems attached to this transaction'),
       h('ul', { class: 'fact-list' }, (alert.facts || []).map((f) => h('li', {}, f))),
       caption('Facts from the rule engine, the ML model and the transaction graph. They say what was detected, not what to check or where to look.')),
     h('div', { class: 'flow-arrow' }, `▼  the LLM reads what the AML typology says about ${t.id}: its definition, ${ty.indicators.length} risk indicators and ${ty.data_sources.length} data sources`),
@@ -158,7 +158,7 @@ function scenario2(root, repaint) {
       h('div', { class: 'big-label' }, '1  What the investigator has: the findings of the case'),
       h('div', {}, h('strong', {}, `Case ${c.case_id}`), ' · investigating ', badge('blue', `${t.id} ${t.name || ''}`)),
       findings,
-      caption('Written by code from the same payment, as a stand-in for an investigator\'s notes. No report wording, and nothing says what the indicators mean.')),
+      caption('Written by code from the same transaction, as a stand-in for an investigator\'s notes. No report wording, and nothing says what the indicators mean.')),
     h('div', { class: 'flow-arrow' }, `▼  the LLM reads what the AML typology says about ${t.id} and the ${Object.keys(s2.indicator_text).length} indicators in these findings`),
     h('div', { class: 'llm-box' },
       h('div', { class: 'big-label' }, '2  What the LLM writes: the findings section of the report'),
@@ -189,9 +189,9 @@ function scenario3(root) {
       s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
         h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
         h('div', {}, c.columns.map((n) => h('div', {}, h('code', {}, n), ` ${meaning[n]}`)))] })), { maxHeight: 420 }),
-    h('div', { class: 'callout' }, `The query ran in ${s3.query.seconds} s and flagged ${fmt(r.flagged)} payments (the most the guard allows), and ${pct(r.laundering, r.flagged)} of them are laundering, ` +
-      `the same as for any payment in the period (${pct(r.period_laundering, r.period_payments)}). It follows chains of three or more payments without checking that the money returns to where it started, ` +
-      `and it found none of the ${fmt(r.verified_cycle_payments)} payments on verified round trips: a query that runs and is safe is not yet a query that is right.`),
+    h('div', { class: 'callout' }, `The query ran in ${s3.query.seconds} s and flagged ${fmt(r.flagged)} transactions (the most the guard allows), and ${pct(r.laundering, r.flagged)} of them are laundering, ` +
+      `the same as for any transaction in the period (${pct(r.period_laundering, r.period_payments)}). It follows chains of three or more transactions without checking that the money returns to where it started, ` +
+      `and it found none of the ${fmt(r.verified_cycle_payments)} transactions on verified round trips: a query that runs and is safe is not yet a query that is right.`),
     caption('Checked by code: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
       'The laundering label was used only afterwards, to judge the result; the LLM never saw it. Queries the guard refused are not shown.'));
 }
@@ -230,9 +230,9 @@ function renderIdentificationAgent(root) {
       return `${r.id} ${r.name} is lit by the ${joinNames(r.systems)}: independent systems agree. ` +
         (read.length ? `Only the ${joinNames(own)}'s own flag points to it; for the ${joinNames(read)} it is the model's reading of the evidence.` : "Each system's own flag points to it.");
     }).join(' ')
-    : 'No technique is lit by more than one system for this payment.';
+    : 'No technique is lit by more than one system for this transaction.';
   const techBox = h('div');
-  const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'payment details')]));
+  const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'transaction details')]));
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
     caption(`Given ${total} risk indicators written as free text, from ${e.techniques.length} techniques, and each system's evidence on its own, it picked the ${e.rows.length} indicators below as supported, ` +
@@ -254,7 +254,7 @@ function renderIdentificationAgent(root) {
       parts.push(h('button', { class: 'btn', type: 'button', onclick: () => { O.focus = null; O.expanded = []; O.node = null; O.section = 'rel'; showTech(); } }, `← Back to ${origin.id} · ${origin.name}`));
     } else if (row) {
       const lit = e.rows.filter((r) => r.technique === row.id);
-      parts.push(h('div', { class: 'card tight' }, h('strong', {}, `What lit ${row.id} for this payment`),
+      parts.push(h('div', { class: 'card tight' }, h('strong', {}, `What lit ${row.id} for this transaction`),
         lit.length ? lit.map((r) => h('div', { class: 'ctx-row' }, sysBadge(r.system), ' ', h('code', {}, r.indicator), ` ${r.support}: ${r.reason} `,
           r.pointed ? caption("The system's own flag points to this technique.") : badge('orange', "not the system's own flag: the model read it from the evidence")))
           : caption('No system\'s evidence supports an indicator of this technique.')));
@@ -269,17 +269,17 @@ function renderIdentificationAgent(root) {
   O.sel = null; O.focus = null;
   showTech();
 
-  root.append(caption(`Saved run from ${s4.exported}: one example payment, one run of one model (${s4.provider}/${s4.model}), on the synthetic IBM AML data, test period only. ` +
+  root.append(caption(`Saved run from ${s4.exported}: one example transaction, one run of one model (${s4.provider}/${s4.model}), on the synthetic IBM AML data, test period only. ` +
       'An illustration, not a measurement. No model or database is used when you view this page.'),
-    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same payment, each gives its reason in its own terms. ' +
+    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
       "The agent judges each system's evidence against AML typology risk indicators, and a technique that more than one system supports is a strong, linked signal. The investigator decides."),
     h('div', { class: 'card' },
-      h('div', {}, h('strong', {}, `Payment ${p.tx_id}`), ' ', p.sources.map((k) => [sysBadge(k), ' '])),
-      caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first payment, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
+      h('div', {}, h('strong', {}, `Transaction ${p.tx_id}`), ' ', p.sources.map((k) => [sysBadge(k), ' '])),
+      caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
     llmBox,
-    h('div', { class: 'callout' }, verdict, caption(`Afterwards, with the label (the model never saw it): this payment ${e.laundering ? 'is' : 'is not'} laundering. ` +
-      `Of the ${fmt(three.payments)} payments alerted on by all three systems, ${pct(three.laundering, three.payments)} are laundering, against ${pct(one.laundering, one.payments)} of those only one system alerted on (computed by code).`)),
+    h('div', { class: 'callout' }, verdict, caption(`Afterwards, with the label (the model never saw it): this transaction ${e.laundering ? 'is' : 'is not'} laundering. ` +
+      `Of the ${fmt(three.payments)} transactions alerted on by all three systems, ${pct(three.laundering, three.payments)} are laundering, against ${pct(one.laundering, one.payments)} of those only one system alerted on (computed by code).`)),
     techBox,
     caption('Checked by code: every indicator is one that was listed under the techniques the flags point to; every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
       `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));
@@ -384,7 +384,7 @@ function identificationDiagram() {
       'not fields: the three alert formats have no JSON-LD context in this demo.'),
     h('div', { class: 'diagram s4', style: { maxWidth: '1245px' } }, svg),
     h('ol', {}, d.steps.map((t) => h('li', {}, t))),
-    d.example ? h('div', {}, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, `See payment ${d.example} in Agent (Risk identification)`)) : null);
+    d.example ? h('div', {}, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, `See transaction ${d.example} in Agent (Risk identification)`)) : null);
 }
 
 /* The Investigation ontology entry (class or property) behind a term such as inv:alertId. */
@@ -479,5 +479,5 @@ function renderIntegration(root, id) {
     };
     show();
   }
-  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one payment in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`));
+  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`));
 }
