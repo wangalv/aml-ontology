@@ -1,6 +1,6 @@
 /* The boxes of the architecture map. Mirrors ITEMS in portal/semantic_tab.py. */
 const SEMANTIC = {
-  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', inv: 'Investigation ontology', kmg: 'Knowledge management',
+  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios & Detection rules', inv: 'Investigation ontology', kmg: 'Knowledge management',
 };
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
 const DEFAULT_ITEM = 'ag2';
@@ -76,7 +76,7 @@ const ITEMS = {
   ind: item('Risk indicators', 'Live data', [], 'Indicator list',
     'The indicators for a chosen technique, with data sources.',
     'Indicators sit in policy documents.', 'Indicators are identifiable and linkable.'),
-  scn: item('Risk scenarios', 'Placeholder', [], 'Note',
+  scn: item('Risk scenarios & Detection rules', 'Placeholder', [], 'Note',
     'To be defined: how typologies combine with country, product or customer type.',
     'Scenarios live in spreadsheets.', 'Scenarios link to typologies and indicators.'),
   inv: item('Investigation ontology', 'Live data', [], 'Classes and shapes',
