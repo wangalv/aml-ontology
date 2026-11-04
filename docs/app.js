@@ -48,9 +48,8 @@ function techBox([term, does, built]) {
 }
 
 function techStack() {
-  return h('div', { class: 'panel-box tech' },
-    TECH_STACK.map(([layer, rows]) => h('div', { class: 'tech-layer' + (layer === 'Semantic layer' ? ' pink' : '') },
-      h('div', { class: 'stack-head' }, layer), rows.map(techBox))));
+  return h('div', { class: 'tech-col' }, TECH_STACK.map(([layer, rows]) => h('div', { class: 'panel-box tech' + (layer === 'Semantic layer' ? ' pink' : '') },
+    h('div', { class: 'stack-head' }, layer), rows.map(techBox))));
 }
 
 function buildArchitecture() {

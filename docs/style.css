@@ -30,10 +30,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .layer { grid-column: 2 / span 3; background: var(--layer); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .layer .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .base { grid-column: 2 / span 3; align-self: start; }
-.panel-box.tech { grid-row: 3 / span 3; gap: 0; align-self: stretch; padding: 8px; }
-.panel-box.tech > * { opacity: .65; } /* additional information: faded, no bold */
-.tech-layer { margin-top: 0; display: flex; flex-direction: column; gap: 2px; }
-.tech-layer.pink { background: var(--layer); border: 1px solid var(--line); border-radius: 10px; padding: 4px 6px 6px; margin-top: 4px; }
+.tech-col { grid-row: 3 / span 3; display: flex; flex-direction: column; gap: 10px; }
+.tech-col .panel-box { padding: 8px; gap: 2px; flex: 1 1 auto; }
+.tech-col .panel-box.pink { background: var(--layer); }
+.tech-col .panel-box > * { opacity: .65; } /* additional information: faded, no bold */
 .stack-head { text-align: center; font-size: .75rem; color: var(--muted); }
 .tech-box { background: var(--btn); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; text-align: center; line-height: 1.2; font-size: .72rem; }
 .tech-box.design { opacity: .7; }
