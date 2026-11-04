@@ -189,10 +189,6 @@ function scenario3(root) {
       s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
         h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
         h('div', {}, c.columns.map((n) => h('div', {}, h('code', {}, n), ` ${meaning[n]}`)))] })), { maxHeight: 420 }),
-    h('div', { class: 'callout' }, (s3.query.attempts > 1
-      ? `The LLM wrote this SQL on attempt ${s3.query.attempts}; the earlier ${s3.query.attempts - 1} ${s3.query.attempts > 2 ? 'were' : 'was'} refused by the checks and sent back with the reason. `
-      : 'The LLM wrote this SQL on its first attempt. ') +
-      'Each part of it is tied to words of the indicator above. This page shows the query the LLM wrote and the checks it passed, not what the query returns.'),
     caption('Checked by code before it ran: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
       'Because this indicator says the funds return to where they started, the code also tried the query on a small made-up table: it had to flag the transactions of a loop and none of a straight chain. ' +
       'The laundering label is not in the table the LLM can query. Queries the checks refused are not shown.'));
