@@ -24,31 +24,34 @@ function paintBoxes() {
   }
 }
 
-// The technologies behind the integration layer and the semantic layer to its right, top to bottom in the same order. Mirrors TECH_STACK in portal/semantic_tab.py.
-// [term, what it does here, built?]
+// The technologies, in three layers: integration, metadata, semantic. Mirrors TECH_STACK in portal/semantic_tab.py.
+// [term, what it does here (shown on hover), built?]
 const TECH_STACK = [
   ['Integration layer', [
     ['JSON-LD', 'source fields to ontology terms', true],
-    ['Mapping table, data dictionary', '', true],
-    ['MCP, API', 'layer exposed to agents', false],
+    ['Mapping table', 'which field maps to which term', true],
+    ['MCP, API', 'the layer exposed to agents (design only)', false],
+  ]],
+  ['Metadata layer', [
+    ['Source schema', 'the records and fields that are mapped', true],
+    ['Data dictionary', 'what each column means', true],
   ]],
   ['Semantic layer', [
     ['OWL', 'classes and properties', true],
-    ['SKOS', 'typology techniques, indicators', true],
+    ['SKOS', 'typology techniques and indicators', true],
     ['RDF, Turtle', 'storage format', true],
     ['SHACL', 'valid-record rules (pyshacl)', true],
     ['SPARQL', 'cross-record checks (rdflib)', true],
   ]],
 ];
 
-function techBox([term, does, built]) {
-  return h('div', { class: 'tech-box' + (built ? '' : ' design') },
-    h('b', { class: 'tech-term' }, term), h('span', { class: 'tech-does' }, (does ? ' · ' + does : '') + (built ? '' : ' (design only)')));
+function techChip([term, does, built]) {
+  return h('span', { class: 'tech-box' + (built ? '' : ' design'), title: does }, term);
 }
 
 function techStack() {
   return h('div', { class: 'tech-col' }, TECH_STACK.map(([layer, rows]) => h('div', { class: 'panel-box tech' + (layer === 'Semantic layer' ? ' pink' : '') },
-    h('div', { class: 'stack-head' }, layer), rows.map(techBox))));
+    h('div', { class: 'stack-head' }, layer), h('div', { class: 'tech-chips' }, rows.map(techChip)))));
 }
 
 function buildArchitecture() {
