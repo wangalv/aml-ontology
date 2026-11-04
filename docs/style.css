@@ -85,9 +85,6 @@ input[type=text], select { font: inherit; font-size: 0.92rem; color: var(--fg); 
 .chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip { font: inherit; font-size: 0.8rem; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .chip.on { background: rgba(145,109,213,.28); border-color: #8a63d2; }
-.metrics { display: flex; gap: 32px; margin: 10px 0; }
-.metric .v { font-size: 1.8rem; font-weight: 600; line-height: 1.1; }
-.metric .l { font-size: 0.82rem; color: var(--muted); }
 .skeleton { height: 8px; border-radius: 4px; background: rgba(128,128,128,.25); margin: 0 0 8px; }
 
 /* agents: what the typology gives the agent, and where its wording shows up */
@@ -128,7 +125,6 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 
 @media (max-width: 820px) {
   .cols2, .cols3.rel, .cols3.invg, .cols3.src, .cols2.typg { grid-template-columns: minmax(0, 1fr); }
-  .metrics { gap: 18px; }
 }
 
 .diagram { overflow-x: auto; margin-top: 8px; }

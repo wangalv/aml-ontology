@@ -29,8 +29,8 @@ function paintBoxes() {
 const TECH_STACK = [
   ['Integration layer', [
     ['JSON-LD', 'source fields to ontology terms', true],
-    ['Mapping table, dictionary', 'written by people', true],
-    ['MCP, API', 'how agents would call it', false],
+    ['Mapping table, data dictionary', '', true],
+    ['MCP, API', 'layer exposed to agents', false],
   ]],
   ['Semantic layer', [
     ['OWL', 'classes and properties', true],
@@ -43,7 +43,7 @@ const TECH_STACK = [
 
 function techBox([term, does, built]) {
   return h('div', { class: 'tech-box' + (built ? '' : ' design') },
-    h('b', { class: 'tech-term' }, term), h('span', { class: 'tech-does' }, ' · ' + does + (built ? '' : ' (design only)')));
+    h('b', { class: 'tech-term' }, term), h('span', { class: 'tech-does' }, (does ? ' · ' + does : '') + (built ? '' : ' (design only)')));
 }
 
 function techStack() {

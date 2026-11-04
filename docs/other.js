@@ -63,10 +63,7 @@ function invGraph(snap) {
 function renderInvestigation(root) {
   const snap = DATA.inv, meta = snap.meta;
   root.append(h('p', {}, h('strong', {}, meta.title), ` · version ${meta.version}. ${meta.description}`),
-    caption(`${meta.note} Snapshot of ${meta.source}, exported ${meta.exported}.`),
-    h('div', { class: 'metrics' },
-      [['Classes', snap.classes.length], ['Properties', snap.properties.length], ['Validation rules', snap.rules.length + snap.consistency.length]]
-        .map(([l, v]) => h('div', { class: 'metric' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l)))));
+    caption(`${meta.note} Snapshot of ${meta.source}, exported ${meta.exported}.`));
   const pillBox = h('div'), body = h('div');
   root.append(pillBox, body);
   function show() {
