@@ -316,6 +316,23 @@ function techDetail(key) {
 
 /* ---------- the AML typology box ---------- */
 let refreshDetail = () => {};
+/* ---------- a draft example of rules for one technique, written as SHACL ---------- */
+function shaclExample(ex) {
+  const outcomeBadge = (o) => badge(o === 'Conforms' ? 'green' : o === 'Warning' ? 'orange' : 'red', o);
+  return h('details', { class: 'card' },
+    h('summary', {}, `What a rule would look like: ${ex.technique}, as SHACL (draft example)`),
+    h('p', {}, 'Written for this demo, not part of AML typology. It turns the checkable parts of one indicator into rules on a candidate record, ',
+      'a chain of transfers. Technique ', h('strong', {}, ex.technique), ', tactic ', h('strong', {}, ex.tactic), ', indicator ', h('strong', {}, ex.indicator), ': ',
+      h('em', {}, `"${ex.indicator_text}"`)),
+    dataTable(['Wording in the indicator', 'Rule'], ex.mapping.map((m) => ({ key: m.phrase, cells: [m.phrase, m.rule] })), { maxHeight: 300 }),
+    h('p', {}, 'The same rules run on seven sample records (validator: pyshacl). A second rule reads the typology itself: a finding that names a technique and a tactic is checked against the typology.'),
+    dataTable(['Record', 'What it is', 'Result', 'What the validator said'],
+      ex.results.map((r) => ({ key: r.record, cells: [r.record, r.what, outcomeBadge(r.outcome), r.messages.map((m) => m.message).join(' ') || '-'] })), { maxHeight: 420 }),
+    caption('Rules check structure, not intent: whether a cycle lacks a business rationale stays with the investigator. They describe a loop as a numbered chain of transfers; finding such chains in millions of transactions still takes a graph search.'),
+    h('details', {}, h('summary', {}, 'The SHACL file'), h('pre', { style: { maxHeight: '420px' } }, ex.shapes)),
+    h('details', {}, h('summary', {}, 'The sample records'), h('pre', { style: { maxHeight: '420px' } }, ex.sample)));
+}
+
 function renderOntology(root) {
   const snap = DATA.snap, tmap = DATA.tmap;
   const nTech = Object.values(snap.techniques).filter((t) => t.kind === 'technique').length;
@@ -323,6 +340,11 @@ function renderOntology(root) {
 
   root.append(h('p', {}, 'All ', h('strong', {}, `${nTech} AML typology techniques`),
     '. Click a row to see its indicators, relationships, mitigations and data sources. Filter by tactic, or by a typology the portal detects to see which techniques it corresponds to.'),
+    h('div', { class: 'note' }, h('strong', {}, 'What this is today: '),
+      'a vocabulary of money-laundering techniques and risk indicators, with links between them (technique → indicator, data source, mitigation). ',
+      'It does not define what makes a set of transactions an instance of a technique. To become an ontology in the full sense it would need rules added, ',
+      'for example what a closed loop of transfers is: the path length, that the last receiver is the first sender, and the time order.'),
+    shaclExample(DATA.shacl),
     h('div', { class: 'warn' }, '⚠️ The typology → technique mapping is a ', h('strong', {}, 'draft'),
       ` (${tmap.status.split(' - ').slice(1).join(' - ') || tmap.status}). Match strength: strong = AML typology's definition describes the behaviour the rule detects; medium = overlapping but framed differently; weak = related context only.`));
 
