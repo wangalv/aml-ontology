@@ -31,6 +31,8 @@ const TECH_STACK = [
     ['JSON-LD', 'source fields to ontology terms', true],
     ['Mapping table', 'which field maps to which term', true],
     ['MCP, API', 'the layer exposed to agents (design only)', false],
+    ['R2RML', 'standard mapping from tables to ontology terms (design only)', false],
+    ['Ontop', 'engine that rewrites ontology queries into SQL (design only)', false],
   ]],
   ['Metadata layer', [
     ['Source schema', 'the records and fields that are mapped', true],
@@ -41,7 +43,7 @@ const TECH_STACK = [
     ['SKOS', 'typology techniques and indicators', true],
     ['RDF, Turtle', 'storage format', true],
     ['SHACL', 'valid-record rules (pyshacl)', true],
-    ['SPARQL', 'cross-record checks (rdflib)', true],
+    ['SPARQL', 'cross-record checks (rdflib); also the query language in an OBDA route', true],
   ]],
 ];
 
