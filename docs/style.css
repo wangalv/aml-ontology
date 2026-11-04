@@ -24,20 +24,21 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 
 /* architecture grid */
 .arch-wrap { overflow-x: auto; padding-bottom: 4px; }
-.arch { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; min-width: 760px; align-items: stretch; }
+.arch { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; min-width: 760px; align-items: stretch; grid-template-rows: auto auto auto auto 1fr; }
 .panel-box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .panel-box .title, .layer .title { text-align: center; font-weight: 600; }
 .layer { grid-column: 2 / span 3; background: var(--layer); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .layer .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.base { grid-column: 2 / span 3; }
-.side-note.span3 { grid-column: 2 / span 3; }
-.panel-box.tech { grid-row: 2 / span 6; gap: 0; align-self: stretch; }
-.tech-head { margin-top: 6px; font-weight: 600; font-size: .85rem; }
-.tech-row { font-size: .8rem; line-height: 1.3; margin-top: 3px; }
-.tech-row.design { opacity: .6; }
-.tech-tag { font-size: .7rem; opacity: .75; }
-.tech-does { opacity: .75; }
-.side-note { align-self: center; font-size: 0.85rem; color: var(--muted); }
+.base { grid-column: 2 / span 3; align-self: start; }
+.panel-box.tech { grid-row: 3 / span 3; gap: 0; align-self: stretch; padding: 8px; }
+.panel-box.tech > * { opacity: .65; } /* additional information: faded, no bold */
+.tech-layer { margin-top: 0; display: flex; flex-direction: column; gap: 2px; }
+.tech-layer.pink { background: var(--layer); border: 1px solid var(--line); border-radius: 10px; padding: 4px 6px 6px; margin-top: 4px; }
+.stack-head { text-align: center; font-size: .75rem; color: var(--muted); }
+.tech-box { background: var(--btn); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; text-align: center; line-height: 1.2; font-size: .72rem; }
+.tech-box.design { opacity: .7; }
+.tech-term { font-weight: 400; }
+.tech-does { color: var(--muted); }
 .box { font: inherit; color: var(--fg); background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: center; width: 100%; }
 .box:hover { background: var(--btn-hover); border-color: var(--muted); }
 .box:disabled { cursor: default; opacity: .55; pointer-events: none; }

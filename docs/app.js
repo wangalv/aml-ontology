@@ -25,14 +25,9 @@ function paintBoxes() {
   }
 }
 
-// The technologies behind the three rows to its right, top to bottom in the same order. Mirrors TECH_STACK in portal/semantic_tab.py.
+// The technologies behind the integration layer and the semantic layer to its right, top to bottom in the same order. Mirrors TECH_STACK in portal/semantic_tab.py.
 // [term, what it does here, built?]
 const TECH_STACK = [
-  ['Agent', [
-    ['LLM', 'Ollama (qwen) or Z.ai (GLM)', true],
-    ['Checks in code', 'ids, quotes, SQL', true],
-    ['SQL on DuckDB', "scenario 3's query", true],
-  ]],
   ['Integration layer', [
     ['JSON-LD', 'source fields to ontology terms', true],
     ['Mapping table, dictionary', 'written by people', true],
@@ -47,11 +42,15 @@ const TECH_STACK = [
   ]],
 ];
 
+function techBox([term, does, built]) {
+  return h('div', { class: 'tech-box' + (built ? '' : ' design') },
+    h('b', { class: 'tech-term' }, term), h('span', { class: 'tech-does' }, ' · ' + does + (built ? '' : ' (design only)')));
+}
+
 function techStack() {
-  return h('div', { class: 'panel-box tech' }, h('div', { class: 'title' }, 'Tech stack'),
-    TECH_STACK.map(([layer, rows]) => h('div', { class: 'tech-layer' }, h('div', { class: 'tech-head' }, layer),
-      rows.map(([term, does, built]) => h('div', { class: 'tech-row' + (built ? '' : ' design') },
-        h('b', {}, term), built ? '' : h('span', { class: 'tech-tag' }, ' (design only)'), h('br'), h('span', { class: 'tech-does' }, does))))));
+  return h('div', { class: 'panel-box tech' },
+    TECH_STACK.map(([layer, rows]) => h('div', { class: 'tech-layer' + (layer === 'Semantic layer' ? ' pink' : '') },
+      h('div', { class: 'stack-head' }, layer), rows.map(techBox))));
 }
 
 function buildArchitecture() {
@@ -61,12 +60,11 @@ function buildArchitecture() {
     panel('FinCrime data management', ['er', 'fs', 'lm']),
     panel('Risk identification systems', ['ml', 'rule', 'graph', 'osol']),
     panel('Investigation systems', ['ucm']),
-    techStack(), ...['ag1', 'ag2', 'ag3'].map((id) => makeBox(id, 'Agent', 'agent')),
-    h('div', { class: 'side-note span3' }, 'Reads and writes through the integration layer'),
+    h('div'), ...['ag1', 'ag2', 'ag3'].map((id) => makeBox(id, 'Agent', 'agent')),
+    techStack(),
     ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration (MCP, API)')),
     h('div', { class: 'layer' }, h('div', { class: 'title' }, 'FinCrime Semantic Layer'),
       h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'det', 'inv'].map((id) => makeBox(id))), makeBox('kmg')),
-    h('div', { class: 'side-note span3' }, "The bank's central definitions, shared by every domain"),
     h('div', { class: 'base' }, makeBox('ent')),
   );
   return h('div', { class: 'arch-wrap' }, grid);
