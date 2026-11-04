@@ -31,8 +31,7 @@ const TECH_STACK = [
     ['JSON-LD', 'source fields to ontology terms', true],
     ['Mapping table', 'which field maps to which term', true],
     ['MCP, API', 'the layer exposed to agents (design only)', false],
-    ['R2RML', 'standard mapping from tables to ontology terms (design only)', false],
-    ['Ontop', 'engine that rewrites ontology queries into SQL (design only)', false],
+    ['OBDA', 'ontology-based data access: tables mapped to ontology terms (R2RML), queried through an engine such as Ontop (design only)', false],
   ]],
   ['Metadata layer', [
     ['Source schema', 'the records and fields that are mapped', true],
