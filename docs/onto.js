@@ -344,9 +344,7 @@ function renderOntology(root) {
       'a vocabulary of money-laundering techniques and risk indicators, with links between them (technique → indicator, data source, mitigation). ',
       'It does not define what makes a set of transactions an instance of a technique. To become an ontology in the full sense it would need rules added, ',
       'for example what a closed loop of transfers is: the path length, that the last receiver is the first sender, and the time order.'),
-    shaclExample(DATA.shacl),
-    h('div', { class: 'warn' }, '⚠️ The typology → technique mapping is a ', h('strong', {}, 'draft'),
-      ` (${tmap.status.split(' - ').slice(1).join(' - ') || tmap.status}). Match strength: strong = AML typology's definition describes the behaviour the rule detects; medium = overlapping but framed differently; weak = related context only.`));
+    shaclExample(DATA.shacl));
 
   const query = h('input', { type: 'text', placeholder: 'e.g. mule, shell, structuring', value: O.query,
     oninput: (e) => { O.query = e.target.value.trim().toLowerCase(); refreshTable(); } });

@@ -64,7 +64,7 @@ function buildArchitecture() {
     panel('Investigation systems', ['ucm']),
     h('div'), ...['ag1', 'ag2', 'ag3'].map((id) => makeBox(id, 'Agent', 'agent')),
     techStack(),
-    ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration (MCP, API)')),
+    ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration')),
     h('div', { class: 'layer' }, h('div', { class: 'title' }, 'FinCrime Semantic Layer'),
       h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'det', 'inv'].map((id) => makeBox(id))), makeBox('kmg')),
     h('div', { class: 'base' }, makeBox('ent')),
