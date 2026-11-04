@@ -16,11 +16,10 @@ function panel(title, ids) {
 }
 
 function paintBoxes() {
-  const relied = ITEMS[selected].relies;
   for (const [id, list] of Object.entries(boxes)) {
     for (const { btn, label } of list) {
       btn.classList.toggle('sel', id === selected);
-      btn.textContent = (relied.includes(id) ? '● ' : '') + label;
+      btn.textContent = label;
     }
   }
 }
@@ -113,8 +112,7 @@ async function main() {
   const hash = location.hash.slice(1);
   if (ITEMS[hash] && CLICKABLE.has(hash)) selected = hash;
   app.replaceChildren(
-    caption('Click a box to see its detail. Greyed-out boxes are placeholders with nothing to show yet and cannot be clicked. The selected box is highlighted; ● marks the ' +
-      'semantic layer parts it relies on. Draft layout.'),
+    caption('Click a box for its detail. Greyed-out boxes are placeholders. Draft layout.'),
     buildArchitecture(), h('hr'), h('div', { id: 'detail' }));
   paintBoxes();
   document.getElementById('detail').replaceChildren(detailView(selected));
@@ -122,7 +120,7 @@ async function main() {
   document.getElementById('footer').replaceChildren(
     h('p', {}, `AMLTRIX ${meta.version} (${meta.url}), snapshot exported ${meta.exported}. ${meta.rights} `,
       h('a', { href: 'AMLTRIX_LICENSE.txt' }, 'License terms'), ' · ', h('a', { href: 'AMLTRIX_NOTICE.txt' }, 'Notice'), '.'),
-    h('p', {}, 'The typology-to-technique mapping is a first draft that has not been reviewed by a domain expert. The sample alert and case are built from one transaction in the synthetic IBM AML data. ' +
+    h('p', {}, 'A static export of the Semantic Layer tab of the AML Triage demo: nothing here calls a model or reads a database. The typology-to-technique mapping is a first draft that has not been reviewed by a domain expert. The sample alert and case are built from one transaction in the synthetic IBM AML data. ' +
       'The agent results are one saved run of one model on one alert and one case: an illustration, not a measurement.'));
 }
 
