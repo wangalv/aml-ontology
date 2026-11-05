@@ -479,8 +479,6 @@ function obdaView() {
     h('h3', {}, `The mapping, term by term`),
     caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
     dataTable(['Ontology term', 'Built from the column(s)', 'How', 'Meaning'], ex.mapping.map((r) => ({ key: r.term, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
-    h('div', { class: 'callout' }, h('strong', {}, 'Checks on the two files. '), ex.checks.map((c) => h('div', {}, (c.ok ? '✓ ' : '✗ ') + c.text)),
-      h('div', { class: 'muted' }, 'These check the files against each other and the table. They do not run the mapping.')),
     h('details', {}, h('summary', {}, 'The R2RML mapping'), h('pre', { style: { maxHeight: '420px' } }, ex.r2rml)),
     h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
 }
