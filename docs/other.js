@@ -180,10 +180,8 @@ function scenario3(root) {
   root.append(caption(`Saved run from ${s3.exported}: one technique and one indicator, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only. ` +
       'An illustration, not a measurement. No model or database is used when you view this page.'),
     h('p', {}, 'An investigator wants to test a hypothesis, here that funds are being round-tripped. The LLM turns one indicator of the AML typology into SQL, runs it, and returns the transactions that fit.'),
-    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works here. '),
-      'The indicator speaks in business terms and the database in columns. OBDA puts two things in between: an ontology (the business terms, such as transaction, from account and timestamp) ' +
-      'and a mapping written in R2RML (which column each term comes from). Normally an engine such as Ontop uses them to turn a query on the terms into SQL. ' +
-      'In this demo no engine is installed: a language model stands in for it, and code checks its SQL against the mapping.'),
+    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works in this case. '),
+      'The indicator speaks in business terms and the database in columns. The integration layer sits between them: an ontology names the business terms, and an R2RML mapping says which column each term is. An OBDA engine such as Ontop would use them to turn a query on the terms into SQL. No engine is installed: here an LLM does the rewrite, and code checks its SQL against the mapping. The mapping is shown in Integration (investigation), Scenario 3.'),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
     h('h3', {}, 'The SQL, and where each part comes from'),
     pre(rw.sql_pretty || rw.sql),
@@ -218,11 +216,12 @@ function scenario3(root) {
 
 function renderInvestigationAgent(root) {
   const meta = DATA.agent.meta;
-  root.append(caption(`Saved run from ${meta.exported} against AML typology ${meta.dictionary}: one alert and one case, one run of one model (${meta.provider}/${meta.model}). ` +
-    'An illustration, not a measurement. No model is called when you view this page.'));
+  const intro = caption(`Saved run from ${meta.exported} against AML typology ${meta.dictionary}: one alert and one case, one run of one model (${meta.provider}/${meta.model}). ` +
+    'An illustration, not a measurement. No model is called when you view this page.');
   const pillBox = h('div'), body = h('div');
-  root.append(pillBox, body);
+  root.append(intro, pillBox, body);
   function show() {
+    intro.style.display = AG.section === AG_SECTIONS[2] ? 'none' : '';  /* scenario 3 states its own run */
     pillBox.replaceChildren(pills(AG_SECTIONS.map((s) => [s, s]), AG.section, (s) => { AG.section = s; show(); }));
     const inner = h('div');
     body.replaceChildren(inner);
@@ -469,12 +468,16 @@ function obdaView() {
   const ex = DATA.obda;
   const svg = document.importNode(new DOMParser().parseFromString(ex.svg, 'image/svg+xml').documentElement, true);
   return h('div', {},
+    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works in this case.'),
+      h('ol', { style: { margin: '6px 0 0', paddingLeft: '20px' } },
+        h('li', {}, 'The indicator speaks in business terms ("funds revert to the same origin across multiple accounts"); the database speaks in columns (from_account, to_account, ts).'),
+        h('li', {}, 'This layer sits between them. The ontology names the business terms (transaction, from account, to account, timestamp). An R2RML mapping says which column each term is, ' +
+          'for example from account is the column from_account. Both are written once, as files, not described in prose to the model.'),
+        h('li', {}, 'An OBDA engine such as Ontop uses them to turn a query on the terms into SQL on the table. No engine is installed here: in the Agent page an LLM does the rewrite, ' +
+          'and code checks its SQL against this mapping.'))),
     h('div', { class: 'card' },
       h('strong', {}, `How the transaction table maps onto the ontology (OBDA design)`),
-      caption('Left: the columns of the table. Middle: the integration layer, an R2RML mapping, a declarative file in a W3C standard that says which column becomes which ontology term. ' +
-        'An engine such as Ontop would apply it to rewrite a query on the terms into SQL on the table, so the mapping is written once as a file, not described in prose to the model. ' +
-        'Right: the terms of a FinCrime data ontology (a draft). Far right: the AML typology entries the ontology points to: the data source a transaction is, and the value instruments that match accounts and some payment formats. ' +
-        'This is a design with no engine installed: in the saved run of scenario 3 (see Agent (investigation)) a language model stood in for the engine and rewrote a SPARQL query into SQL using this mapping.'),
+      caption('Left: the columns of the table. Middle: the R2RML mapping. Right: the ontology terms the columns become. Far right: the AML typology entries the ontology points to. A design: nothing here runs.'),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg)),
     h('h3', {}, `The mapping, term by term`),
     caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
@@ -487,14 +490,17 @@ function obdaView() {
 
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
+  const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real, except the R2RML mapping in scenario 3, which is a design and is not run. There is no API or MCP server behind them yet.'))), caption(INT_INTRO[area]));
+    caption('In this demo the mapping and the checks are real, except the R2RML mapping in scenario 3, which is a design and is not run. There is no API or MCP server behind them yet.'))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
     const body = h('div');
     root.append(body);
     const show = () => {
+      const s3 = id === 'int3' && INTS.scenario === 's3';  /* scenario 3 has no records and no sample: its own text explains it */
+      introCap.style.display = footCap.style.display = s3 ? 'none' : '';
       if (id === 'int2') {
         const t = DATA.agent.s1.technique, ty = DATA.agent.s1.typology;
         const outro = h('div', { class: 'callout' },
@@ -516,5 +522,5 @@ function renderIntegration(root, id) {
     };
     show();
   }
-  root.append(caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`));
+  root.append(footCap);
 }

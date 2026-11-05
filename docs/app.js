@@ -35,7 +35,7 @@ const TECH_STACK = [
   ]],
   ['Metadata layer', [
     ['Source schema', 'the records and fields that are mapped', true],
-    ['Data dictionary', 'what each column means', true],
+    ['Data dictionary', 'the table and its columns, for the SQL guard', true],
   ]],
   ['Semantic layer', [
     ['OWL', 'classes and properties', true],

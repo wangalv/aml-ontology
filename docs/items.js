@@ -68,7 +68,7 @@ const ITEMS = {
     'Each detection system speaks its own alert format.', 'Alerts and typologies meet through one shared set of terms.'),
   int3: item('Integration (investigation)', 'Live data', ['typ', 'ind', 'inv', 'kmg'], 'Mapping table',
     'How the investigation agent reads alerts and cases as JSON-LD and looks up indicators, data sources, policies ' +
-    'and past cases.',
+    'and past cases. For a query over the transaction table, an R2RML mapping (a design) ties the business terms to the columns.',
     'The agent is wired to each case system separately.', 'One contract lets any agent read any case system.'),
   typ: item('AML typology', 'Live data', [], 'Technique table and graph',
     'The list of laundering techniques and how they relate.',
