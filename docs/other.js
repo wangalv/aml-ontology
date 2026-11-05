@@ -104,6 +104,12 @@ function docToggle(key, label, doc, repaint) {
   return h('div', {}, h('label', {}, box, ' ' + label), AG.doc[key] ? jsonBlock(doc, 360) : null);
 }
 
+/* The flow diagram of scenario 1 or 2: what the investigator has, the AML typology the LLM reads, what the LLM writes, what code checks. */
+function flowCard(svgText) {
+  const svg = document.importNode(new DOMParser().parseFromString(svgText, 'image/svg+xml').documentElement, true);
+  return h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg));
+}
+
 function scenario1(root, repaint) {
   const s1 = DATA.agent.s1, alert = s1.alert, run = s1.real.with, t = s1.technique, ty = s1.typology;
   const usedInd = new Set(run.accepted.map((a) => a.indicator)), usedDs = new Set(run.accepted.map((a) => a.data_source));
@@ -114,6 +120,7 @@ function scenario1(root, repaint) {
     h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), a.reason)));
   const detailsOpen = AG.open.s1;
   root.append(h('p', {}, 'When an alert comes in, the LLM uses the AML typology to tell the investigator what to check first and where to look.'),
+    flowCard(s1.diagram),
     h('div', { class: 'card' },
       h('div', { class: 'big-label' }, '1  The alert the investigator receives'),
       h('div', {}, h('strong', {}, `Alert ${alert.alert_id}`), ` · raised ${when} · suspected technique `, badge('blue', `${t.id} ${t.name}`)),
@@ -151,6 +158,7 @@ function scenario2(root, repaint) {
     h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), highlight(p.text, grams).nodes),
     h('div', { class: 'llm-quote' }, 'Based on ', p.based_on.map((b) => badge('gray', findingName(b))))));
   root.append(h('p', {}, 'When the investigation is done, the LLM drafts the findings section of the report, using the AML typology to say what each finding means.'),
+    flowCard(s2.diagram),
     h('div', { class: 'card' },
       h('div', { class: 'big-label' }, '1  What the investigator has: the findings of the case'),
       h('div', {}, h('strong', {}, `Case ${c.case_id}`), ' · investigating ', badge('blue', `${t.id} ${t.name || ''}`)),
