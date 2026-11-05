@@ -221,13 +221,9 @@ function scenario3(root) {
 }
 
 function renderInvestigationAgent(root) {
-  const meta = DATA.agent.meta;
-  const intro = caption(`Saved run from ${meta.exported} against AML typology ${meta.dictionary}: one alert and one case, one run of one model (${meta.provider}/${meta.model}). ` +
-    'An illustration, not a measurement. No model is called when you view this page.');
   const pillBox = h('div'), body = h('div');
-  root.append(intro, pillBox, body);
+  root.append(pillBox, body);
   function show() {
-    intro.style.display = AG.section === AG_SECTIONS[2] ? 'none' : '';  /* scenario 3 states its own run */
     pillBox.replaceChildren(pills(AG_SECTIONS.map((s) => [s, s]), AG.section, (s) => { AG.section = s; show(); }));
     const inner = h('div');
     body.replaceChildren(inner);
