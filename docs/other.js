@@ -201,7 +201,7 @@ function scenario3(root) {
     h('h3', {}, 'Result'),
     caption(`The SQL returned ${r.n_rows} rows in ${r.seconds} s: ${r.distinct} different transactions (a transaction that sits in two loops appears twice). These are payments that take part in a three-step ` +
       'chain which comes back to its first account, within the test period. They are what the indicator describes, not a finding that the money is laundered.'),
-    dataTable(r.columns.map((c) => (c === 'amount_log' ? 'amount_log (a logarithm)' : c)), r.rows.map((row, i) => ({ key: i, cells: row.map((v, k) => (k === 4 ? Number(v).toFixed(2) : String(v))) })), { maxHeight: 420 }),
+    dataTable(r.columns.map((c) => (c === 'amount_log' ? 'amount' : c)), r.rows.map((row, i) => ({ key: i, cells: row.map((v, k) => (r.columns[k] === 'amount_log' ? (Math.exp(Number(v)) - 1).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v))) })), { maxHeight: 420 }),
     h('details', { class: 'card' }, h('summary', {}, 'Under the hood: the two steps, the SPARQL query and the mapping rules'),
       h('p', {}, 'The model works in two steps. First it reads the indicator and the data ontology and writes a query over the ontology terms (SPARQL); it never sees a column name. ' +
         'Then, standing in for an engine such as Ontop, it rewrites that query into the SQL above, using the R2RML mapping.'),
