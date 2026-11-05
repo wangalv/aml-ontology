@@ -173,22 +173,47 @@ function scenario2(root, repaint) {
 }
 
 function scenario3(root) {
-  const s3 = DATA.agent.s3, r = s3.result, meaning = Object.fromEntries(s3.dictionary.columns.map((c) => [c.name, c.meaning]));
+  const s3 = DATA.agent.s3, sp = s3.sparql, rw = s3.rewrite, r = s3.result;
   const svg = document.importNode(new DOMParser().parseFromString(s3.diagram, 'image/svg+xml').documentElement, true);
-  root.append(caption(`Saved run from ${s3.exported}: one technique, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only. ` +
+  const attemptNote = (n, refused) => n > 1 ? ` It was accepted on attempt ${n}; the earlier attempt was refused: ${refused.map((x) => x.join(' ')).join(' ')}` : '';
+  const pre = (text) => h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, text);
+  root.append(caption(`Saved run from ${s3.exported}: one technique and one indicator, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only. ` +
       'An illustration, not a measurement. No model or database is used when you view this page.'),
-    h('p', {}, 'An investigator wants to test a hypothesis, here that funds are being round-tripped. The LLM turns the indicator in the AML typology into SQL. ' +
-      "The data dictionary, which people write, is the link between the indicator's words and the columns of the table."),
+    h('p', {}, 'An investigator wants to test a hypothesis, here that funds are being round-tripped. The LLM turns one indicator of the AML typology into SQL, runs it, and returns the transactions that fit.'),
+    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works here. '),
+      'The indicator speaks in business terms and the database in columns. OBDA puts two things in between: an ontology (the business terms, such as transaction, from account and timestamp) ' +
+      'and a mapping written in R2RML (which column each term comes from). Normally an engine such as Ontop uses them to turn a query on the terms into SQL. ' +
+      'In this demo no engine is installed: a language model stands in for it, and code checks its SQL against the mapping.'),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
-    h('h3', {}, 'The SQL it wrote, and how each part links back'),
-    h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, s3.query.sql_pretty || s3.query.sql),
-    dataTable(['Part of the SQL', 'Words of the indicator the LLM says it comes from', 'Columns it uses, as the data dictionary describes them'],
-      s3.conditions.map((c, i) => ({ key: i, cells: [h('code', {}, c.sql),
-        h('div', {}, h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), c.quote), c.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
-        h('div', {}, c.columns.map((n) => h('div', {}, h('code', {}, n), ` ${meaning[n]}`)))] })), { maxHeight: 420 }),
-    caption('Checked by code before it ran: the SQL is one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts, and the words the LLM quotes from the indicator must be in it. ' +
-      'Because this indicator says the funds return to where they started, the code also tried the query on a small made-up table: it had to flag the transactions of a loop and none of a straight chain. ' +
-      'The laundering label is not in the table the LLM can query. Queries the checks refused are not shown.'));
+    h('h3', {}, 'The SQL, and where each part comes from'),
+    pre(rw.sql_pretty || rw.sql),
+    dataTable(['Words of the indicator', 'The SQL it became', 'Ontology terms', 'Columns'],
+      s3.trace.map((g, i) => ({ key: i, cells: [
+        h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), g.words, g.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
+        h('div', {}, g.sql.map((q) => h('div', {}, h('code', {}, q)))),
+        h('div', {}, g.terms.map((t) => h('div', {}, h('code', {}, t)))),
+        h('div', {}, g.columns.map((c) => h('div', {}, h('code', {}, c))))] })), { maxHeight: 420 }),
+    caption('Checked by code before it ran: one read-only SELECT with a LIMIT; tried on a small made-up table, it had to flag the transactions of a loop and none of a straight chain; ' +
+      'and it reads only the columns that the ontology terms stand for in the mapping. The laundering label is not in the table the LLM can query.'),
+    h('h3', {}, 'Result'),
+    caption(`The SQL returned ${r.n_rows} rows in ${r.seconds} s: ${r.distinct} different transactions (a transaction that sits in two loops appears twice). These are payments that take part in a three-step ` +
+      'chain which comes back to its first account, within the test period. They are what the indicator describes, not a finding that the money is laundered.'),
+    dataTable(r.columns.map((c) => (c === 'amount_log' ? 'amount_log (a logarithm)' : c)), r.rows.map((row, i) => ({ key: i, cells: row.map((v, k) => (k === 4 ? Number(v).toFixed(2) : String(v))) })), { maxHeight: 420 }),
+    h('details', { class: 'card' }, h('summary', {}, 'Under the hood: the two steps, the SPARQL query and the mapping rules'),
+      h('p', {}, 'The model works in two steps. First it reads the indicator and the data ontology and writes a query over the ontology terms (SPARQL); it never sees a column name. ' +
+        'Then, standing in for an engine such as Ontop, it rewrites that query into the SQL above, using the R2RML mapping.'),
+      h('h4', {}, 'Step 1: the SPARQL query over the ontology'), pre(sp.text),
+      dataTable(['Part of the query', 'Words of the indicator the LLM says it comes from'],
+        sp.patterns.map((c, i) => ({ key: i, cells: [h('code', {}, c.pattern), h('div', { class: 'quote' }, c.from_indicator, c.quote_found ? badge('green', 'found') : badge('red', 'not found'))] })), { maxHeight: 320 }),
+      h('h4', {}, 'Step 2: the rewrite into SQL'),
+      dataTable(['Part of the query', 'The SQL it became', 'Rule of the mapping it used'],
+        rw.steps.map((c, i) => ({ key: i, cells: [h('code', {}, c.sparql), h('code', {}, c.sql), c.mapping] })), { maxHeight: 360 }),
+      h('div', { class: 'callout' }, h('strong', {}, 'Checked by code. '),
+        h('div', {}, `✓ The SPARQL parsed and used only terms the ontology defines (${sp.terms.join(', ')}).` + attemptNote(sp.attempts, sp.refused)),
+        h('div', {}, '✓ The SQL passed the guard: one read-only SELECT over the listed columns, with a LIMIT, a tx_id column and the time column ts.' + attemptNote(rw.attempts, rw.refused)),
+        h('div', {}, '✓ Because the indicator says the funds return to where they started, the SQL was tried on a small made-up table: it flagged the transactions of a loop and none of a straight chain.'),
+        h('div', {}, `✓ The SQL reads ${rw.used_columns.join(', ')}: exactly the columns the mapping gives for the terms the SPARQL uses, and tx_id.`),
+        h('div', { class: 'muted' }, 'Not checked: that every join of the SQL means what the SPARQL means, or that the SPARQL captures the indicator.'))));
 }
 
 function renderInvestigationAgent(root) {
@@ -439,10 +464,31 @@ function rawView(source, graph) {
     h('div', { style: { marginTop: '10px' } }, sourceView(source, graph)));
 }
 
+/* Scenario 3 in an OBDA design: the transaction table, the R2RML mapping (the integration layer), the data ontology terms, and the AML typology data source. */
+function obdaView() {
+  const ex = DATA.obda;
+  const svg = document.importNode(new DOMParser().parseFromString(ex.svg, 'image/svg+xml').documentElement, true);
+  return h('div', {},
+    h('div', { class: 'card' },
+      h('strong', {}, `How the transaction table maps onto the ontology (OBDA design)`),
+      caption('Left: the columns of the table. Middle: the integration layer, an R2RML mapping, a declarative file in a W3C standard that says which column becomes which ontology term. ' +
+        'An engine such as Ontop would apply it to rewrite a query on the terms into SQL on the table, so the mapping is written once as a file, not described in prose to the model. ' +
+        'Right: the terms of a FinCrime data ontology (a draft). Far right: the AML typology entries the ontology points to: the data source a transaction is, and the value instruments that match accounts and some payment formats. ' +
+        'This is a design with no engine installed: in the saved run of scenario 3 (see Agent (investigation)) a language model stood in for the engine and rewrote a SPARQL query into SQL using this mapping.'),
+      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg)),
+    h('h3', {}, `The mapping, term by term`),
+    caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
+    dataTable(['Ontology term', 'Built from the column(s)', 'How', 'Meaning'], ex.mapping.map((r) => ({ key: r.term, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
+    h('div', { class: 'callout' }, h('strong', {}, 'Checks on the two files. '), ex.checks.map((c) => h('div', {}, (c.ok ? '✓ ' : '✗ ') + c.text)),
+      h('div', { class: 'muted' }, 'These check the files against each other and the table. They do not run the mapping.')),
+    h('details', {}, h('summary', {}, 'The R2RML mapping'), h('pre', { style: { maxHeight: '420px' } }, ex.r2rml)),
+    h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
+}
+
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real. There is no API or MCP server behind them yet.'))), caption(INT_INTRO[area]));
+    caption('In this demo the mapping and the checks are real, except the R2RML mapping in scenario 3, which is a design and is not run. There is no API or MCP server behind them yet.'))), caption(INT_INTRO[area]));
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
@@ -457,12 +503,8 @@ function renderIntegration(root, id) {
           h('div', { style: { marginTop: '6px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
         body.replaceChildren(identificationDiagram(), recordView(snap.alerts.source, 'alert', 'alerts', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph));
       } else if (INTS.scenario === 's3') {
-        /* Scenario 3 has no record to map: the integration layer is the data dictionary of the table. */
-        const dic = snap.dictionary;
-        body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), mappingDiagram('s3'),
-          h('h3', {}, `The data dictionary of the table ${dic.table}`),
-          caption('What the LLM is given about the table: for each column its type and what it means in words. Written by people.'),
-          dataTable(['Column', 'Type', 'Meaning'], dic.columns.map((c) => ({ key: c.name, cells: [h('code', {}, c.name), c.type, c.meaning] })), { maxHeight: 420 }),
+        /* Scenario 3 has no record to map: the integration layer is the R2RML mapping of the table, in an OBDA design. */
+        body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), obdaView(),
           h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
       } else {
         const sc = snap.investigation[INTS.scenario];
