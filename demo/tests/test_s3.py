@@ -63,6 +63,11 @@ class GuardTests(unittest.TestCase):
         for sql in ("DELETE FROM txs", "DROP TABLE txs", "PRAGMA version", "ATTACH 'x.db'", "COPY txs TO 'x.csv'"):
             self.assertTrue(problems(sql), sql)
 
+    def test_a_union_of_selects_returns_the_names_of_its_first_select(self):
+        union = "SELECT tx_id FROM txs WHERE ts > '2022-09-09' UNION SELECT tx_id FROM txs WHERE is_self_transfer LIMIT 10"
+        self.assertEqual(problems(union), [])
+        self.assertTrue(any("tx_id" in p for p in problems("SELECT ts AS x FROM txs UNION SELECT tx_id FROM txs LIMIT 10")))
+
     def test_two_statements_are_refused(self):
         self.assertTrue(any("exactly one" in p for p in problems(GOOD + "; " + GOOD)))
 

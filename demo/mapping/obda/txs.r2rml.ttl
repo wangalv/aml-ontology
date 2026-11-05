@@ -1,0 +1,34 @@
+@prefix rr:  <http://www.w3.org/ns/r2rml#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fcd: <https://example.org/fincrime-data#> .
+@prefix map: <https://example.org/obda/txs#> .
+
+# DRAFT written for this demo (OBDA design, not run). An R2RML mapping (W3C Recommendation) from the view `txs` to the
+# FinCrime data ontology in transaction_ontology.ttl. It is declarative: it says which columns become which terms, and
+# an engine such as Ontop would apply it to rewrite a query on the terms into SQL on the columns. Nothing here runs yet.
+
+map:TransactionMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery """
+        SELECT tx_id, ts, from_account, to_account, amount_log,
+               is_cross_currency, is_self_transfer, is_same_bank,
+               CASE WHEN fmt_wire = 1 THEN 'wire' WHEN fmt_ach = 1 THEN 'ach' WHEN fmt_cheque = 1 THEN 'cheque'
+                    WHEN fmt_cash = 1 THEN 'cash' WHEN fmt_credit_card = 1 THEN 'credit card'
+                    WHEN fmt_bitcoin = 1 THEN 'bitcoin' WHEN fmt_reinvestment = 1 THEN 'reinvestment' END AS payment_format
+        FROM txs""" ] ;
+    rr:subjectMap [ rr:template "https://example.org/transaction/{tx_id}" ; rr:class fcd:Transaction ] ;
+    rr:predicateObjectMap
+        [ rr:predicate fcd:timestamp ;       rr:objectMap [ rr:column "ts" ; rr:datatype xsd:dateTime ] ] ,
+        [ rr:predicate fcd:fromAccount ;     rr:objectMap [ rr:template "https://example.org/account/{from_account}" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate fcd:toAccount ;       rr:objectMap [ rr:template "https://example.org/account/{to_account}" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate fcd:amountLog ;       rr:objectMap [ rr:column "amount_log" ; rr:datatype xsd:double ] ] ,
+        [ rr:predicate fcd:isCrossCurrency ; rr:objectMap [ rr:column "is_cross_currency" ; rr:datatype xsd:boolean ] ] ,
+        [ rr:predicate fcd:isSelfTransfer ;  rr:objectMap [ rr:column "is_self_transfer" ; rr:datatype xsd:boolean ] ] ,
+        [ rr:predicate fcd:isSameBank ;      rr:objectMap [ rr:column "is_same_bank" ; rr:datatype xsd:boolean ] ] ,
+        [ rr:predicate fcd:paymentFormat ;   rr:objectMap [ rr:column "payment_format" ] ] .
+
+# The table has no table of accounts: the accounts are the distinct ids that appear in the transactions.
+map:AccountMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery """
+        SELECT from_account AS account FROM txs UNION SELECT to_account AS account FROM txs""" ] ;
+    rr:subjectMap [ rr:template "https://example.org/account/{account}" ; rr:class fcd:Account ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:accountId ; rr:objectMap [ rr:column "account" ] ] .

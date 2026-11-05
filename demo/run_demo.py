@@ -4,6 +4,7 @@
     ../.venv/bin/python run_demo.py advise [--llm mock|ollama|zai] [--baseline | --compare]
     ../.venv/bin/python run_demo.py report [--llm mock|ollama|zai] [--baseline | --compare]
     ../.venv/bin/python run_demo.py hunt [--llm mock|ollama|zai] [--technique T0039]
+    ../.venv/bin/python run_demo.py obda [--llm ollama|zai] [--technique T0039] [--indicator IND02191]
     ../.venv/bin/python run_demo.py reason [--llm ollama|zai] [--seed s4] [--examples 1] [--resume]
     ../.venv/bin/python run_demo.py consolidate [--llm ollama|zai] [--sample 3:40] [--seed s4] [--examples N] [--compare] [--resume]
 
@@ -17,6 +18,9 @@ report  scenario 2: asks a model to draft the findings section of a report for t
 hunt    scenario 3: asks a model which indicators of a technique the payments table can show and to write a query for
         them; a guard checks the SQL, it runs read-only on the test period of the AML Triage Demo database (AML_DB, and
         AML_DB_PYTHON if that file needs a newer duckdb), and the labels judge it afterwards. Writes generated/hunt.json.
+obda    scenario 3 as an OBDA design: the model writes a SPARQL query over the FinCrime data ontology for one indicator, then (standing in for an
+        engine such as Ontop) rewrites it to SQL with the R2RML mapping; code checks both steps and runs the SQL on the database (needs AML_DB,
+        and AML_DB_PYTHON if that file needs a newer duckdb). Writes generated/obda.json.
 reason  scenario 4: takes payments that three monitoring systems all alerted on (the first one(s) in a fixed random order), builds the
         evidence each system gives (rule definition, ML score, verified cycle, the payment), and asks a model which AMLTRIX risk
         indicators that evidence supports, citing it. Code checks the citations, numbers and ids; the label judges afterwards. Needs
@@ -33,7 +37,7 @@ import sys
 from amldemo import adapters, config, jsonld_build, validate
 from amldemo.llm import LLMError, make_llm
 from amldemo import dbrun
-from amldemo.scenarios import s1_advisor, s2_report, s3_hunting, s4_cases, s4_reason
+from amldemo.scenarios import s1_advisor, s2_report, s3_hunting, s3_obda, s4_cases, s4_reason
 
 SCENARIOS = {
     "s1": ("alert", "alert_source.json", adapters.alert_doc, "context_alert.jsonld"),
@@ -168,6 +172,27 @@ def hunt(provider, technique):
     return 0
 
 
+def obda(provider, technique, indicator):
+    try:
+        result = s3_obda.run(make_llm(provider), technique, indicator)
+    except (LLMError, dbrun.DatabaseError) as e:
+        print(f"[s3-obda] failed: {e}")
+        return 1
+    print(f"[s3-obda] {result['provider']}/{result['model']}  {result['technique']['id']} {result['technique']['name']}  {result['indicator']['id']}")
+    print(f"  sparql: accepted={result['sparql']['accepted']} attempts={len(result['sparql']['attempts'])}")
+    for a in result["sparql"]["attempts"]:
+        print("   ", a["problems"] or "ok")
+    if result["rewrite"]:
+        print(f"  sql: accepted={result['rewrite']['accepted']} attempts={len(result['rewrite']['attempts'])}")
+        for a in result["rewrite"]["attempts"]:
+            print("   ", a["problems"] or "ok")
+    if result["result"]:
+        print(f"  result: {result['result']['n_rows']} transactions in {result['result']['seconds']} s")
+    jsonld_build.write_json(result, config.GENERATED_DIR / "obda.json")
+    print("\n[s3-obda] wrote generated/obda.json")
+    return 0 if result["result"] else 1
+
+
 def reason(provider, seed, examples, resume):
     partial_path = config.GENERATED_DIR / "reason.partial.json"
     done = json.loads(partial_path.read_text(encoding="utf-8")) if resume and partial_path.exists() else {}
@@ -264,10 +289,11 @@ def consolidate(provider, sample, seed, resume, examples, compare):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["build", "advise", "report", "hunt", "consolidate", "reason"])
+    parser.add_argument("command", choices=["build", "advise", "report", "hunt", "obda", "consolidate", "reason"])
     parser.add_argument("--only", choices=list(SCENARIOS))
     parser.add_argument("--llm", choices=["mock", "ollama", "zai"], help="default: LLM_PROVIDER, else mock")
     parser.add_argument("--technique", default="T0039", help="hunt: the AMLTRIX technique to turn into queries")
+    parser.add_argument("--indicator", default="IND02191", help="obda: the indicator of the technique to turn into a query")
     parser.add_argument("--sample", default="3:40", help="consolidate: accounts to sample, as sources:count pairs")
     parser.add_argument("--examples", type=int, default=0, help="consolidate: write notes only for the first N cases of each link class")
     parser.add_argument("--seed", default="s4", help="consolidate: seed of the sample")
@@ -279,6 +305,8 @@ if __name__ == "__main__":
         sys.exit(build(args.only))
     if args.command == "hunt":
         sys.exit(hunt(args.llm, args.technique))
+    if args.command == "obda":
+        sys.exit(obda(args.llm, args.technique, args.indicator))
     if args.command == "reason":
         sys.exit(reason(args.llm, args.seed, args.examples or 1, args.resume))
     if args.command == "consolidate":

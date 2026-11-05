@@ -1,0 +1,71 @@
+@prefix fcd:  <https://example.org/fincrime-data#> .
+@prefix amx:  <https://example.org/amltrix/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+# DRAFT written for this demo (OBDA design, not run). The ontology side of an OBDA setup for the payments table:
+# the business terms a query would use, so that nobody has to know the column names. The mapping that ties them to the
+# columns is txs.r2rml.ttl. The namespace is a placeholder. The comments are the meaning of each term in words; they
+# replace the column descriptions of the plain-text data dictionary.
+
+<https://example.org/fincrime-data> a owl:Ontology ;
+    dct:title "FinCrime data ontology, payments (Demo)"@en ;
+    owl:versionInfo "0.1-draft" .
+
+fcd:Transaction a owl:Class ;
+    rdfs:label "Transaction"@en ;
+    rdfs:comment "One payment from one account to another. The data is synthetic."@en ;
+    rdfs:seeAlso amx:DS0019 .   # AML typology data source "Transaction Logs": the kind of record a payment is
+
+fcd:Account a owl:Class ;
+    rdfs:label "Account"@en ;
+    rdfs:comment "An account that sends or receives payments. Only its identifier is known: there is no table of accounts, customers or companies."@en ;
+    rdfs:seeAlso amx:IN0008 .   # AML typology value instrument "Bank Accounts"
+
+fcd:fromAccount a owl:ObjectProperty ;
+    rdfs:label "from account"@en ;
+    rdfs:comment "The account the money leaves."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range fcd:Account .
+
+fcd:toAccount a owl:ObjectProperty ;
+    rdfs:label "to account"@en ;
+    rdfs:comment "The account the money arrives in."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range fcd:Account .
+
+fcd:accountId a owl:DatatypeProperty ;
+    rdfs:label "account id"@en ;
+    rdfs:comment "The identifier of the account, such as 80308DE40."@en ;
+    rdfs:domain fcd:Account ; rdfs:range xsd:string .
+
+fcd:timestamp a owl:DatatypeProperty ;
+    rdfs:label "timestamp"@en ;
+    rdfs:comment "When the payment was made, to the minute."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:dateTime .
+
+fcd:amountLog a owl:DatatypeProperty ;
+    rdfs:label "amount (logarithm)"@en ;
+    rdfs:comment "A natural logarithm, not the amount: ln(1 + amount paid). An amount of 1000 is stored as about 6.9."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:double .
+
+fcd:isCrossCurrency a owl:DatatypeProperty ;
+    rdfs:label "is cross-currency"@en ;
+    rdfs:comment "True when the payment currency differs from the receiving currency."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:boolean .
+
+fcd:isSelfTransfer a owl:DatatypeProperty ;
+    rdfs:label "is self-transfer"@en ;
+    rdfs:comment "True when the paying and the receiving account are the same account."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:boolean .
+
+fcd:isSameBank a owl:DatatypeProperty ;
+    rdfs:label "is same bank"@en ;
+    rdfs:comment "True when both accounts are at the same bank."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:boolean .
+
+fcd:paymentFormat a owl:DatatypeProperty ;
+    rdfs:label "payment format"@en ;
+    rdfs:comment "How the payment was made, for example wire, cash or cheque. One of seven formats: wire, ach, cheque, cash, credit card, bitcoin, reinvestment. Four of them match AML typology value instruments (see also): cash, cheque, credit card and bitcoin. Wire, ach and reinvestment have no direct counterpart."@en ;
+    rdfs:domain fcd:Transaction ; rdfs:range xsd:string ;
+    rdfs:seeAlso amx:IN0051 , amx:IN0004 , amx:IN0029 , amx:IN0015 .   # Cash, Checks, Credit and Debit Cards, Cryptocurrencies

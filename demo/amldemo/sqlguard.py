@@ -78,7 +78,10 @@ def check(sql, dictionary, max_rows=MAX_ROWS):
     elif not isinstance(limit, int) or limit > max_rows:
         problems.append(f"the LIMIT must be a number no larger than {max_rows}")
 
-    outputs = tree.get("select_list", [])
+    first = tree
+    while first.get("type") == "SET_OPERATION_NODE" and first.get("left"):  # the output names of a UNION are those of its first SELECT
+        first = first["left"]
+    outputs = first.get("select_list", [])
     names = {item.get("alias") or (item["column_names"][-1] if item.get("class") == "COLUMN_REF" else "") for item in outputs}
     if "tx_id" not in names:
         problems.append("the query must return a tx_id column: the transactions it flags")
