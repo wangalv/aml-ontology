@@ -186,7 +186,7 @@ function scenario3(root) {
   const attemptNote = (n, refused) => n > 1 ? ` It was accepted on attempt ${n}; the earlier attempt was refused: ${refused.map((x) => x.join(' ')).join(' ')}` : '';
   const pre = (text) => h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, text);
   root.append(
-    h('p', {}, 'An investigator wants to test a hypothesis: that funds are being round-tripped. The indicator in the AML typology speaks in business terms (funds revert to the same origin across multiple accounts), while the database speaks in columns. An ontology names the business terms and an R2RML mapping says which column each term is; an OBDA engine such as Ontop would use them to turn the indicator into SQL. The SQL then runs and returns the transactions that fit. The mapping is shown in Integration (investigation), Scenario 3.'),
+    h('p', {}, 'An investigator wants to test a hypothesis: that funds are being round-tripped. The indicator in the AML typology speaks in business terms (funds revert to the same origin across multiple accounts), while the database speaks in columns. An ontology names the business terms and an R2RML mapping says which column each term is; here an LLM does what an OBDA engine such as Ontop would: it uses them to turn the indicator into SQL. The SQL then runs and returns the transactions that fit. The mapping is shown in Integration (investigation), Scenario 3.'),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
     h('h3', {}, 'The SQL, and where each part comes from'),
     pre(rw.sql_pretty || rw.sql),
