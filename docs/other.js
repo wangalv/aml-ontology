@@ -179,9 +179,7 @@ function scenario3(root) {
   const pre = (text) => h('pre', { style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, text);
   root.append(caption(`Saved run from ${s3.exported}: one technique and one indicator, one run of one model (${s3.provider}/${s3.model}), on the synthetic IBM AML data, test period only. ` +
       'An illustration, not a measurement. No model or database is used when you view this page.'),
-    h('p', {}, 'An investigator wants to test a hypothesis, here that funds are being round-tripped. The LLM turns one indicator of the AML typology into SQL, runs it, and returns the transactions that fit.'),
-    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works in this case. '),
-      'The indicator speaks in business terms and the database in columns. The integration layer sits between them: an ontology names the business terms, and an R2RML mapping says which column each term is. An OBDA engine such as Ontop would use them to turn a query on the terms into SQL. No engine is installed: here an LLM does the rewrite, and code checks its SQL against the mapping. The mapping is shown in Integration (investigation), Scenario 3.'),
+    h('p', {}, 'An investigator wants to test a hypothesis: that funds are being round-tripped. The indicator in the AML typology speaks in business terms (funds revert to the same origin across multiple accounts), while the database speaks in columns. An ontology names the business terms and an R2RML mapping says which column each term is; an OBDA engine such as Ontop would use them to turn the indicator into SQL. The SQL then runs and returns the transactions that fit. The mapping is shown in Integration (investigation), Scenario 3.'),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
     h('h3', {}, 'The SQL, and where each part comes from'),
     pre(rw.sql_pretty || rw.sql),
@@ -468,15 +466,14 @@ function obdaView() {
   const ex = DATA.obda;
   const svg = document.importNode(new DOMParser().parseFromString(ex.svg, 'image/svg+xml').documentElement, true);
   return h('div', {},
-    h('div', { class: 'callout' }, h('strong', {}, 'How OBDA works in this case.'),
+    h('div', { class: 'card' },
+      h('strong', {}, `How the transaction table maps onto the ontology (OBDA design)`),
       h('ol', { style: { margin: '6px 0 0', paddingLeft: '20px' } },
         h('li', {}, 'The indicator speaks in business terms ("funds revert to the same origin across multiple accounts"); the database speaks in columns (from_account, to_account, ts).'),
         h('li', {}, 'This layer sits between them. The ontology names the business terms (transaction, from account, to account, timestamp). An R2RML mapping says which column each term is, ' +
           'for example from account is the column from_account. Both are written once, as files, not described in prose to the model.'),
         h('li', {}, 'An OBDA engine such as Ontop uses them to turn a query on the terms into SQL on the table. No engine is installed here: in the Agent page an LLM does the rewrite, ' +
-          'and code checks its SQL against this mapping.'))),
-    h('div', { class: 'card' },
-      h('strong', {}, `How the transaction table maps onto the ontology (OBDA design)`),
+          'and code checks its SQL against this mapping.')),
       caption('Left: the columns of the table. Middle: the R2RML mapping. Right: the ontology terms the columns become. Far right: the AML typology entries the ontology points to. A design: nothing here runs.'),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg)),
     h('h3', {}, `The mapping, term by term`),
