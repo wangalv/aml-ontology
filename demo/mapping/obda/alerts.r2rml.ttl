@@ -1,0 +1,73 @@
+@prefix rr:  <http://www.w3.org/ns/r2rml#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix fcd: <https://example.org/fincrime-data#> .
+@prefix map: <https://example.org/obda/alerts#> .
+
+# DRAFT written for this demo. An R2RML mapping (W3C Recommendation) from the three alert tables to the
+# FinCrime data ontology in alert_ontology.ttl, so that an alert looks the same whichever system raised it. It is declarative:
+# an engine such as Ontop would apply it to rewrite a query on the terms into SQL on the tables. No engine such as Ontop is connected: amldemo/alert_obda.py applies it to one payment at a time.
+#
+# Each table is mapped for what its own system says: the rule table for its flags, the ML table for its score, the graph table for
+# the round trip. The tables also carry the signals of the other systems (they are all cut from one feature table), but those are
+# not read here, so no alert claims something its own system did not say. The payment itself is described by the mapping of the
+# transaction table (txs.r2rml.ttl): the alert only points to it. The laundering label is not mapped.
+
+# ---------------------------------------------------------------- rule engine
+map:RuleAlertMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ; rr:class fcd:Alert ] ;
+    rr:predicateObjectMap
+        [ rr:predicate fcd:sourceSystem ;        rr:objectMap [ rr:constant "rule engine" ] ] ,
+        [ rr:predicate fcd:alertedTransaction ;  rr:objectMap [ rr:template "https://example.org/transaction/{tx_id}" ; rr:termType rr:IRI ] ] .
+
+map:RuleFlagStructuringMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_structuring = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_structuring ] .
+
+map:RuleFlagMoneyMuleMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_money_mule = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_money_mule ] .
+
+map:RuleFlagFanInMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_fan_in = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_fan_in ] .
+
+map:RuleFlagPepMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_pep = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_pep ] .
+
+map:RuleFlagHighRiskBusinessMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_high_risk_business = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_high_risk_business ] .
+
+map:RuleFlagHighRiskCountryMap a rr:TriplesMap ;   # one mapping per flag: the alert gets the flag when the rule fired
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_rule WHERE rule_high_risk_country = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/rule/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_high_risk_country ] .
+
+# ---------------------------------------------------------------- ML model
+map:MlAlertMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id, ml_proba FROM alert_ml" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/ml/{tx_id}" ; rr:class fcd:Alert ] ;
+    rr:predicateObjectMap
+        [ rr:predicate fcd:sourceSystem ;        rr:objectMap [ rr:constant "ML model" ] ] ,
+        [ rr:predicate fcd:alertedTransaction ;  rr:objectMap [ rr:template "https://example.org/transaction/{tx_id}" ; rr:termType rr:IRI ] ] ,
+        [ rr:predicate fcd:mlScore ;             rr:objectMap [ rr:column "ml_proba" ; rr:datatype xsd:float ] ] .
+
+# ---------------------------------------------------------------- transaction graph
+map:GraphAlertMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_graph" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/graph/{tx_id}" ; rr:class fcd:Alert ] ;
+    rr:predicateObjectMap
+        [ rr:predicate fcd:sourceSystem ;        rr:objectMap [ rr:constant "transaction graph" ] ] ,
+        [ rr:predicate fcd:alertedTransaction ;  rr:objectMap [ rr:template "https://example.org/transaction/{tx_id}" ; rr:termType rr:IRI ] ] .
+
+map:GraphFlagRoundtripMap a rr:TriplesMap ;
+    rr:logicalTable [ rr:sqlQuery "SELECT tx_id FROM alert_graph WHERE graph_roundtrip = 1" ] ;
+    rr:subjectMap [ rr:template "https://example.org/alert/graph/{tx_id}" ] ;
+    rr:predicateObjectMap [ rr:predicate fcd:firedFlag ; rr:object fcd:flag_roundtrip ] .

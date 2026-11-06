@@ -59,3 +59,8 @@ def sample_payments(seed, n_sources, count=1):
 
 def judge_payments(tx_ids):
     return call({"action": "judge_payments", "tx_ids": list(tx_ids)})
+
+
+def mapping_rows(tx_id, statements):
+    """The rows each SQL statement of the alert mapping gives for one payment (see sqlrun.mapping)."""
+    return call({"action": "mapping", "tx_id": int(tx_id), "statements": list(statements)})

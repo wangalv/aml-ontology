@@ -25,7 +25,7 @@ explain() (all the evidence in one request) and explain_lanes() return plain dic
 """
 import re
 
-from .. import dbrun, lookup
+from .. import alert_obda, dbrun, lookup
 from . import s4_cases
 from .s4_cases import COUNTED_WORD, MENTIONED_AMOUNT, MENTIONED_TECHNIQUE, NUMBER, WORDS, _read_object, case_techniques, load_sources
 
@@ -300,25 +300,52 @@ def lamps(result):
     return rows
 
 
-def run(llm, seed, count=1, n_sources=3, done=None, on_payment=None):
+def same_prompt(result, payment, sources):
+    """True when a saved result was made from the evidence and the techniques (with their indicators) that `sources` gives for the payment now, so
+    that the model would be asked the same thing and the saved answer still stands."""
+    techniques = techniques_of(payment, sources)
+    saved = {t["id"]: [i["id"] for i in t["indicators"]] for t in result["techniques"]}
+    return (result["evidence"] == evidence_of(payment, sources) and list(saved) == list(techniques)
+            and all(saved[k] == [i["id"] for i in techniques[k]["indicators"]] for k in saved))
+
+
+def run(llm, seed, count=1, n_sources=3, done=None, on_payment=None, reuse=None):
     """Population figures, the first `count` payments (in a fixed random order) raised by `n_sources` systems, a note for each, then the label.
 
-    `done` maps tx_id (as text) -> an explain() result from an interrupted run; `on_payment(payment, result)` is called after each new one."""
+    What the agent is given about each payment comes through the integration layer: the alert mapping and the alert ontology (alert_obda)
+    give the systems, the flags, the score and the techniques the flags point to; the alert tables read directly are only used to check that
+    the two agree. The detail of a round trip (its legs) is not in the mapping and is added from the graph analysis.
+
+    `done` maps tx_id (as text) -> an explain() result from an interrupted run; `reuse` is a finished run (generated/reason.json), whose notes are kept only if
+    the model would be asked the same thing (same_prompt); when every note is kept, the run keeps that run's provider and model; `on_payment(payment, result)` is called after each new one."""
     population = dbrun.population()
     if "error" in population:
         raise dbrun.DatabaseError(population["error"])
     sampled = dbrun.sample_payments(seed, n_sources, count)
     if "error" in sampled:
         raise dbrun.DatabaseError(sampled["error"])
-    payments, sources, results = sampled["payments"], load_sources(), []
+    payments, results, status = sampled["payments"], [], load_sources()["status"]
+    kept = {str(r["tx_id"]): r for r in (reuse or {}).get("results", [])}
+    fresh = False
     for payment in payments:
+        view = alert_obda.alerts_of(payment["tx_id"])
+        problems = alert_obda.problems_with(payment, view)
+        if problems:
+            raise dbrun.DatabaseError("the alert mapping and the alert tables disagree: " + "; ".join(problems))
+        sources = alert_obda.as_sources(view["flags"], status)
         previous = (done or {}).get(str(payment["tx_id"]))
+        saved = kept.get(str(payment["tx_id"]))
+        if previous is None and saved is not None and same_prompt(saved, payment, sources):
+            previous = saved
+        fresh = fresh or previous is None or previous is not saved
         result = previous or explain_lanes(payment, llm, sources)
+        result["mapping"] = view
         if not previous and on_payment:
             on_payment(payment, result)
         results.append(result)
     judged = dbrun.judge_payments([p["tx_id"] for p in payments])
     if "error" in judged:
         raise dbrun.DatabaseError(judged["error"])
-    return {"provider": llm.name, "model": llm.model, "seed": seed, "n_sources": n_sources, "mapping_status": sources["status"],
+    keep_model = reuse is not None and not fresh
+    return {"provider": reuse["provider"] if keep_model else llm.name, "model": reuse["model"] if keep_model else llm.model, "seed": seed, "n_sources": n_sources, "mapping_status": status,
             "population": population, "payments": payments, "results": results, "labels": judged["payments"]}

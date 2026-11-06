@@ -199,7 +199,7 @@ function scenario3(root) {
     caption('Checked by code before it ran: one read-only SELECT with a LIMIT; tried on a small made-up table, it had to flag the transactions of a loop and none of a straight chain; ' +
       'and it reads only the columns that the ontology terms stand for in the mapping. The laundering label is not in the table the LLM can query.'),
     h('h3', {}, 'Result'),
-    caption(`The SQL returned ${r.n_rows} rows in ${r.seconds} s: ${r.distinct} different transactions (a transaction that sits in two loops appears twice). These are payments that take part in a three-step ` +
+    caption(`The SQL returned ${r.n_rows} rows in ${r.seconds} s: ${r.distinct} different transactions (a transaction that sits in two loops appears twice). These are transactions that take part in a three-step ` +
       'chain which comes back to its first account, within the test period. They are what the indicator describes, not a finding that the money is laundered.'),
     dataTable(r.columns.map((c) => (c === 'amount_log' ? 'amount' : c)), r.rows.map((row, i) => ({ key: i, cells: row.map((v, k) => (r.columns[k] === 'amount_log' ? (Math.exp(Number(v)) - 1).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v))) })), { maxHeight: 420 }),
     h('details', { class: 'card' }, h('summary', {}, 'Under the hood: the two steps, the SPARQL query and the mapping rules'),
@@ -231,26 +231,14 @@ function renderInvestigationAgent(root) {
   show();
 }
 
-const fmt = (n) => Number(n).toLocaleString('en-US');
-const pct = (a, b) => (b ? (100 * a / b).toFixed(2) + '%' : '–');
 const money = (n) => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const SYS_COLOR = { rule: 'blue', ml: 'orange', graph: 'green' };
 const SYS_NAME = { rule: 'rule engine', ml: 'ML model', graph: 'transaction graph' };
 const sysBadge = (k) => badge(SYS_COLOR[k], SYS_NAME[k]);
-const joinNames = (list) => list.map((k) => SYS_NAME[k]).join(' and the ');
 
 function renderIdentificationAgent(root) {
   const s4 = DATA.agent.s4, e = s4.examples[0], p = e.payment, snap = DATA.snap;
-  const tiers = s4.payments_by_sources, three = tiers.find((t) => t.sources === 3), one = tiers.find((t) => t.sources === 1);
   const svg = document.importNode(new DOMParser().parseFromString(e.diagram, 'image/svg+xml').documentElement, true);
-  const agree = e.lamps.filter((r) => r.systems.length > 1);
-  const verdict = agree.length
-    ? agree.map((r) => {
-      const own = r.systems.filter((k) => r.cells[k].pointed), read = r.systems.filter((k) => !r.cells[k].pointed);
-      return `${r.id} ${r.name} is lit by the ${joinNames(r.systems)}: independent systems agree. ` +
-        (read.length ? `Only the ${joinNames(own)}'s own flag points to it; for the ${joinNames(read)} it is the model's reading of the evidence.` : "Each system's own flag points to it.");
-    }).join(' ')
-    : 'No technique is lit by more than one system for this transaction.';
   const techBox = h('div');
   const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'transaction details')]));
   const llmBox = h('div', { class: 'llm-box' },
@@ -289,19 +277,22 @@ function renderIdentificationAgent(root) {
   O.sel = null; O.focus = null;
   showTech();
 
-  root.append(caption(`Saved run from ${s4.exported}: one example transaction, one run of one model (${s4.provider}/${s4.model}), on the synthetic IBM AML data, test period only. ` +
-      'An illustration, not a measurement. No model or database is used when you view this page.'),
-    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
+  const flowSvg = document.importNode(new DOMParser().parseFromString(e.flow, 'image/svg+xml').documentElement, true);
+  root.append(h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
       "The agent judges each system's evidence against AML typology risk indicators, and a technique that more than one system supports is a strong, linked signal. The investigator decides."),
+    h('div', { class: 'card' }, h('strong', {}, 'How the agent gets its input'),
+      caption("The agent's input about the alerts comes through the integration layer, not straight from the alert tables: the alert mapping (R2RML) and the alert ontology give the systems that alerted, their flags and score, and the techniques each flag points to, the same facts as on the Integration page. " +
+        "A small program applies the mapping; no engine such as Ontop is connected. Two things do not come through it: the transaction's own details (amount, accounts, time, format), which are read from the transactions table, and the amounts and times of the round trip, which are read from the graph analysis."),
+      h('div', { class: 'diagram s4', style: { maxWidth: '1245px' } }, flowSvg),
+      caption("'Agree' on this page means that the evidence of more than one system supports the same technique. The flags of the systems can still point to different techniques, which is the question of the Integration page: here, for this transaction, they do."),
+      h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('int2') }, 'See the mapping in Integration (Risk identification)'))),
     h('div', { class: 'card' },
       h('div', {}, h('strong', {}, `Transaction ${p.tx_id}`), ' ', p.sources.map((k) => [sysBadge(k), ' '])),
       caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
     llmBox,
-    h('div', { class: 'callout' }, verdict, caption(`Afterwards, with the label (the model never saw it): this transaction ${e.laundering ? 'is' : 'is not'} laundering. ` +
-      `Of the ${fmt(three.payments)} transactions alerted on by all three systems, ${pct(three.laundering, three.payments)} are laundering, against ${pct(one.laundering, one.payments)} of those only one system alerted on (computed by code).`)),
     techBox,
-    caption('Checked by code: every indicator is one that was listed under the techniques the flags point to; every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
+    caption('Checked by code: every indicator is one that was listed under the techniques the flags point to (strong and medium links; weak ones are not given to the model); every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
       `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));
 }
 
@@ -478,31 +469,25 @@ function obdaAlertsView() {
     h('div', { class: 'card' },
       h('strong', {}, 'How the alert tables map onto the ontology (OBDA design)'),
       h('ol', { style: { margin: '6px 0 0', paddingLeft: '20px' } },
-        h('li', {}, 'The three detection systems alert for different reasons and say different things: the rule engine names the rules that fired, the ML model gives a score and no reason, the transaction graph says the payment lies on a verified loop. Each keeps its alerts in its own table.'),
-        h('li', {}, 'This layer gives every alert the same shape. The ontology names the terms (alert, the payment it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
-        h('li', {}, 'A question on those terms, for example which risks the systems flagged on a payment and whether they agree, then needs no knowledge of the three tables. An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here, so this is a design: nothing runs.')),
-      caption(`Three systems raise alerts, each in its own table. One question about a payment (here ${ex.example.tx_id}, the payment of scenario 4) goes through the mapping to all three, and the answers come back in one shape.`),
+        h('li', {}, 'The three detection systems alert for different reasons and say different things: the rule engine names the rules that fired, the ML model gives a score and no reason, the transaction graph says the transaction lies on a verified loop. Each keeps its alerts in its own table.'),
+        h('li', {}, 'This layer gives every alert the same shape. The ontology names the terms (alert, the transaction it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
+        h('li', {}, 'A question on those terms, for example which techniques the flags of the systems point to for a transaction and whether they point to the same one, then needs no knowledge of the three tables. An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here: a small program applies the mapping to one transaction, which is how the identification agent gets its input. So the mapping is a design, run by code, not by an engine.')),
+      caption(`Three systems raise alerts, each in its own table. One question about a transaction (here ${ex.example.tx_id}, the transaction of scenario 4) goes through the mapping to all three, and the answers come back in one shape.`),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flow),
-      caption('One question, asked once in the terms of the ontology (top). The mapping turns it into one lookup per table, and every system answers in the same shape: the alert, what the system said, and the payment it points to. ' +
-        'The technique after each flag is the link from the flag to the AML typology (a first draft, not reviewed by a domain expert); it is what lets the risks be compared. The question is not read by an engine: code applies the mapping to the three tables.'),
-      h('div', { class: 'callout' }, ex.example.conclusion),
       h('details', {}, h('summary', {}, 'The question as SPARQL, and the lookups the mapping gives'),
-        caption('The question in the terms of the ontology. It parses as SPARQL but is not run. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the payment.'),
+        caption('The question in the terms of the ontology. It is run over the triples the mapping gives for the transaction, by a small program rather than an engine such as Ontop. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the transaction.'),
         h('pre', {}, ex.question.sparql), h('pre', { style: { maxHeight: '320px' } }, ex.question.lookups.join('\n\n')))),
-    h('div', { class: 'callout' },
-      h('div', {}, 'In this demo the three tables have the same columns, because all three are cut from one feature table: each holds the payments one system alerted on. Real systems would differ more, and that is where a mapping layer earns its place.'),
-      h('div', { style: { marginTop: '6px' } }, 'The details of the round trip (its legs and their amounts) come from a JSON file, not a table, so this mapping does not cover them.')),
     h('h3', {}, 'What the flags point to'),
     h('div', { class: 'card' },
-      caption('What each monitoring system raises, in its own terms, becomes an ontology term through the OBDA mapping. Each term links to the AML typology techniques it relates to, which is what lets alerts from different systems be compared by risk. ' +
-        'The links are a first draft, not reviewed by a domain expert.'),
+      caption('The diagram above shows the flags of one transaction. Here are all of them: what each detection system raises in its own terms, the ontology term the R2RML mapping turns it into (with its name as in the diagram above), and the AML typology techniques that term links to. ' +
+        `The links are a first draft, not reviewed by a domain expert. The ontology holds ${ex.link_counts.strong} strong, ${ex.link_counts.medium} medium and ${ex.link_counts.weak} weak links; only the strong and medium ones are drawn and given to the model, the weak ones are context only.`),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flags)),
     h('h3', {}, 'The mapping, term by term'),
     caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined. Not mapped: ' +
       ex.unmapped.map((u) => `${u.columns.join(', ')} (${u.why})`).join('; ') + '.'),
     dataTable(['Ontology term', 'Built from', 'How', 'Meaning'], ex.mapping.map((r, i) => ({ key: i, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
-    h('details', {}, h('summary', {}, `What the mapping gives for payment ${ex.example.tx_id}`),
-      caption('The triples (subject, predicate, object) that the mapping produces for this payment, computed by code from the three tables. Nothing is stored: an engine would build them when a query needs them.'),
+    h('details', {}, h('summary', {}, `What the mapping gives for transaction ${ex.example.tx_id}`),
+      caption('The triples (subject, predicate, object) that the mapping produces for this transaction, computed by code from the three tables. Nothing is stored: an engine would build them when a query needs them.'),
       dataTable(['Subject', 'Predicate', 'Object'], ex.example.triples.map((t, i) => ({ key: i, cells: [h('code', {}, t.s.replace('https://example.org/', '')), h('code', {}, t.p), h('code', {}, t.o.replace('https://example.org/', ''))] })), { maxHeight: 420 })),
     h('details', {}, h('summary', {}, 'The R2RML mapping'), h('pre', { style: { maxHeight: '420px' } }, ex.r2rml)),
     h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
@@ -512,7 +497,7 @@ function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
   const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real, except the R2RML mappings (the alert tables, and scenario 3), which are designs and are not run. There is no API or MCP server behind them yet.'))), introCap);
+    caption('In this demo the mapping and the checks are real, except the R2RML mappings, which are designs: for the alert tables a small program applies the mapping to one transaction, and in scenario 3 a language model stands in for the engine. No engine such as Ontop is connected, and there is no API or MCP server yet.'))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {

@@ -64,8 +64,8 @@ const ITEMS = {
     'exposed through an API or an MCP tool.',
     'Every source is wired to every consumer by hand.', 'Each source is mapped once to shared terms and reused.'),
   int2: item('Integration (identification)', 'Live data', ['typ', 'ind', 'scn', 'det'], 'Mapping table',
-    'How detection systems send alerts in, and ask the semantic layer for typologies and indicators.',
-    'Each detection system speaks its own alert format.', 'Alerts and typologies meet through one shared set of terms.'),
+    'How the alert tables of the three detection systems are described in shared terms: an R2RML mapping and an alert ontology give every alert the same shape and link each flag to AML typology techniques. The identification agent reads its alerts this way.',
+    'Each detection system keeps its alerts in its own table, in its own terms.', 'Alerts and typologies meet through one shared set of terms, so alerts from different systems can be compared by risk.'),
   int3: item('Integration (investigation)', 'Live data', ['typ', 'ind', 'inv', 'kmg'], 'Mapping table',
     'How the investigation agent reads alerts and cases as JSON-LD and looks up indicators, data sources, policies ' +
     'and past cases. For a query over the transaction table, an R2RML mapping (a design) ties the business terms to the columns.',

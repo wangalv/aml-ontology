@@ -1,0 +1,117 @@
+@prefix fcd:  <https://example.org/fincrime-data#> .
+@prefix amx:  <https://example.org/amltrix/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+# DRAFT written for this demo. The ontology side of an OBDA setup for the three alert tables of the
+# detection systems (rule engine, ML model, transaction graph): the terms every alert is described with, whichever system
+# raised it. It builds on transaction_ontology.ttl (fcd:Transaction). The mapping that ties the terms to the tables is
+# alerts.r2rml.ttl. The namespace is a placeholder.
+
+<https://example.org/fincrime-data/alerts> a owl:Ontology ;
+    dct:title "FinCrime data ontology, alerts (Demo)"@en ;
+    owl:imports <https://example.org/fincrime-data> ;
+    owl:versionInfo "0.1-draft" .
+
+fcd:Alert a owl:Class ;
+    rdfs:label "Alert"@en ;
+    rdfs:comment "One detection system flagged one payment. The same payment can have one alert from each system."@en .
+
+fcd:Flag a owl:Class ;
+    rdfs:label "Flag"@en ;
+    rdfs:comment "A reason a detection system gives for an alert: one of the six rules, or the round trip found by the transaction graph."@en .
+
+fcd:alertedTransaction a owl:ObjectProperty ;
+    rdfs:label "alerted transaction"@en ;
+    rdfs:comment "The payment the alert is about."@en ;
+    rdfs:domain fcd:Alert ; rdfs:range fcd:Transaction .
+
+fcd:sourceSystem a owl:DatatypeProperty ;
+    rdfs:label "source system"@en ;
+    rdfs:comment "The detection system that raised the alert: the rule engine, the ML model or the transaction graph."@en ;
+    rdfs:domain fcd:Alert ; rdfs:range xsd:string .
+
+fcd:firedFlag a owl:ObjectProperty ;
+    rdfs:label "fired flag"@en ;
+    rdfs:comment "A reason the alert gives. The rule engine can give several; the transaction graph gives the round trip; the ML model gives none, only a score."@en ;
+    rdfs:domain fcd:Alert ; rdfs:range fcd:Flag .
+
+fcd:mlScore a owl:DatatypeProperty ;
+    rdfs:label "ML score"@en ;
+    rdfs:comment "The probability the ML model gave the payment. A score, not a reason."@en ;
+    rdfs:domain fcd:Alert ; rdfs:range xsd:float .
+
+# How strongly a flag points to a technique. The three properties are kinds of rdfs:seeAlso, so a reader that knows nothing of them still
+# gets the link. The strengths are those of the first-pass draft mapping of the demo (alert_sources.json, not reviewed by a domain expert);
+# weak links are context only and are not given to a model.
+
+fcd:strongLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf rdfs:seeAlso ;
+    rdfs:label "strong link"@en ;
+    rdfs:comment "The flag is a direct sign of this AML typology technique."@en ;
+    rdfs:domain fcd:Flag .
+
+fcd:mediumLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf rdfs:seeAlso ;
+    rdfs:label "medium link"@en ;
+    rdfs:comment "The flag is a partial sign of this AML typology technique."@en ;
+    rdfs:domain fcd:Flag .
+
+fcd:weakLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf rdfs:seeAlso ;
+    rdfs:label "weak link"@en ;
+    rdfs:comment "The flag is only context for this AML typology technique."@en ;
+    rdfs:domain fcd:Flag .
+
+# The flags. Each points to every technique the draft mapping lists for it, with the strength of the link.
+
+fcd:flag_structuring a fcd:Flag ;
+    rdfs:label "Structuring"@en ;
+    rdfs:comment "Same account makes 2 or more same-day transactions in the $8,500-$10,000 range."@en ;
+    fcd:strongLink amx:T0016 ;
+    fcd:mediumLink amx:T0053 .
+
+fcd:flag_money_mule a fcd:Flag ;
+    rdfs:label "Gather-Scatter"@en ;
+    rdfs:comment "An inflow of at least $3,000 followed within 3 days by an outflow of at least 85% of it from the same account (rapid pass-through)."@en ;
+    fcd:strongLink amx:T0011 ;
+    fcd:mediumLink amx:T0083 ;
+    fcd:weakLink amx:T0140 .
+
+fcd:flag_fan_in a fcd:Flag ;
+    rdfs:label "Fan-In"@en ;
+    rdfs:comment "The receiving account collects funds from 5 or more distinct counterparties on the same day."@en ;
+    fcd:mediumLink amx:T0083 ;
+    fcd:mediumLink amx:T0011 ;
+    fcd:weakLink amx:T0138 .
+
+fcd:flag_pep a fcd:Flag ;
+    rdfs:label "PEP"@en ;
+    rdfs:comment "Either party's KYC record carries a PEP flag. A customer-risk flag, not a behavioural pattern."@en ;
+    fcd:mediumLink amx:T0051 ;
+    fcd:weakLink amx:T0006 .
+
+fcd:flag_high_risk_business a fcd:Flag ;
+    rdfs:label "High-Risk Business"@en ;
+    rdfs:comment "Either party's declared industry is Money Service Business, Cryptocurrency Exchange, Casino & Gaming, Precious Metals & Jewelry, or Import/Export Trading."@en ;
+    fcd:strongLink amx:T0055 ;
+    fcd:mediumLink amx:T0013 ;
+    fcd:mediumLink amx:T0107 ;
+    fcd:mediumLink amx:T0008 ;
+    fcd:mediumLink amx:T0074 ;
+    fcd:weakLink amx:T0114 .
+
+fcd:flag_high_risk_country a fcd:Flag ;
+    rdfs:label "High-Risk Country"@en ;
+    rdfs:comment "Payment currency is Ruble or Mexican Peso, used as a jurisdiction proxy because the dataset has no country field."@en ;
+    fcd:mediumLink amx:T0141 ;
+    fcd:weakLink amx:T0062 ;
+    fcd:weakLink amx:T0121 .
+
+fcd:flag_roundtrip a fcd:Flag ;
+    rdfs:label "Round-trip"@en ;
+    rdfs:comment "A verified, time-ordered cycle of 3-5 hops where funds return to the originating account."@en ;
+    fcd:strongLink amx:T0039 ;
+    fcd:weakLink amx:T0071 .

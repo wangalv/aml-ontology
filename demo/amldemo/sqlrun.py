@@ -11,6 +11,7 @@ this project's own environment). dbrun.py starts it as a subprocess. Request on 
   {"action": "judge",      "accounts": [...]}                                  which of those accounts hold a laundering payment
   {"action": "payments",   "seed": "...", "n_sources": 3, "count": 1}          alerted payments raised by n sources, with their evidence
   {"action": "judge_payments", "tx_ids": [...]}                                which of those payments are laundering
+  {"action": "mapping",    "tx_id": 5007762, "statements": ["SELECT ..."]}    the rows each SQL statement of an R2RML mapping gives for one payment
 
 `txs` is a view of the test period (not the tail) with only the columns the data dictionary lists. The laundering label and
 the round-trip flag are not in it; only "score" reads them, and only to judge a query that has already been written.
@@ -280,12 +281,26 @@ def judge_payments(con, request):
     return {"payments": {str(r[0]): bool(r[1]) for r in rows}}
 
 
+def mapping(con, request):
+    """The rows each SQL statement of the alert mapping (alerts.r2rml.ttl) gives for one payment. A statement must be a single SELECT on the
+    alert tables; its rows are cut down to the payment, nothing else is read. The label is in the tables but a mapping that does not name it
+    cannot return it, and a statement that does is refused."""
+    tx_id, out = int(request["tx_id"]), []
+    for sql in request["statements"]:
+        if not sql.lstrip().upper().startswith("SELECT") or ";" in sql or "label" in sql.lower():
+            raise ValueError(f"refused: {sql[:60]}")
+        cursor = con.execute(f"SELECT * FROM ({sql}) WHERE tx_id = ?", [tx_id])
+        names = [d[0] for d in cursor.description]
+        out.append([dict(zip(names, map(jsonable, r))) for r in cursor.fetchall()])
+    return {"rows": out}
+
+
 def main():
     request = json.load(sys.stdin)
     try:
         con = connect()
         answer = {"run": run, "score": score, "population": population, "sample": sample, "judge": judge,
-               "payments": payments, "judge_payments": judge_payments}[request["action"]](con, request)
+               "payments": payments, "judge_payments": judge_payments, "mapping": mapping}[request["action"]](con, request)
     except Exception as e:  # a request the runner cannot answer must still come back as JSON
         answer = {"error": f"{type(e).__name__}: {str(e).splitlines()[0] if str(e) else ''}"}
     json.dump(answer, sys.stdout)

@@ -5,7 +5,7 @@
     ../.venv/bin/python run_demo.py report [--llm mock|ollama|zai] [--baseline | --compare]
     ../.venv/bin/python run_demo.py hunt [--llm mock|ollama|zai] [--technique T0039]
     ../.venv/bin/python run_demo.py obda [--llm ollama|zai] [--technique T0039] [--indicator IND02191]
-    ../.venv/bin/python run_demo.py reason [--llm ollama|zai] [--seed s4] [--examples 1] [--resume]
+    ../.venv/bin/python run_demo.py reason [--llm ollama|zai] [--seed s4] [--examples 1] [--resume] [--reuse]
     ../.venv/bin/python run_demo.py consolidate [--llm ollama|zai] [--sample 3:40] [--seed s4] [--examples N] [--compare] [--resume]
 
 build   maps each sample source to JSON-LD, validates it, and writes generated/*.jsonld and generated/*.ttl.
@@ -193,7 +193,7 @@ def obda(provider, technique, indicator):
     return 0 if result["result"] else 1
 
 
-def reason(provider, seed, examples, resume):
+def reason(provider, seed, examples, resume, reuse=False):
     partial_path = config.GENERATED_DIR / "reason.partial.json"
     done = json.loads(partial_path.read_text(encoding="utf-8")) if resume and partial_path.exists() else {}
 
@@ -203,7 +203,9 @@ def reason(provider, seed, examples, resume):
         print(f"  payment {payment['tx_id']} ({len(payment['sources'])} systems): judged", flush=True)
 
     try:
-        result = s4_reason.run(make_llm(provider), seed, examples, done=done, on_payment=save)
+        saved_path = config.GENERATED_DIR / "reason.json"
+        saved = json.loads(saved_path.read_text(encoding="utf-8")) if reuse and saved_path.exists() else None
+        result = s4_reason.run(make_llm(provider), seed, examples, done=done, on_payment=save, reuse=saved)
     except (LLMError, dbrun.DatabaseError) as e:
         print(f"[s4] problem: {e}")
         return 1
@@ -297,6 +299,7 @@ if __name__ == "__main__":
     parser.add_argument("--sample", default="3:40", help="consolidate: accounts to sample, as sources:count pairs")
     parser.add_argument("--examples", type=int, default=0, help="consolidate: write notes only for the first N cases of each link class")
     parser.add_argument("--seed", default="s4", help="consolidate: seed of the sample")
+    parser.add_argument("--reuse", action="store_true", help="reason: keep the saved notes of generated/reason.json when the model would be asked the same thing")
     parser.add_argument("--resume", action="store_true", help="consolidate: reuse the notes saved by an interrupted run")
     parser.add_argument("--baseline", action="store_true", help="advise or report without giving the model the dictionary")
     parser.add_argument("--compare", action="store_true", help="advise or report with and without the dictionary; consolidate: each example also without the AMLTRIX techniques")
@@ -308,7 +311,7 @@ if __name__ == "__main__":
     if args.command == "obda":
         sys.exit(obda(args.llm, args.technique, args.indicator))
     if args.command == "reason":
-        sys.exit(reason(args.llm, args.seed, args.examples or 1, args.resume))
+        sys.exit(reason(args.llm, args.seed, args.examples or 1, args.resume, args.reuse))
     if args.command == "consolidate":
         sys.exit(consolidate(args.llm, args.sample, args.seed, args.resume, args.examples, args.compare))
     sys.exit((advise if args.command == "advise" else report)(args.llm, args.baseline, args.compare))
