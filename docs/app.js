@@ -102,7 +102,7 @@ function select(id) {
 async function main() {
   const app = document.getElementById('app');
   try {
-    const names = { snap: 'amlo_snapshot', tmap: 'typology_map', inv: 'investigation_snapshot', agent: 'agent_snapshot', integ: 'integration_snapshot', shacl: 'shacl_example', obda: 'obda_example' };
+    const names = { snap: 'amlo_snapshot', tmap: 'typology_map', inv: 'investigation_snapshot', agent: 'agent_snapshot', integ: 'integration_snapshot', shacl: 'shacl_example', obda: 'obda_example', obdaAlerts: 'obda_alerts' };
     const loaded = await Promise.all(Object.values(names).map((n) => fetch(`data/${n}.json`, { cache: "no-cache" }).then((r) => {
       if (!r.ok) throw new Error(`${n}.json: ${r.status}`);
       return r.json();

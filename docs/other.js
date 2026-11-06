@@ -393,20 +393,6 @@ function mappingDiagram(scenario) {
     h('p', {}, d.records), h('p', {}, d.checks));
 }
 
-/* How the identification side's alerts meet AML typology: the flags of the three monitoring systems, the mapping table, the techniques. */
-function identificationDiagram() {
-  const d = DATA.integ.diagram_identification;
-  const svg = document.importNode(new DOMParser().parseFromString(d.svg, 'image/svg+xml').documentElement, true);
-  return h('div', { class: 'card' },
-    h('strong', {}, 'How the alerts of the monitoring systems meet the ontology'),
-    caption('Left: what the three monitoring systems raise, each in its own terms. Middle: the integration layer, a mapping table that says which AML typology techniques a flag points to. ' +
-      'Right: those techniques, each with its risk indicators. The mapping is defined by people and applied by code; no model is involved. It maps concepts (flag to technique), ' +
-      'not fields: the three alert formats have no JSON-LD context in this demo.'),
-    h('div', { class: 'diagram s4', style: { maxWidth: '1245px' } }, svg),
-    h('ol', {}, d.steps.map((t) => h('li', {}, t))),
-    d.example ? h('div', {}, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, `See transaction ${d.example} in Agent (Risk identification)`)) : null);
-}
-
 /* The Investigation ontology entry (class or property) behind a term such as inv:alertId. */
 function investigationTerm(term) {
   const inv = DATA.inv, cls = inv.classes.find((c) => c.id === term);
@@ -449,9 +435,6 @@ function recordView(source, contextName, area, intro, outro, held) {
 }
 
 const REC_INTRO = {
-  int2: "The alert the investigator receives from the detection system. The first two columns are the data in the alert, exactly as it arrives: the " +
-    "system's own field names and values. The next two columns link each field to the AML ontology: the term it is mapped to, and what that term and the value " +
-    'lead to in the semantic layer. The last two show the mapping itself, meaning what the value becomes and what kind of term it is, and why the field is mapped this way.',
   s1: 'The suggested checks for an alert, as a case system would hold them, one check per indicator. The first two columns are the data at the case system; ' +
     'the next two columns link it to the AML ontology, and the last two show the mapping and why.',
   s2: 'A case with its findings and report draft, as the case system holds it. The first two columns are the data at the case system; the next two ' +
@@ -486,11 +469,50 @@ function obdaView() {
     h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
 }
 
+/* The alert tables of the three detection systems in an OBDA design: the columns the mapping reads, the R2RML mapping, the data ontology terms, and the AML typology techniques the flags point to. */
+function obdaAlertsView() {
+  const ex = DATA.obdaAlerts;
+  const parse = (text) => document.importNode(new DOMParser().parseFromString(text, 'image/svg+xml').documentElement, true);
+  const flow = parse(ex.flow_svg), flags = parse(ex.flags_svg);
+  return h('div', {},
+    h('div', { class: 'card' },
+      h('strong', {}, 'How the alert tables map onto the ontology (OBDA design)'),
+      h('ol', { style: { margin: '6px 0 0', paddingLeft: '20px' } },
+        h('li', {}, 'The three detection systems alert for different reasons and say different things: the rule engine names the rules that fired, the ML model gives a score and no reason, the transaction graph says the payment lies on a verified loop. Each keeps its alerts in its own table.'),
+        h('li', {}, 'This layer gives every alert the same shape. The ontology names the terms (alert, the payment it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
+        h('li', {}, 'A question on those terms, for example which risks the systems flagged on a payment and whether they agree, then needs no knowledge of the three tables. An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here, so this is a design: nothing runs.')),
+      caption(`Three systems raise alerts, each in its own table. One question about a payment (here ${ex.example.tx_id}, the payment of scenario 4) goes through the mapping to all three, and the answers come back in one shape.`),
+      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flow),
+      caption('One question, asked once in the terms of the ontology (top). The mapping turns it into one lookup per table, and every system answers in the same shape: the alert, what the system said, and the payment it points to. ' +
+        'The technique after each flag is the link from the flag to the AML typology (a first draft, not reviewed by a domain expert); it is what lets the risks be compared. The question is not read by an engine: code applies the mapping to the three tables.'),
+      h('div', { class: 'callout' }, ex.example.conclusion),
+      h('details', {}, h('summary', {}, 'The question as SPARQL, and the lookups the mapping gives'),
+        caption('The question in the terms of the ontology. It parses as SPARQL but is not run. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the payment.'),
+        h('pre', {}, ex.question.sparql), h('pre', { style: { maxHeight: '320px' } }, ex.question.lookups.join('\n\n')))),
+    h('div', { class: 'callout' },
+      h('div', {}, 'In this demo the three tables have the same columns, because all three are cut from one feature table: each holds the payments one system alerted on. Real systems would differ more, and that is where a mapping layer earns its place.'),
+      h('div', { style: { marginTop: '6px' } }, 'The details of the round trip (its legs and their amounts) come from a JSON file, not a table, so this mapping does not cover them.')),
+    h('h3', {}, 'What the flags point to'),
+    h('div', { class: 'card' },
+      caption('What each monitoring system raises, in its own terms, becomes an ontology term through the OBDA mapping. Each term links to the AML typology techniques it relates to, which is what lets alerts from different systems be compared by risk. ' +
+        'The links are a first draft, not reviewed by a domain expert.'),
+      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flags)),
+    h('h3', {}, 'The mapping, term by term'),
+    caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined. Not mapped: ' +
+      ex.unmapped.map((u) => `${u.columns.join(', ')} (${u.why})`).join('; ') + '.'),
+    dataTable(['Ontology term', 'Built from', 'How', 'Meaning'], ex.mapping.map((r, i) => ({ key: i, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
+    h('details', {}, h('summary', {}, `What the mapping gives for payment ${ex.example.tx_id}`),
+      caption('The triples (subject, predicate, object) that the mapping produces for this payment, computed by code from the three tables. Nothing is stored: an engine would build them when a query needs them.'),
+      dataTable(['Subject', 'Predicate', 'Object'], ex.example.triples.map((t, i) => ({ key: i, cells: [h('code', {}, t.s.replace('https://example.org/', '')), h('code', {}, t.p), h('code', {}, t.o.replace('https://example.org/', ''))] })), { maxHeight: 420 })),
+    h('details', {}, h('summary', {}, 'The R2RML mapping'), h('pre', { style: { maxHeight: '420px' } }, ex.r2rml)),
+    h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
+}
+
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
   const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real, except the R2RML mapping in scenario 3, which is a design and is not run. There is no API or MCP server behind them yet.'))), introCap);
+    caption('In this demo the mapping and the checks are real, except the R2RML mappings (the alert tables, and scenario 3), which are designs and are not run. There is no API or MCP server behind them yet.'))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
@@ -498,14 +520,11 @@ function renderIntegration(root, id) {
     root.append(body);
     const show = () => {
       const s3 = id === 'int3' && INTS.scenario === 's3';  /* scenario 3 has no records and no sample: its own text explains it */
-      introCap.style.display = footCap.style.display = s3 ? 'none' : '';
+      const hide = s3 || id === 'int2';
+      introCap.style.display = footCap.style.display = hide ? 'none' : '';
       if (id === 'int2') {
-        const t = DATA.agent.s1.technique, ty = DATA.agent.s1.typology;
-        const outro = h('div', { class: 'callout' },
-          `The detection system said only "${snap.alerts.source.suspected_technique}". As a pointer into AML typology it lets the investigator's agent take the ${ty.indicators.length} risk indicators and ` +
-          `${ty.data_sources.length} data sources listed for ${t.name}, and suggest what to check first.`,
-          h('div', { style: { marginTop: '6px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
-        body.replaceChildren(identificationDiagram(), recordView(snap.alerts.source, 'alert', 'alerts', REC_INTRO.int2, outro, { noun: 'alert', group: 'Received in the alert' }), rawView(snap.alerts.source, snap.alerts.graph));
+        body.replaceChildren(obdaAlertsView(),
+          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, 'See this in Agent (Risk identification)')));
       } else if (INTS.scenario === 's3') {
         /* Scenario 3 has no record to map: the integration layer is the R2RML mapping of the table, in an OBDA design. */
         body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), obdaView(),
