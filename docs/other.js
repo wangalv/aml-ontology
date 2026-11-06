@@ -91,6 +91,7 @@ function renderInvestigation(root) {
 }
 
 /* ---------- Agents ---------- */
+const ID_SECTION = 'Scenario 1: multi-system alert reasoning';
 const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative', 'Scenario 3: typology-driven query'];
 const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false }, open: { s1: false, s2: false } };
 
@@ -278,7 +279,8 @@ function renderIdentificationAgent(root) {
   showTech();
 
   const flowSvg = document.importNode(new DOMParser().parseFromString(e.flow, 'image/svg+xml').documentElement, true);
-  root.append(h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
+  root.append(pills([[ID_SECTION, ID_SECTION]], ID_SECTION, () => {}),
+    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
       "The agent judges each system's evidence against AML typology risk indicators, and a technique that more than one system supports is a strong, linked signal. The investigator decides."),
     h('div', { class: 'card' }, h('strong', {}, 'How the agent gets its input'),
       caption("The agent's input about the alerts comes through the integration layer, not straight from the alert tables: the alert mapping (R2RML) and the alert ontology give the systems that alerted, their flags and score, and the techniques each flag points to, the same facts as on the Integration page. " +
@@ -472,7 +474,7 @@ function obdaAlertsView() {
         h('li', {}, 'The three detection systems alert for different reasons and say different things: the rule engine names the rules that fired, the ML model gives a score and no reason, the transaction graph says the transaction lies on a verified loop. Each keeps its alerts in its own table.'),
         h('li', {}, 'This layer gives every alert the same shape. The ontology names the terms (alert, the transaction it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
         h('li', {}, 'A question on those terms, for example which techniques the flags of the systems point to for a transaction and whether they point to the same one, then needs no knowledge of the three tables. An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here: a small program applies the mapping to one transaction, which is how the identification agent gets its input. So the mapping is a design, run by code, not by an engine.')),
-      caption(`Three systems raise alerts, each in its own table. One question about a transaction (here ${ex.example.tx_id}, the transaction of scenario 4) goes through the mapping to all three, and the answers come back in one shape.`),
+      caption(`Three systems raise alerts, each in its own table. One question about a transaction (here ${ex.example.tx_id}, the transaction of the identification agent) goes through the mapping to all three, and the answers come back in one shape.`),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flow),
       h('details', {}, h('summary', {}, 'The question as SPARQL, and the lookups the mapping gives'),
         caption('The question in the terms of the ontology. It is run over the triples the mapping gives for the transaction, by a small program rather than an engine such as Ontop. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the transaction.'),
@@ -495,7 +497,7 @@ function obdaAlertsView() {
 
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
-  const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one in scenario 4); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
+  const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one the identification agent explains); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
     caption('In this demo the mapping and the checks are real, except the R2RML mappings, which are designs: for the alert tables a small program applies the mapping to one transaction, and in scenario 3 a language model stands in for the engine. No engine such as Ontop is connected, and there is no API or MCP server yet.'))), introCap);
   if (id === 'int1') {
