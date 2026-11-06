@@ -16,7 +16,7 @@ draft_report() returns plain dicts and lists and prints nothing, so a UI can cal
 """
 import re
 
-from .. import adapters, jsonld_build, lookup, validate
+from .. import adapters, claims, jsonld_build, lookup, validate
 from ..llm import LLMError
 from ..replies import parse_reply
 
@@ -34,7 +34,10 @@ FORMAT = (
     'Reply with JSON of this shape: {"paragraphs": [{"text": "one to three sentences", "based_on": ["F-1"]}]}. '
     "Every paragraph must list in based_on the ids of the findings it rests on, and say nothing that those findings "
     "do not say. A finding whose status is not-assessable must be reported as not assessed, never as established. "
-    "Mention technique and indicator ids only if they belong to the findings you cite."
+    "Mention technique and indicator ids only if they belong to the findings you cite. "
+    "List amounts one by one: never add them up or call them a total, and do not say that an amount or money came back. When the findings describe a cycle, "
+    "say that the payments form a closed path between accounts. The data has no country field: a currency is not a country and a payment between two "
+    "banks is not cross-border."
 )
 
 
@@ -114,6 +117,8 @@ def _problems_in(paragraph, findings, hypothesis):
     missing = [c for c in cited if c not in findings]
     problems += [f"cites {c}, which is not a finding of this case" for c in missing]
     if isinstance(text, str) and not missing:
+        basis = " ".join(str(findings[c].get("observation", "")) for c in cited)
+        problems += claims.unstated_place(text, basis) + claims.added_up(text, basis)
         allowed = set(hypothesis) | {findings[c].get(k) for c in cited for k in ("technique", "indicator")}
         problems += [f"mentions {m}, which is not the technique or indicator of the findings it cites"
                      for m in dict.fromkeys(MENTIONED_ID.findall(text)) if m not in allowed]

@@ -8,7 +8,7 @@ to look, not a check of whether the indicator is present.
 
 advise() returns plain dicts and lists and prints nothing, so a UI can call it directly.
 """
-from .. import adapters, jsonld_build, lookup, validate
+from .. import adapters, claims, jsonld_build, lookup, validate
 from ..llm import LLMError
 from ..replies import parse_reply
 
@@ -25,7 +25,9 @@ FORMAT = (
     'Reply with JSON of this shape: {"suggestions": [{"indicator": "IND#####", "priority": 1, '
     '"reason": "one or two sentences tied to facts in the alert", "data_source": "DS####"}]}. '
     "Priority 1 is the first thing to look into; use whole numbers with no repeats. "
-    "Say where to look, not what you found: you have only the facts in the alert and have not seen any other records."
+    "Say where to look, not what you found: you have only the facts in the alert and have not seen any other records. "
+    "Do not say the alert shows something it does not state: it has no country field, so a currency is not a country and a payment between two banks "
+    "is not cross-border. Never add amounts together."
 )
 
 
@@ -105,6 +107,11 @@ def _validate(alert, items):
     return doc, validate.validate_doc(doc)
 
 
+def _facts_text(alert):
+    """Everything the alert states, as one text: what a suggestion's reason may rest on."""
+    return " ".join([str(alert.get("trigger_reason", ""))] + [str(f) for f in alert.get("facts", [])])
+
+
 def _problems(report):
     return [f"{layer}: {issue}" for layer in ("syntax", "unmapped", "iris", "shacl", "consistency") for issue in getattr(report, layer)]
 
@@ -143,6 +150,9 @@ def advise(alert, llm, with_dictionary=True):
             result["rejected"].append({"suggestion": suggestion, "problems": [f"more than {MAX_SUGGESTIONS} suggestions"]})
         elif isinstance(suggestion, dict) and suggestion.get("indicator") in seen:
             result["rejected"].append({"suggestion": suggestion, "problems": ["the same indicator was suggested twice"]})
+        elif isinstance(suggestion, dict) and isinstance(suggestion.get("reason"), str) and (
+                grounded := claims.unstated_place(suggestion["reason"], _facts_text(alert)) + claims.added_up(suggestion["reason"], _facts_text(alert))):
+            result["rejected"].append({"suggestion": suggestion, "problems": grounded})
         else:
             kept.append(suggestion)
             if isinstance(suggestion, dict):

@@ -103,6 +103,7 @@ class NoteCheckTests(unittest.TestCase):
         self.assertTrue(any("number 9" in p for p in self.problems(match(reason="A cycle of 9 payments."))))
         self.assertTrue(any("number 4" in p for p in self.problems(match(reason="A cycle of four payments."))))
         self.assertEqual(self.problems(match(reason="It spans 6.92 days.")), [])
+        self.assertEqual(self.problems(match(reason="E4 shows a cycle that spans 6.92 days.")), [])  # an evidence id is a citation, not a number
 
     def test_amounts_must_be_in_the_cited_evidence(self):
         self.assertTrue(any("$5,000" in p for p in self.problems(match(reason="It moved $5,000 back."))))

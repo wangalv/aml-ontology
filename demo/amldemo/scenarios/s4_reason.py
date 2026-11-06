@@ -25,7 +25,7 @@ explain() (all the evidence in one request) and explain_lanes() return plain dic
 """
 import re
 
-from .. import alert_obda, dbrun, lookup
+from .. import alert_obda, claims, dbrun, lookup
 from . import s4_cases
 from .s4_cases import COUNTED_WORD, MENTIONED_AMOUNT, MENTIONED_TECHNIQUE, NUMBER, WORDS, _read_object, case_techniques, load_sources
 
@@ -47,7 +47,10 @@ FORMAT = (
     f"techniques, that the evidence supports, at most {MAX_MATCHES}: support is yes or partly, evidence lists the ids of the evidence that shows it, "
     "and reason says in one sentence what in that evidence matches the indicator, using only numbers that appear in it. Do not list an indicator "
     "just because its technique is relevant. not_shown says which important indicators of these techniques this data cannot show. "
-    "Mention a technique id only if it is listed in <techniques>."
+    "Mention a technique id only if it is listed in <techniques>. "
+    "List an indicator only if the evidence itself shows what the indicator describes. A rule that fired shows only that the rule fired, and a proxy is not "
+    "the thing it stands for: the data has no country field, so a currency is not a country and a payment between two banks is not cross-border; there are "
+    "no invoices and no routing. If you cannot tell, leave the indicator out and say so in not_shown. Never add amounts together."
 )
 
 
@@ -160,7 +163,7 @@ def _problems_in(reply, evidence, indicator_ids, technique_ids):
         if unknown:
             continue
         body = " ".join(by_id[c] for c in cited)
-        plain = MENTIONED_AMOUNT.sub("", match["reason"])
+        plain = re.sub(r"\bE\d+\b", "", MENTIONED_AMOUNT.sub("", match["reason"]))  # an evidence id such as E4 is a citation, not a number
         shown = set(NUMBER.findall(body))
         problems += [f"match {n} states the number {m}, which the evidence it cites does not contain"
                      for m in dict.fromkeys(NUMBER.findall(plain)) if m not in shown | {"1", "2", "3"}]
@@ -168,6 +171,9 @@ def _problems_in(reply, evidence, indicator_ids, technique_ids):
                      for m in dict.fromkeys(WORDS[w.lower()] for w in COUNTED_WORD.findall(plain)) if m not in shown]
         problems += [f"match {n} states {m}, which is not an amount in the evidence it cites"
                      for m in s4_cases._unmatched_amounts(match["reason"], _amounts_in([body]))]
+    if isinstance(reply.get("summary"), str):
+        everything = " ".join(by_id.values())
+        problems += [f"summary {p}" for p in claims.unstated_place(reply["summary"], everything) + claims.added_up(reply["summary"], everything)]
     for name, text in (("summary", reply.get("summary")), ("not_shown", reply.get("not_shown"))):
         if isinstance(text, str):
             problems += [f"{name} states {m}, which is not an amount in the evidence"
@@ -175,6 +181,38 @@ def _problems_in(reply, evidence, indicator_ids, technique_ids):
     mentioned = dict.fromkeys(m for t in texts for m in MENTIONED_TECHNIQUE.findall(t))
     problems += [f"mentions {m}, which is not listed in <techniques>" for m in mentioned if m not in technique_ids]
     return list(dict.fromkeys(problems))
+
+
+def drop_unsupported(reply, evidence, indicator_texts):
+    """Take out the matches whose reason claims more than the evidence it cites says (see claims.py): a place that the evidence does not mention, amounts
+    added up, a reason that admits the evidence does not show it while the match says "yes" (a "partly" may say what is missing), or an indicator about places supported only by a proxy. Returns the reply without
+    those matches and the list of what was dropped, each with the indicator, the system, the model's reason and why. A dropped match is never shown as support."""
+    by_id = {e["id"]: e for e in evidence}
+    kept, dropped = [], []
+    for m in reply["matches"][:MAX_MATCHES]:
+        body = " ".join(by_id[c]["text"] for c in m["evidence"])
+        why = (claims.unstated_place(m["reason"], body) + claims.added_up(m["reason"], body)
+               + (claims.admitted_absence(m["reason"]) if m["support"] == "yes" else [])  # a "partly" is expected to say what is missing; a "yes" is not
+               + claims.proxy_for_place((indicator_texts or {}).get(m["indicator"]), [by_id[c]["text"] for c in m["evidence"]]))
+        if why:
+            dropped.append({"indicator": m["indicator"], "support": m["support"], "reason": m["reason"], "evidence": m["evidence"], "problems": why})
+        else:
+            kept.append(m)
+    return {**reply, "matches": kept}, dropped
+
+
+def refilter(result, payment, sources):
+    """The notes of a saved result, filtered again by drop_unsupported with the rules as they are now, from the accepted reply of each lane. No model
+    is asked: this is for when the rules of claims.py change after a run. The saved replies are the model's, unchanged; only what code lets through differs."""
+    techniques, evidence = techniques_of(payment, sources), evidence_of(payment, sources)
+    texts = {i["id"]: i["text"] for t in techniques.values() for i in t["indicators"]}
+    for kind, lane in result["lanes"].items():
+        if lane["note"] is None or not lane["attempts"]:
+            continue
+        items = lane_evidence(evidence, kind)
+        reply, lane["dropped"] = drop_unsupported(_read_object(lane["attempts"][-1]["raw"]), items, texts)
+        lane["note"] = _note(reply, items, techniques)
+    return result
 
 
 def chain_of(indicator, cited, evidence, techniques):
@@ -209,8 +247,9 @@ def explain(payment, llm, sources=None):
     the problems found in it (empty when accepted)."""
     sources = sources or load_sources()
     techniques, evidence = techniques_of(payment, sources), evidence_of(payment, sources)
-    indicator_ids = {i["id"] for t in techniques.values() for i in t["indicators"]}
-    result = {"tx_id": payment["tx_id"], "evidence": evidence, "attempts": [], "note": None,
+    indicator_texts = {i["id"]: i["text"] for t in techniques.values() for i in t["indicators"]}
+    indicator_ids = set(indicator_texts)
+    result = {"tx_id": payment["tx_id"], "evidence": evidence, "attempts": [], "note": None, "dropped": [],
               "techniques": [{k: t[k] for k in ("id", "name", "short", "strength", "flags", "links", "indicators")} for t in techniques.values()]}
     prompt = build_prompt(payment, techniques, evidence)
     retry = ""
@@ -224,6 +263,7 @@ def explain(payment, llm, sources=None):
             problems = _problems_in(reply, evidence, indicator_ids, set(techniques))
         result["attempts"].append({"raw": raw, "problems": problems})
         if not problems:
+            reply, result["dropped"] = drop_unsupported(reply, evidence, indicator_texts)
             result["note"] = _note(reply, evidence, techniques)
             return result
         retry = f"\n\nYour previous note could not be used: {'; '.join(problems)}. Write a corrected note."
@@ -246,11 +286,12 @@ def explain_lanes(payment, llm, sources=None):
     note of that lane or None; "skipped" says why the lane was not asked (the system did not alert, or gives no reason)."""
     sources = sources or load_sources()
     techniques, evidence = techniques_of(payment, sources), evidence_of(payment, sources)
-    indicator_ids = {i["id"] for t in techniques.values() for i in t["indicators"]}
+    indicator_texts = {i["id"]: i["text"] for t in techniques.values() for i in t["indicators"]}
+    indicator_ids = set(indicator_texts)
     result = {"tx_id": payment["tx_id"], "evidence": evidence, "lanes": {},
               "techniques": [{k: t[k] for k in ("id", "name", "short", "strength", "flags", "links", "indicators")} for t in techniques.values()]}
     for kind in LANES:
-        lane = {"note": None, "attempts": [], "skipped": None}
+        lane = {"note": None, "attempts": [], "skipped": None, "dropped": []}
         result["lanes"][kind] = lane
         if kind not in payment["sources"]:
             lane["skipped"] = "This system did not alert on the payment."
@@ -270,6 +311,7 @@ def explain_lanes(payment, llm, sources=None):
                 problems = _problems_in(reply, items, indicator_ids, set(techniques))
             lane["attempts"].append({"raw": raw, "problems": problems})
             if not problems:
+                reply, lane["dropped"] = drop_unsupported(reply, items, indicator_texts)
                 lane["note"] = _note(reply, items, techniques)
                 break
             retry = f"\n\nYour previous note could not be used: {'; '.join(problems)}. Write a corrected note."
@@ -336,7 +378,7 @@ def run(llm, seed, count=1, n_sources=3, done=None, on_payment=None, reuse=None)
         previous = (done or {}).get(str(payment["tx_id"]))
         saved = kept.get(str(payment["tx_id"]))
         if previous is None and saved is not None and same_prompt(saved, payment, sources):
-            previous = saved
+            previous = refilter(saved, payment, sources)
         fresh = fresh or previous is None or previous is not saved
         result = previous or explain_lanes(payment, llm, sources)
         result["mapping"] = view
