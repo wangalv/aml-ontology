@@ -93,7 +93,7 @@ function renderInvestigation(root) {
 /* ---------- Agents ---------- */
 const SAVED = 'Saved output of an earlier run, not a live call: nothing is run when you view this page.';
 const ID_SECTION = 'Scenario 1: multi-system alert reasoning';
-const AG_SECTIONS = ['Scenario 1: investigation advice', 'Scenario 2: report narrative', 'Scenario 3: typology-driven query'];
+const AG_SECTIONS = ['Scenario 1: investigation suggestion', 'Scenario 2: findings report draft', 'Scenario 3: typology-driven query'];
 const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false }, open: { s1: false, s2: false } };
 
 function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
@@ -316,7 +316,7 @@ const INT_INTRO = {
   investigation: 'How suggested checks, cases, findings and report drafts are written. The same shared terms let an agent read the records of any case system, ' +
     'and let code check them.',
 };
-const INT_SCENARIOS = [['s1', 'Scenario 1: suggested checks'], ['s2', 'Scenario 2: case and report'], ['s3', 'Scenario 3: typology-driven query']];
+const INT_SCENARIOS = [['s1', 'Scenario 1: investigation suggestion'], ['s2', 'Scenario 2: findings report draft'], ['s3', 'Scenario 3: typology-driven query']];
 const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds; the value is kept as it is', transform: 'the value is converted to another form, such as a pointer to an AML typology entry or to another record, or a date', unresolved: 'no term yet' };
 const INTS = { scenario: 's1' };
 
