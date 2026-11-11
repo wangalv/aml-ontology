@@ -66,7 +66,8 @@ function buildArchitecture() {
     techStack(),
     ...['int1', 'int2', 'int3'].map((id) => makeBox(id, 'Integration')),
     h('div', { class: 'layer' }, h('div', { class: 'title' }, 'FinCrime Semantic Layer'),
-      h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'det', 'inv'].map((id) => makeBox(id))), makeBox('kmg')),
+      h('div', { class: 'row' }, ['typ', 'ind', 'scn', 'det', 'inv'].map((id) => makeBox(id))),
+      h('div', { class: 'row three' }, ['kmg', 'cor', 'aln'].map((id) => makeBox(id)))),
     h('div', { class: 'base' }, makeBox('ent')),
   );
   return h('div', { class: 'arch-wrap' }, grid);

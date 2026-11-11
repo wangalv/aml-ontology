@@ -95,4 +95,10 @@ const ITEMS = {
   kmg: item('Knowledge management', 'Placeholder', [], 'Policies and cases',
     'Policies and past cases the agents can draw on.',
     'Knowledge is searched by keyword.', 'Knowledge is linked to typologies and indicators.'),
+  cor: item('AML concepts and requirements', 'Design only', [], 'Note',
+    'The canonical AML concepts (parties, accounts, funds transfers and how they relate), independent of any database, and for each indicator the concepts and context it needs.',
+    'Each indicator is read against whatever fields a system happens to have.', 'Indicators state the concepts they need, so one requirement serves every data source.'),
+  aln: item('Data alignment and mapping', 'Design only', [], 'Note',
+    'How source vocabulary corresponds to the AML concepts, and the R2RML mappings and SQL views that tie those concepts to tables and columns.',
+    'Every query is written against the physical tables.', 'A query is asked in AML terms and resolved against the data.'),
 };
