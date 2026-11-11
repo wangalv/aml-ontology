@@ -519,11 +519,11 @@ function renderIntegration(root, id) {
       introCap.style.display = footCap.style.display = hide ? 'none' : '';
       if (id === 'int2') {
         body.replaceChildren(obdaAlertsView(),
-          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, 'See this in Agent (Risk identification)')));
+          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, 'See this in Risk identification agentic AI use cases')));
       } else if (INTS.scenario === 's3') {
         /* Scenario 3 has no record to map: the integration layer is the R2RML mapping of the table, in an OBDA design. */
         body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), obdaView(),
-          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Agent (investigation)')));
+          h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Investigation agentic AI use cases')));
       } else {
         const sc = snap.investigation[INTS.scenario];
         const outro = h('div', { class: 'callout' }, 'Every indicator, technique and data source is a pointer into AML typology, so code can check each one before anyone relies on the record: ' +
