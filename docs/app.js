@@ -100,7 +100,7 @@ function select(id) {
   document.getElementById('detail').replaceChildren(detailView(id));
 }
 
-const TABS = [['arch', 'Architecture demo'], ['modes', 'Development modes']];
+const TABS = [['arch', 'Architecture demo'], ['modes', 'Operating model']];
 
 function showArchitecture() {
   Object.keys(boxes).forEach((k) => delete boxes[k]); // the boxes are rebuilt each time the tab is shown

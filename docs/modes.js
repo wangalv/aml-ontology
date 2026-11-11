@@ -1,4 +1,4 @@
-/* The "Development modes" tab: the same business delivered two ways, as two cards side by side. No data files; the text is written here. */
+/* The "Operating model" tab: the same business delivered two ways, as two cards side by side. No data files; the text is written here. */
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const ICONS = {
   database: [['ellipse', { cx: 12, cy: 5, rx: 7, ry: 3 }], ['path', { d: 'M5 5v14c0 1.7 3.1 3 7 3s7-1.3 7-3V5' }], ['path', { d: 'M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3' }]],
