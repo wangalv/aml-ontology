@@ -85,6 +85,8 @@ function detailView(id) {
   else if (id === 'ag3') renderInvestigationAgent(body);
   else if (id === 'ind') renderIndicators(body);
   else if (id === 'inv') renderInvestigation(body);
+  else if (id === 'cor') renderConcepts(body);
+  else if (id === 'aln') renderAlignment(body);
   else if (id === 'typ') renderOntology(body);
   else {
     body.append(h('div', { class: 'card' }, caption('Preview: ' + it.preview), h('p', {}, it.text)));
