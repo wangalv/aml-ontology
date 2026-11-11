@@ -74,9 +74,9 @@ function opic(kind) {
     if (i) svg.append(S('line', { x1: 205 + 374 * i / 4, y1: 204, x2: 205 + 374 * i / 4, y2: 227, class: 'o-div' }));
     svg.append(txt(cx, 215, t, 'o-cell'));
   });
-  /* the last row is an application, not an agent: existing applications can use the semantic layer too */
+  /* the middle row is an application, not an agent: existing applications can use the semantic layer too */
   ROWS.forEach((y, i) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'),
-    ...(i < 2 ? [link(id, 100, y, 124, y), S('circle', { cx: 150, cy: y, r: 24, class: 'o-box' }), txt(150, y, 'agent'), link(id, 174, y, 203, y)]
+    ...(i !== 1 ? [link(id, 100, y, 124, y), S('circle', { cx: 150, cy: y, r: 24, class: 'o-box' }), txt(150, y, 'agent'), link(id, 174, y, 203, y)]
       : [link(id, 100, y, 120, y), rect(122, y - 16, 56, 32), txt(150, y, 'Application', 'o-small'), link(id, 178, y, 203, y)])));
   ROWS.forEach((y) => svg.append(link(id, 580, y, 634, y), ...dataStore(664, y, 30)));
   svg.append(...personIcon(150, 252, 'dash'), txt(172, 254, 'People: judgment and exceptions', 'o-note', 'start'),
