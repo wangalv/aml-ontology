@@ -56,6 +56,7 @@ function opic(kind) {
     svg.append(rect(190, 24, 140, 212, 'frame'), txt(260, 40, 'Application', 'o-title'));
     ROWS.forEach((y) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'), link(id, 100, y, 122, y), ...personIcon(146, y - 1),
       link(id, 172, y, 203, y), rect(204, y - 15, 112, 30), txt(260, y, 'Function'), link(id, 316, y, 362, y), ...dataStore(392, y, 28)));
+    svg.append(txt(146, 218, 'Users', 'o-note'));
     return svg;
   }
   svg.append(rect(204, 24, 376, 212, 'frame sem'), S('rect', { x: 205, y: 25, width: 374, height: 26, rx: 5, class: 'o-band' }), txt(392, 38, 'Semantic layer (ontology)', 'o-title'));
