@@ -54,23 +54,31 @@ const MODES = [
   },
 ];
 
+function stageBox(s) {
+  return h('div', { class: 'stage' + (s.parts ? ' foundation' : '') },
+    h('div', { class: 'who' }, s.who),
+    s.parts && h('div', { class: 'parts' }, s.parts.map(([name, what]) => h('div', { class: 'part' }, h('div', { class: 'part-name' }, name), h('div', { class: 'part-what' }, what)))),
+    h('p', { class: 'what' }, s.what));
+}
+
 function modeCard(m) {
-  const stages = [];
-  m.stages.forEach((s, i) => {
-    if (i) stages.push(h('div', { class: 'down', 'aria-hidden': 'true' }, '↓'));
-    stages.push(h('div', { class: 'stage' + (s.parts ? ' foundation' : '') },
-      h('div', { class: 'who' }, s.who),
-      s.parts && h('div', { class: 'parts' }, s.parts.map(([name, what]) => h('div', { class: 'part' }, h('div', { class: 'part-name' }, name), h('div', { class: 'part-what' }, what)))),
-      h('p', { class: 'what' }, s.what)));
+  /* The semantic foundation is a shared asset, not a step in the hand-over, so it sits in its own column to the right of the steps. */
+  const steps = [];
+  m.stages.filter((s) => !s.parts).forEach((s, i) => {
+    if (i) steps.push(h('div', { class: 'down', 'aria-hidden': 'true' }, '↓'));
+    steps.push(stageBox(s));
   });
+  const foundation = m.stages.find((s) => s.parts);
   const outcome = [];
   m.outcome.forEach(([ic, label], i) => {
     if (i) outcome.push(h('div', { class: 'right', 'aria-hidden': 'true' }, '→'));
     outcome.push(h('div', { class: 'out-box' }, icon(ic), h('div', {}, label)));
   });
-  return h('section', { class: 'mode ' + m.tone },
+  return h('section', { class: 'mode ' + m.tone + (foundation ? ' wide' : '') },
     h('h2', {}, m.title),
-    h('div', { class: 'stages' }, stages),
+    h('div', { class: 'stages' + (foundation ? ' two' : '') },
+      h('div', { class: 'steps' }, steps),
+      foundation && h('div', { class: 'side' }, stageBox(foundation))),
     h('div', { class: 'outcome' }, h('div', { class: 'who' }, 'Typical delivery outcome'), h('div', { class: 'out-row' }, outcome), h('p', { class: 'what' }, m.note)));
 }
 
@@ -81,7 +89,6 @@ function modesView() {
     h('div', { class: 'shift' },
       h('div', { class: 'who' }, 'The operating model each approach leads to'),
       h('div', { class: 'shift-row' },
-        h('div', { class: 'shift-box from' }, h('b', {}, 'From'), 'People operate applications to complete the process.'),
-        h('div', { class: 'right', 'aria-hidden': 'true' }, '→'),
-        h('div', { class: 'shift-box to' }, h('b', {}, 'To'), 'Agents carry out the process within a controlled scope. People make the judgments and handle the exceptions.'))));
+        h('div', { class: 'shift-box from' }, 'People operate applications to complete the process.'),
+        h('div', { class: 'shift-box to' }, 'Agents carry out the process within a controlled scope. People make the judgments and handle the exceptions.'))));
 }
