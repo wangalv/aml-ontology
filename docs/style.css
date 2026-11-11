@@ -198,6 +198,7 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .o-strip { fill: rgba(46,158,107,.12); }
 .o-div { stroke: rgba(46,158,107,.5); stroke-width: 1; }
 .o-cell { font-size: 10.5px; }
+.o-small { font-size: 9.5px; }
 .dash { stroke-dasharray: 4 3; }
 .o-box.dash { fill: none; }
 .stages.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }

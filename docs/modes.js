@@ -54,9 +54,12 @@ function opic(kind) {
     S('defs', {}, S('marker', { id, markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: 'auto' }, S('path', { d: 'M0 0L8 4L0 8z', class: 'o-head' }))));
   if (app) {
     svg.append(rect(190, 24, 140, 212, 'frame'), txt(260, 40, 'Application', 'o-title'));
-    ROWS.forEach((y) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'), link(id, 100, y, 122, y), ...personIcon(146, y - 1),
-      link(id, 172, y, 203, y), rect(204, y - 15, 112, 30), txt(260, y, 'Function'), link(id, 316, y, 362, y), ...dataStore(392, y, 28)));
-    svg.append(txt(146, 218, 'Users', 'o-note'));
+    /* the last row is an agent, not a user: agents can work through an application too */
+    ROWS.forEach((y, i) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'),
+      ...(i < 2 ? [link(id, 100, y, 122, y), ...personIcon(146, y - 1), link(id, 172, y, 203, y)]
+        : [link(id, 100, y, 127, y), S('circle', { cx: 146, cy: y, r: 19, class: 'o-box' }), txt(146, y, 'agent', 'o-small'), link(id, 165, y, 203, y)]),
+      rect(204, y - 15, 112, 30), txt(260, y, 'Function'), link(id, 316, y, 362, y), ...dataStore(392, y, 28)));
+    svg.append(txt(146, 218, 'Users and agents', 'o-note'));
     return svg;
   }
   svg.append(rect(204, 24, 376, 212, 'frame sem'), S('rect', { x: 205, y: 25, width: 374, height: 26, rx: 5, class: 'o-band' }), txt(392, 38, 'Semantic layer (ontology)', 'o-title'));
@@ -71,8 +74,10 @@ function opic(kind) {
     if (i) svg.append(S('line', { x1: 205 + 374 * i / 4, y1: 204, x2: 205 + 374 * i / 4, y2: 227, class: 'o-div' }));
     svg.append(txt(cx, 215, t, 'o-cell'));
   });
-  ROWS.forEach((y) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'), link(id, 100, y, 124, y),
-    S('circle', { cx: 150, cy: y, r: 24, class: 'o-box' }), txt(150, y, 'agent'), link(id, 174, y, 203, y)));
+  /* the last row is an application, not an agent: existing applications can use the semantic layer too */
+  ROWS.forEach((y, i) => svg.append(rect(0, y - 16, 100, 32), txt(50, y, 'Business case'),
+    ...(i < 2 ? [link(id, 100, y, 124, y), S('circle', { cx: 150, cy: y, r: 24, class: 'o-box' }), txt(150, y, 'agent'), link(id, 174, y, 203, y)]
+      : [link(id, 100, y, 120, y), rect(122, y - 16, 56, 32), txt(150, y, 'Application', 'o-small'), link(id, 178, y, 203, y)])));
   ROWS.forEach((y) => svg.append(link(id, 580, y, 634, y), ...dataStore(664, y, 30)));
   svg.append(...personIcon(150, 252, 'dash'), txt(172, 254, 'People: judgment and exceptions', 'o-note', 'start'),
     link(id, 150, 238, 150, 212, 'dash'));
@@ -83,7 +88,7 @@ const MODES = [
   {
     tone: 'a',
     pic: 'app',
-    lead: 'Built for one business case at a time. Each case needs its own person, working through its own function of the application, and the logic and the data are tightly coupled.',
+    lead: 'Built for one business case at a time. Each case needs its own user or agent, working through its own function of the application, and the logic and the data are tightly coupled.',
     title: 'Application-driven development',
     stages: [
       { who: 'Business', what: 'Raises business requirements, describes business processes, and provides business rules and acceptance criteria.' },
@@ -96,7 +101,7 @@ const MODES = [
   {
     tone: 'b',
     pic: 'sem',
-    lead: 'One shared semantic layer gives every agent the same domain knowledge, so solutions are composable and consistent. People step in for judgment and exceptions.',
+    lead: 'One shared semantic layer gives every agent the same domain knowledge, so solutions are composable and consistent. Existing applications can use it too. People step in for judgment and exceptions.',
     title: 'Semantic-driven agent development',
     stages: [
       { who: 'Business', what: 'Defines business concepts, relationships, rules, decision criteria and acceptance outcomes, and takes part in confirming and governing semantic knowledge.' },
