@@ -194,6 +194,14 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .out-box { flex: 1 1 0; min-width: 0; background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: .9rem; }
 .out-box svg { display: block; margin: 0 auto 4px; }
 @media (max-width: 820px) { .modes { grid-template-columns: minmax(0, 1fr); } }
+/* the shift a semantic layer makes: from people operating applications to agents running the process */
+.shift { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px 14px; }
+.shift-row { display: flex; align-items: stretch; gap: 12px; margin-top: 6px; }
+.shift-box { flex: 1 1 0; min-width: 0; border-radius: 10px; padding: 10px 12px; background: rgba(128,128,128,.1); }
+.shift-box.to { background: rgba(46,158,107,.08); border: 1px solid rgba(46,158,107,.45); }
+.shift-box b { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 2px; }
+.shift-row .right { align-self: center; font-size: 1.4rem; }
+@media (max-width: 820px) { .shift-row { flex-direction: column; } .shift-row .right { transform: rotate(90deg); } }
 
 /* semantic layer architecture: six layers, the OBDA box around layers 1 to 5, source data on the right */
 .arch-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; margin-top: 8px; }
