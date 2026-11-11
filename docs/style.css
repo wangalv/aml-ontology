@@ -164,3 +164,32 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .llm-box .llm-row .tag:not(.llm) { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 0 6px; margin-right: 6px; border-radius: 4px; background: rgba(255, 213, 79, 0.3); color: var(--fg); }
 .fact-list { margin: 2px 0 6px; padding-left: 20px; font-size: 0.85rem; color: var(--muted); }
 .fact-list li { margin: 3px 0; }
+
+/* page tabs under the title */
+.tabs { max-width: 1320px; margin: 8px auto 0; padding: 0 16px; display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab { font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 6px 14px; margin-bottom: -1px; cursor: pointer; }
+.tab:hover { color: var(--fg); }
+.tab.on { color: var(--fg); font-weight: 600; border-bottom-color: var(--accent); }
+
+/* development modes: two cards, the same structure; mode B is tinted green */
+.modes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.mode { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; }
+.mode h2 { margin: 0 0 12px; font-size: 1.25rem; }
+.mode.b { border-color: rgba(46,158,107,.5); background: rgba(46,158,107,.05); }
+.stages, .outcome { border-radius: 10px; padding: 10px 12px; background: rgba(128,128,128,.1); }
+.mode.b .stages, .mode.b .outcome { background: rgba(46,158,107,.08); }
+.outcome { margin-top: 12px; }
+.who { font-weight: 600; margin-bottom: 3px; }
+.what { margin: 0; font-size: .88rem; color: var(--muted); }
+.down, .right { text-align: center; color: var(--muted); }
+.down { margin: 6px 0; }
+.stage.foundation { border: 1px solid rgba(46,158,107,.45); border-radius: 8px; padding: 8px 10px; background: rgba(46,158,107,.1); }
+.parts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 6px 0 8px; }
+.part { background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.part-name { font-weight: 600; }
+.part-what { font-size: .82rem; color: var(--muted); }
+.out-row { display: flex; align-items: stretch; gap: 8px; margin: 6px 0 8px; }
+.out-row .right { align-self: center; }
+.out-box { flex: 1 1 0; min-width: 0; background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: .9rem; }
+.out-box svg { display: block; margin: 0 auto 4px; }
+@media (max-width: 820px) { .modes { grid-template-columns: minmax(0, 1fr); } }

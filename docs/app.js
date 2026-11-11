@@ -99,6 +99,27 @@ function select(id) {
   document.getElementById('detail').replaceChildren(detailView(id));
 }
 
+const TABS = [['arch', 'Architecture demo'], ['modes', 'Development modes']];
+
+function showArchitecture() {
+  Object.keys(boxes).forEach((k) => delete boxes[k]); // the boxes are rebuilt each time the tab is shown
+  document.getElementById('app').replaceChildren(
+    caption('Click a box for its detail. Greyed-out boxes are placeholders. Draft layout.'),
+    buildArchitecture(), h('hr'), h('div', { id: 'detail' }));
+  paintBoxes();
+  document.getElementById('detail').replaceChildren(detailView(selected));
+}
+
+/* Each tab is built fresh when shown, never hidden: a vis-network graph started in a hidden container gets zero height. */
+function showTab(name) {
+  dropAllNets();
+  document.getElementById('tabs').replaceChildren(...TABS.map(([id, label]) =>
+    h('button', { class: 'tab' + (id === name ? ' on' : ''), type: 'button', onclick: () => { if (id !== name) showTab(id); } }, label)));
+  try { history.replaceState(null, '', '#' + (name === 'modes' ? 'modes' : selected)); } catch (e) { /* file:// or sandboxed frames */ }
+  if (name === 'modes') document.getElementById('app').replaceChildren(modesView());
+  else showArchitecture();
+}
+
 async function main() {
   const app = document.getElementById('app');
   try {
@@ -115,11 +136,7 @@ async function main() {
   }
   const hash = location.hash.slice(1);
   if (ITEMS[hash] && CLICKABLE.has(hash)) selected = hash;
-  app.replaceChildren(
-    caption('Click a box for its detail. Greyed-out boxes are placeholders. Draft layout.'),
-    buildArchitecture(), h('hr'), h('div', { id: 'detail' }));
-  paintBoxes();
-  document.getElementById('detail').replaceChildren(detailView(selected));
+  showTab(hash === 'modes' ? 'modes' : 'arch');
   const meta = DATA.snap.meta;
   document.getElementById('footer').replaceChildren(
     h('p', {}, `AMLTRIX ${meta.version} (${meta.url}), snapshot exported ${meta.exported}. ${meta.rights} `,
