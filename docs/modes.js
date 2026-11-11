@@ -76,6 +76,6 @@ function modeCard(m) {
 
 function modesView() {
   return h('div', {},
-    caption('The same business, delivered two ways. The difference is where the business knowledge lives.'),
+    caption('Two operating models for delivering the same business capability. Application-driven development builds each solution case by case, around one business need at a time. Semantic-driven agent development captures business knowledge once as a shared semantic foundation, which every agent then reuses.'),
     h('div', { class: 'modes' }, MODES.map(modeCard)));
 }
