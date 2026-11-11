@@ -37,6 +37,6 @@ function archView() {
     h('div', { class: 'note' }, 'This is an example, not a prescribed design. It is here to highlight the considerations in building a semantic layer.'),
     h('div', { class: 'arch-grid' },
       h('div', { class: 'arch-obda' },
-        h('div', { class: 'arch-obda-head' }, h('b', {}, 'OBDA'), h('span', {}, 'layers 1 to 5 are read together as one virtual knowledge graph · a question in business concepts is rewritten to SQL on the source')),
+        h('div', { class: 'arch-obda-head' }, h('b', {}, 'Ontology-Based Data Access (OBDA)'), h('span', {}, 'layers 1 to 5 are read together as one virtual knowledge graph · a question in business concepts is rewritten to SQL on the source')),
         layers)));
 }
