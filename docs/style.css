@@ -174,13 +174,32 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 
 /* development modes: two cards, the same structure; mode B is tinted green */
 .modes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 0 16px; align-items: stretch; }
-.mode { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; display: grid; grid-row: span 3; grid-template-rows: subgrid; }
+.mode { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; display: grid; grid-row: span 4; grid-template-rows: subgrid; }
 .mode h2 { margin: 0 0 12px; font-size: 1.25rem; }
 .mode.b { border-color: rgba(46,158,107,.5); background: rgba(46,158,107,.05); }
 .stages, .outcome { border-radius: 10px; padding: 10px 12px; background: rgba(128,128,128,.1); }
 .mode.b .stages, .mode.b .outcome { background: rgba(46,158,107,.08); }
 .outcome { margin-top: 12px; }
 .stages { flex: 1 1 auto; }
+.pic { margin-bottom: 12px; border-radius: 10px; padding: 10px 12px 12px; background: rgba(128,128,128,.1); }
+.mode.b .pic { background: rgba(46,158,107,.08); }
+.opic { display: block; width: 100%; height: auto; margin-bottom: 8px; }
+.o-box { fill: var(--btn); stroke: var(--fg); stroke-width: 1.2; }
+.o-box.frame { fill: rgba(128,128,128,.08); }
+.o-box.sem { fill: rgba(46,158,107,.07); stroke: rgba(46,158,107,.9); stroke-width: 1.6; }
+.o-band { fill: rgba(46,158,107,.25); }
+.o-line { stroke: var(--fg); stroke-width: 1.2; }
+.o-line.rel { stroke: rgba(46,158,107,.9); }
+.o-head { fill: var(--fg); }
+.o-text { fill: var(--fg); font-size: 12px; }
+.o-title { font-weight: 600; }
+.o-note, .o-edge { fill: var(--muted); font-size: 10.5px; font-style: italic; }
+.o-pill { fill: rgba(46,158,107,.2); stroke: rgba(46,158,107,.85); stroke-width: 1.2; }
+.o-strip { fill: rgba(46,158,107,.12); }
+.o-div { stroke: rgba(46,158,107,.5); stroke-width: 1; }
+.o-cell { font-size: 10.5px; }
+.dash { stroke-dasharray: 4 3; }
+.o-box.dash { fill: none; }
 .stages.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .stages.two .side { display: flex; flex-direction: column; }
 .stages.two .side .stage { flex: 1 1 auto; }
@@ -197,7 +216,7 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .out-row .right { align-self: center; }
 .out-box { flex: 1 1 0; min-width: 0; background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: .9rem; }
 .out-box svg { display: block; margin: 0 auto 4px; }
-@media (max-width: 820px) { .modes { grid-template-columns: minmax(0, 1fr); gap: 16px; } .mode { grid-row: auto; display: block; } .stages.two { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 820px) { .modes { grid-template-columns: minmax(0, 1fr); gap: 16px; } .mode { grid-row: auto; display: block; } .pic { overflow-x: auto; } .opic.app { min-width: 330px; } .opic.sem { min-width: 560px; } .stages.two { grid-template-columns: minmax(0, 1fr); } }
 /* the shift a semantic layer makes: from people operating applications to agents running the process */
 .shift { margin-top: 16px; }
 .shift > .who { margin: 0 0 8px; }
