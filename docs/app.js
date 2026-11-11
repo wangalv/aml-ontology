@@ -36,6 +36,7 @@ const TECH_STACK = [
   ['Metadata layer', [
     ['Source schema', 'the records and fields that are mapped', true],
     ['Data dictionary', 'the table and its columns, for the SQL guard', true],
+    ['Glossary', 'business terms with plain-language definitions (design only; the AML concepts table is the nearest thing in this demo)', false],
   ]],
   ['Semantic layer', [
     ['OWL', 'classes and properties', true],
