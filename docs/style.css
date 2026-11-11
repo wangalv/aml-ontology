@@ -194,3 +194,49 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .out-box { flex: 1 1 0; min-width: 0; background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; font-size: .9rem; }
 .out-box svg { display: block; margin: 0 auto 4px; }
 @media (max-width: 820px) { .modes { grid-template-columns: minmax(0, 1fr); } }
+
+/* semantic layer architecture: six layers, the OBDA box around layers 1 to 5, source data on the right */
+.arch-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; margin-top: 8px; }
+.arch-llm, .arch-foot { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; font-size: .9rem; display: flex; gap: 14px; align-items: baseline; }
+.arch-llm b { font-size: 1rem; }
+.arch-foot { grid-column: 1 / -1; justify-content: center; font-weight: 600; background: rgba(66, 133, 244, .08); border-color: rgba(66, 133, 244, .4); }
+.arch-llm { grid-column: 1; grid-row: 1; align-self: start; }
+.arch-obda { grid-column: 1; grid-row: 2; }
+.arch-side { grid-column: 2; grid-row: 2; }
+.arch-six { grid-column: 1; grid-row: 3; }
+.arch-source { grid-column: 2; grid-row: 3; }
+.arch-foot { grid-row: 4; }
+.arch-obda { border: 2px solid var(--fg); border-radius: 14px; padding: 8px 10px 12px; }
+.arch-obda-head { display: flex; gap: 14px; align-items: baseline; padding: 2px 6px 8px; font-size: .86rem; color: var(--muted); }
+.arch-obda-head b { color: var(--fg); font-size: 1.15rem; }
+.arch-layers { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 14px 10px; }
+.arch-bracket { grid-column: 1; border: 2px solid #2e7d5b; border-right: 0; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; }
+.arch-bracket span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: #2e7d5b; white-space: nowrap; }
+.arch-layer { --t: color-mix(in srgb, var(--c) 12%, transparent); display: grid; grid-template-columns: 52px minmax(0, 1.15fr) minmax(0, 1fr); gap: 0 14px; align-items: center; border: 2px solid var(--c); border-radius: 10px; background: var(--t); overflow: hidden; position: relative; }
+.arch-layer .num { align-self: stretch; display: flex; align-items: center; justify-content: center; background: var(--c); color: #fff; font-size: 1.7rem; font-weight: 700; }
+.arch-layer .body { padding: 10px 0; }
+.arch-layer .name, .arch-source-box .name { font-weight: 700; font-size: 1.1rem; }
+.arch-layer p, .arch-source-box p { margin: 2px 0 0; font-size: .86rem; color: var(--muted); }
+.arch-layer .ex { margin: 10px 12px 10px 0; border: 1.5px dashed var(--c); border-radius: 6px; padding: 4px 10px 6px; min-width: 0; }
+.arch-layer .ex-tag { font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.arch-layer pre { background: transparent; padding: 0; margin: 2px 0 0; font-size: .74rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* a small arrow under each of layers 1 to 4 */
+.arch-obda .arch-layer:not(:last-of-type)::after { content: "\25BC"; position: absolute; left: 20px; bottom: -1px; font-size: 9px; color: var(--muted); }
+.arch-side { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.arch-side-head { font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.step-name { font-weight: 700; font-size: 1.05rem; }
+.arch-step p { margin: 2px 0 0; font-size: .84rem; color: var(--muted); }
+.arch-down { color: var(--muted); text-align: left; padding: 2px 0; }
+.arch-sql { margin-top: auto; font-size: .8rem; font-style: italic; color: var(--muted); display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+.arch-six { display: flex; flex-direction: column; }
+.arch-six .arch-down { padding-left: 20px; }
+.arch-source { display: flex; gap: 10px; align-items: center; }
+.arch-source .rows { font-size: .8rem; font-style: italic; color: var(--muted); white-space: nowrap; }
+.arch-source-box { flex: 1 1 auto; border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: center; background: var(--card); }
+@media (max-width: 900px) {
+  .arch-grid { grid-template-columns: minmax(0, 1fr); }
+  .arch-llm, .arch-obda, .arch-side, .arch-six, .arch-source, .arch-foot { grid-column: 1; grid-row: auto; }
+  .arch-layer { grid-template-columns: 44px minmax(0, 1fr); }
+  .arch-layer .ex { grid-column: 2; margin: 0 12px 10px 0; }
+  .arch-obda-head, .arch-llm { flex-direction: column; gap: 2px; }
+}
