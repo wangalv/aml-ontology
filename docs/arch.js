@@ -20,8 +20,8 @@ const ARCH_LAYERS = [
     code: '[consecutive_legs_connect]\n  Consecutive legs must connect' },
 ];
 
-function archCard(l, row) {
-  const card = h('div', { class: 'arch-layer', style: row ? { gridRow: String(row), gridColumn: '2' } : {} },
+function archCard(l, row, final) {
+  const card = h('div', { class: 'arch-layer' + (final ? ' final' : ''), style: row ? { gridRow: String(row), gridColumn: '2' } : {} },
     h('div', { class: 'num' }, String(l.n)),
     h('div', { class: 'body' }, h('div', { class: 'name' }, l.name), h('p', {}, l.what)),
     h('div', { class: 'ex' }, h('div', { class: 'ex-tag' }, 'Example'), h('pre', {}, l.code)));
@@ -30,17 +30,14 @@ function archCard(l, row) {
 }
 
 function archView() {
-  const five = ARCH_LAYERS.slice(0, 5);
   const layers = h('div', { class: 'arch-layers' },
-    five.map((l, i) => archCard(l, i + 1)),
+    ARCH_LAYERS.map((l, i) => archCard(l, i + 1, i === ARCH_LAYERS.length - 1)),
     h('div', { class: 'arch-bracket', style: { gridRow: '2 / span 4' } }, h('span', {}, 'Semantic and data-access layers')));
   return h('div', {},
     h('div', { class: 'note' }, 'This is an example, not a prescribed design. It is here to highlight the considerations in building a semantic layer.'),
     h('div', { class: 'arch-grid' },
-      h('div', { class: 'arch-llm' }, h('b', {}, 'LLM'), h('span', {}, 'interprets the request and explains the result · never writes SQL, never sees a table or column')),
       h('div', { class: 'arch-obda' },
         h('div', { class: 'arch-obda-head' }, h('b', {}, 'OBDA'), h('span', {}, 'layers 1 to 5 are read together as one virtual knowledge graph · a question in business concepts is rewritten to SQL on the source')),
         layers),
-      h('div', { class: 'arch-six' }, h('div', { class: 'arch-down' }, '↓'), archCard(ARCH_LAYERS[5])),
       h('div', { class: 'arch-foot' }, 'The model interprets · the semantic layer defines meaning and access · explicit rules decide')));
 }
