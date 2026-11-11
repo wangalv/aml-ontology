@@ -38,6 +38,5 @@ function archView() {
     h('div', { class: 'arch-grid' },
       h('div', { class: 'arch-obda' },
         h('div', { class: 'arch-obda-head' }, h('b', {}, 'OBDA'), h('span', {}, 'layers 1 to 5 are read together as one virtual knowledge graph · a question in business concepts is rewritten to SQL on the source')),
-        layers),
-      h('div', { class: 'arch-foot' }, 'The model interprets · the semantic layer defines meaning and access · explicit rules decide')));
+        layers)));
 }
