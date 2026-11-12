@@ -277,3 +277,6 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .arch-layer .techs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 6px; }
 .techs-label { font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
 .arch-tech { font-size: .74rem; line-height: 1.2; padding: 1px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--btn); cursor: help; }
+
+.arch-layer pre mark.hl { background: rgba(220,38,38,.14); color: #dc2626; font-weight: 700; border-radius: 3px; padding: 0 2px; }
+@media (prefers-color-scheme: dark) { .arch-layer pre mark.hl { background: rgba(255,107,107,.18); color: #ff6b6b; } }
