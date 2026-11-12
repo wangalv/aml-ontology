@@ -1,6 +1,6 @@
 /* The boxes of the architecture map. Mirrors ITEMS in portal/semantic_tab.py. */
 const SEMANTIC = {
-  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', det: 'Detection rules', inv: 'Investigation ontology', kmg: 'Knowledge management',
+  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', det: 'Features', inv: 'Investigation ontology', kmg: 'Knowledge management',
 };
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
 const DEFAULT_ITEM = 'ag2';
@@ -79,9 +79,9 @@ const ITEMS = {
   scn: item('Risk scenarios', 'Placeholder', [], 'Note',
     'To be defined: how typologies combine with country, product or customer type.',
     'Scenarios live in spreadsheets.', 'Scenarios link to typologies and indicators.'),
-  det: item('Detection rules', 'Placeholder', [], 'Note',
-    'To be defined: what each transaction monitoring rule detects, and which techniques it covers.',
-    'Rules live in the monitoring systems.', 'Rules link to the techniques they cover.'),
+  det: item('Features', 'Placeholder', [], 'Note',
+    'To be defined: the features the detection systems compute (rule flags, model inputs, graph measures), what each one means, and which techniques it covers.',
+    'Features live in the monitoring systems.', 'Features link to the techniques they cover.'),
   inv: item('Investigation ontology', 'Live data', [], 'Classes and shapes',
     'Alerts, cases, findings and reports, and the rules for a valid record.',
     'Case data has no agreed shape.', 'Records can be checked before anyone relies on them.'),
