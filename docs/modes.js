@@ -157,6 +157,5 @@ function modesView() {
     h('div', { class: 'modes' }, MODES.map(modeCard)),
     h('div', { class: 'shift' },
       h('div', { class: 'shift-row' },
-        h('div', { class: 'shift-box from' }, 'People operate applications to complete the process.'),
         h('div', { class: 'shift-box to' }, 'Agents carry out the process within a controlled scope. People make the judgments and handle the exceptions.'))));
 }
