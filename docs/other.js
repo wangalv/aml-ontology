@@ -124,7 +124,6 @@ function traceOfSuggestion(a, t) {
 
 function scenario1(root, repaint) {
   const s1 = DATA.agent.s1, alert = s1.alert, run = s1.real.with, bare = s1.real.without, t = s1.technique, ty = s1.typology;
-  const usedInd = new Set(run.accepted.map((a) => a.indicator)), usedDs = new Set(run.accepted.map((a) => a.data_source));
   const when = String(alert.raised_at).replace('T', ' ').replace('Z', ' UTC');
   const items = run.accepted.map((a) => h('div', { class: 'llm-row' },
     h('div', {}, h('strong', {}, `${a.priority}. `), h('span', { class: 'tag' }, 'AML typology'), h('span', { title: a.indicator_text }, shorten(a.indicator_text, 85)), ' ', h('code', {}, a.indicator),
@@ -144,17 +143,9 @@ function scenario1(root, repaint) {
       caption('What the monitoring systems attached to this transaction'),
       h('ul', { class: 'fact-list' }, (alert.facts || []).map((f) => h('li', {}, f))),
       caption('Facts from the rule engine, the ML model and the transaction graph. They say what was detected, not what to check or where to look.')),
-    h('div', { class: 'flow-arrow' }, `▼  the semantic layer links the suspected technique to the AML typology: what does it say to look for?`),
-    h('div', { class: 'card' },
-      h('div', { class: 'big-label' }, `2  What the semantic layer adds: ${ty.indicators.length} risk indicators and ${ty.data_sources.length} data sources for ${t.id}`),
-      caption('The alert says only which technique is suspected. The AML typology says what indicates it and where evidence of it can be found. Both lists are told to the LLM.'),
-      dataTable(['Indicator', 'Suggested below', 'What the AML typology says'],
-        ty.indicators.map((i) => ({ key: i.id, cells: [h('code', {}, i.id), usedInd.has(i.id) ? badge('green', 'yes') : badge('gray', 'no'), shorten(i.text, 150)] })), { maxHeight: 360 }),
-      caption(`${ty.data_sources.length} data sources where evidence can be found. Green: the LLM points to it below.`),
-      h('div', { class: 'chip-row' }, ty.data_sources.map((d) => h('span', { class: usedDs.has(d.id) ? 'used' : '', title: d.note }, `${d.id} ${d.name}`)))),
-    h('div', { class: 'flow-arrow' }, '▼  the LLM reads the alert and these lists, and suggests where to start'),
+    h('div', { class: 'flow-arrow' }, `▼  the LLM reads the alert and what the AML typology says about ${t.id}: its risk indicators and data sources`),
     h('div', { class: 'llm-box' },
-      h('div', { class: 'big-label' }, '3  What the LLM suggests the investigator checks, with its trace'),
+      h('div', { class: 'big-label' }, '2  What the LLM suggests the investigator checks, with its trace'),
       caption('Every indicator and data source below is taken from the AML typology; the LLM adds why each one fits this alert. It sees only the alert, no other records.'),
       items,
       caption(`Checked by code: ${run.accepted.length} of ${run.accepted.length + run.rejected.length} suggestions name a real indicator of ${t.id} and a data source the AML typology lists for it, and the advice as JSON-LD passes the rules of the Investigation ontology. ` +
@@ -205,15 +196,9 @@ function scenario2(root, repaint) {
       h('div', {}, h('strong', {}, `Case ${c.case_id}`), ' · investigating ', badge('blue', `${t.id} ${t.name || ''}`)),
       findings,
       caption('Written by code from the same transaction, as a stand-in for an investigator\'s notes. No report wording, and nothing says what the indicators mean.')),
-    h('div', { class: 'flow-arrow' }, `▼  the semantic layer links the findings to the AML typology and counts: how many of the indicators of ${t.id} are the findings about?`),
-    h('div', { class: 'card' },
-      h('div', { class: 'big-label' }, `2  What the semantic layer adds: ${cov.looked_at} of the ${cov.total} indicators of ${t.id} were looked at`),
-      caption(`The AML typology lists ${cov.total} risk indicators for ${t.id} ${t.name}. The case has findings about ${cov.looked_at} of them. The count is worked out by code and told to the LLM.`),
-      dataTable(['Indicator', 'Status in this case', 'What the AML typology says'],
-        cov.indicators.map((r) => ({ key: r.id, cells: [h('code', {}, r.id), badge(STATUS[r.status] || 'gray', r.status.replace(/-/g, ' ')), shorten(r.text, 150)] })), { maxHeight: 360 })),
-    h('div', { class: 'flow-arrow' }, `▼  the LLM reads the findings, the typology wording and this count; each paragraph names the findings it rests on`),
+    h('div', { class: 'flow-arrow' }, `▼  the LLM reads the findings, what the AML typology says about ${t.id}, and a count: the findings are about ${cov.looked_at} of its ${cov.total} indicators`),
     h('div', { class: 'llm-box' },
-      h('div', { class: 'big-label' }, '3  What the LLM writes: the findings section of the report, with its trace'),
+      h('div', { class: 'big-label' }, '2  What the LLM writes: the findings section of the report, with its trace'),
       caption('Under each paragraph: the chain from the finding it cites to the data source. Hover an indicator to read what the AML typology says about it.'),
       paragraphs,
       caption(`Checked by code: every paragraph cites a real finding of this case, names only technique and indicator ids that belong to the findings it cites, and a statement such as "3 of the ${cov.total} indicators" must match the count. ` +
@@ -244,13 +229,8 @@ function scenario3(root) {
       h('div', {}, h('strong', {}, `${s3.indicator.id}`), ` · AML typology `, badge('blue', `${s3.technique.id} ${s3.technique.name}`)),
       h('div', { class: 'alert-line' }, s3.indicator.text),
       caption('The indicator speaks in business terms. The database speaks in columns.')),
-    h('div', { class: 'flow-arrow' }, '▼  the semantic layer gives the LLM the business terms and the mapping from terms to columns'),
-    h('div', { class: 'card' },
-      h('div', { class: 'big-label' }, '2  What the semantic layer adds: the data ontology and the mapping'),
-      caption('The ontology names the business terms (fcd:Transaction, fcd:fromAccount …) and an R2RML mapping says which column each term is. The mapping is a design: no OBDA engine is installed, so the LLM stands in for one.'),
-      dataTable(['Ontology term', 'Built from', 'Meaning'], DATA.obda.mapping.map((m, i) => ({ key: i, cells: [h('code', {}, m.term), h('code', {}, m.from), m.meaning] })), { maxHeight: 300 })),
-    h('div', { class: 'flow-arrow' }, '▼  the LLM writes a query over the terms (SPARQL), then rewrites it into SQL using the mapping'),
-    h('div', { class: 'big-label', style: { marginTop: '8px' } }, '3  What the LLM writes: the SQL, and where each part comes from'),
+    h('div', { class: 'flow-arrow' }, '▼  the LLM reads the indicator, the business terms of the data ontology and the mapping from terms to columns; it writes a query over the terms (SPARQL), then rewrites it into SQL. No OBDA engine is installed, so the LLM stands in for one'),
+    h('div', { class: 'big-label', style: { marginTop: '8px' } }, '2  What the LLM writes: the SQL, and where each part comes from'),
     pre(rw.sql_pretty || rw.sql),
     dataTable(['Words of the indicator', 'The SQL it became', 'Ontology terms', 'Columns'],
       s3.trace.map((g, i) => ({ key: i, cells: [
@@ -260,7 +240,7 @@ function scenario3(root) {
         h('div', {}, g.columns.map((c) => h('div', {}, h('code', {}, c))))] })), { maxHeight: 420 }),
     caption('Checked by code before it ran: one read-only SELECT with a LIMIT; tried on a small made-up table, it had to flag the transactions of a loop and none of a straight chain; ' +
       'and it reads only the columns that the ontology terms stand for in the mapping. The laundering label is not in the table the LLM can query.'),
-    h('div', { class: 'big-label', style: { marginTop: '8px' } }, '4  Result: what the SQL returned'),
+    h('div', { class: 'big-label', style: { marginTop: '8px' } }, '3  Result: what the SQL returned'),
     caption(`In the saved run the SQL returned ${r.n_rows} rows in ${r.seconds} s: ${r.distinct} different transactions (a transaction that sits in two loops appears twice). These are transactions that take part in a three-step ` +
       'chain which comes back to its first account, within the test period. They are what the indicator describes, not a finding that the money is laundered.'),
     dataTable(r.columns.map((c) => (c === 'amount_log' ? 'amount' : c)), r.rows.map((row, i) => ({ key: i, cells: row.map((v, k) => (r.columns[k] === 'amount_log' ? (Math.exp(Number(v)) - 1).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v))) })), { maxHeight: 420 }),
