@@ -29,7 +29,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .arch { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; min-width: 760px; align-items: stretch; grid-template-rows: auto auto auto auto 1fr; }
 .panel-box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .panel-box .title, .layer .title { text-align: center; font-weight: 600; }
-.layer { grid-column: 2 / span 3; background: var(--layer); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.layer { position: relative; grid-column: 2 / span 3; background: var(--layer); border: 2px dashed var(--muted); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .layer .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .layer .row.three { grid-template-columns: repeat(3, 1fr); }
 .base { grid-column: 2 / span 3; align-self: start; }
@@ -280,3 +280,5 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 
 .arch-layer pre mark.hl { background: rgba(220,38,38,.14); color: #dc2626; font-weight: 700; border-radius: 3px; padding: 0 2px; }
 @media (prefers-color-scheme: dark) { .arch-layer pre mark.hl { background: rgba(255,107,107,.18); color: #ff6b6b; } }
+
+.layer .moat { position: absolute; top: -9px; left: 16px; padding: 0 6px; background: var(--bg); color: var(--muted); font-size: .7rem; line-height: 1.2; letter-spacing: .06em; }
