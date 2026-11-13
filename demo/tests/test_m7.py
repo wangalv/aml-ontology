@@ -186,3 +186,42 @@ class BadDraft(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Coverage(unittest.TestCase):
+    """How much of the technique the findings are about: worked out by code, told to the model, and checked in what it writes."""
+
+    def setUp(self):
+        self.cov = s2_report.coverage(CASE)
+
+    def test_the_findings_are_about_three_of_the_nine_indicators_of_the_technique(self):
+        (c,) = self.cov
+        self.assertEqual((c["technique"], c["total"], c["looked_at"]), ("T0039", 9, 3))
+        self.assertEqual(c["counts"], {"supported": 1, "not-assessable": 2, "not-looked-at": 6})
+
+    def test_with_the_dictionary_the_prompt_tells_the_model_the_count(self):
+        prompt = s2_report.build_prompt(CASE, s2_report.dictionary_context(CASE), with_dictionary=True)
+        self.assertIn("lists 9 risk indicators for T0039", prompt)
+        self.assertIn("about 3 of them", prompt)
+        self.assertIn("The other 6 were not looked at", prompt)
+
+    def test_without_the_dictionary_the_prompt_has_no_count(self):
+        prompt = s2_report.build_prompt(CASE, s2_report.dictionary_context(CASE), with_dictionary=False)
+        self.assertNotIn("<coverage>", prompt)
+
+    def test_a_statement_that_matches_is_accepted(self):
+        result = draft([para("The findings are about 3 of the 9 indicators of T0039; the other six were not looked at.")])
+        self.assertEqual(len(result["accepted"]), 1, problems(result))
+
+    def test_a_statement_in_words_that_matches_is_accepted(self):
+        result = draft([para("Three of the nine risk indicators of T0039 were looked at.")])
+        self.assertEqual(len(result["accepted"]), 1, problems(result))
+
+    def test_a_statement_that_does_not_match_is_refused(self):
+        result = draft([para("All 9 of 9 indicators of T0039 were assessed.")])
+        self.assertEqual(result["accepted"], [])
+        self.assertIn("says 9 of 9 indicators", problems(result))
+
+    def test_a_ratio_that_is_not_about_indicators_is_left_alone(self):
+        result = draft([para("Funds returned within 5.2 days: 3 of the 3 findings rest on the transaction log.")])
+        self.assertEqual(len(result["accepted"]), 1, problems(result))

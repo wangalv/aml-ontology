@@ -12,6 +12,10 @@ it rests on. This code wraps the paragraphs as JSON-LD and checks three things f
 A paragraph that fails is rejected and never shown. Whether the wording is faithful to a finding is NOT checked:
 that is for the investigator, which is why the draft is always marked as needing review.
 
+The dictionary also says how much of the technique the findings cover: the technique has some number of risk indicators, and the findings
+are about only some of them. That count is worked out by code from the dictionary and the findings, told to the model, and checked in what it writes:
+a statement of the form "N of M indicators" must match it.
+
 draft_report() returns plain dicts and lists and prints nothing, so a UI can call it directly.
 """
 import re
@@ -39,6 +43,54 @@ FORMAT = (
     "say that the payments form a closed path between accounts. The data has no country field: a currency is not a country and a payment between two "
     "banks is not cross-border."
 )
+
+
+NOT_LOOKED_AT = "not-looked-at"
+NUMBER_WORDS = {w: n for n, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split())}
+INDICATOR_RATIO = re.compile(r"\b(\d+|[a-z]+)\s+(?:out\s+of|of)\s+(?:the\s+)?(\d+|[a-z]+)\s+(?:[\w-]+\s+){0,2}?indicators\b", re.I)
+
+
+def coverage(case):
+    """For each technique the case investigates: all its indicators in the dictionary, and which of them the findings are about.
+
+    [{"technique", "total", "looked_at", "counts": {status: n}, "indicators": [{"id", "text", "status"}]}]. An indicator that no finding is about has the
+    status "not-looked-at"."""
+    out = []
+    for technique in dict.fromkeys(case.get("hypothesis", [])):
+        try:
+            indicators = lookup.list_indicators(technique)
+        except (KeyError, ValueError):
+            continue
+        status = {f["indicator"]: f["status"] for f in case.get("findings", []) if f.get("technique") == technique}
+        rows = [{"id": i["id"], "text": i["text"], "status": status.get(i["id"], NOT_LOOKED_AT)} for i in indicators]
+        counts = {}
+        for r in rows:
+            counts[r["status"]] = counts.get(r["status"], 0) + 1
+        out.append({"technique": technique, "total": len(rows), "looked_at": sum(1 for r in rows if r["status"] != NOT_LOOKED_AT),
+                    "counts": counts, "indicators": rows})
+    return out
+
+
+def coverage_text(cov):
+    """The coverage as plain sentences for the prompt."""
+    lines = []
+    for c in cov:
+        parts = [f"{c['counts'][k]} {k.replace('-', ' ')}" for k in ("supported", "not-supported", "inconclusive", "not-assessable") if c["counts"].get(k)]
+        lines.append(f"The AML typology lists {c['total']} risk indicators for {c['technique']}. The findings are about {c['looked_at']} of them ({', '.join(parts)}). "
+                     f"The other {c['total'] - c['looked_at']} were not looked at.")
+    return "\n".join(lines)
+
+
+def wrong_coverage(text, cov):
+    """Problems with any statement of the form "N of M indicators" (digits or words) that does not match the coverage."""
+    problems = []
+    for m in INDICATOR_RATIO.finditer(text):
+        a, b = (int(g) if g.isdigit() else NUMBER_WORDS.get(g.lower()) for g in m.groups())
+        if a is None or b is None or any(a == c["looked_at"] and b == c["total"] for c in cov):
+            continue
+        truth = "; ".join(f"{c['technique']} has {c['total']} and the findings are about {c['looked_at']}" for c in cov)
+        problems.append(f"says {a} of {b} indicators, but {truth}")
+    return problems
 
 
 def _findings(case):
@@ -84,8 +136,12 @@ def build_prompt(case, context, with_dictionary=True):
         used = [f["indicator"] for f in case.get("findings", []) if f["indicator"] in context["indicators"]]
         if used:
             reference += "<indicators>\n" + "\n".join(f"{i}: {context['indicators'][i]}" for i in dict.fromkeys(used)) + "\n</indicators>\n"
+        if cov := coverage(case):
+            reference += "<coverage>\n" + coverage_text(cov) + "\n</coverage>\n"
     task = (f"Write the findings section of the report: at most {MAX_PARAGRAPHS} short paragraphs, "
             "covering each finding, in a neutral professional tone. ")
+    if with_dictionary and coverage(case):
+        task += "Say how many of the technique's indicators the findings are about, using the numbers in <coverage>. "
     return f"{reference}{_case_block(case, context, with_dictionary)}\n\n{task}{FORMAT}"
 
 
@@ -102,7 +158,7 @@ def _source_paragraph(paragraph):
     return {"text": paragraph.get("text"), "based_on": based_on}
 
 
-def _problems_in(paragraph, findings, hypothesis):
+def _problems_in(paragraph, findings, hypothesis, cov=()):
     """Plain-Python checks 1 to 3. Returns a list of problems, empty if the paragraph is acceptable."""
     if not isinstance(paragraph, dict):
         return [f"paragraph is not an object: {paragraph!r}"]
@@ -119,6 +175,7 @@ def _problems_in(paragraph, findings, hypothesis):
     if isinstance(text, str) and not missing:
         basis = " ".join(str(findings[c].get("observation", "")) for c in cited)
         problems += claims.unstated_place(text, basis) + claims.added_up(text, basis)
+        problems += wrong_coverage(text, cov)
         allowed = set(hypothesis) | {findings[c].get(k) for c in cited for k in ("technique", "indicator")}
         problems += [f"mentions {m}, which is not the technique or indicator of the findings it cites"
                      for m in dict.fromkeys(MENTIONED_ID.findall(text)) if m not in allowed]
@@ -145,11 +202,12 @@ def draft_report(case, llm, with_dictionary=True):
     """
     case = {k: v for k, v in case.items() if k != "report_draft"}
     findings, hypothesis = _findings(case), case.get("hypothesis", [])
+    cov = coverage(case)
     context = dictionary_context(case)
     task = "s2-report" if with_dictionary else "s2-baseline"
     raw = llm.complete(SYSTEM, build_prompt(case, context, with_dictionary), task)
     result = {"case_id": case["case_id"], "with_dictionary": with_dictionary, "provider": llm.name, "model": llm.model,
-              "accepted": [], "rejected": [], "raw": raw, "review_status": REVIEW_STATUS, "doc": None}
+              "accepted": [], "rejected": [], "raw": raw, "review_status": REVIEW_STATUS, "doc": None, "coverage": cov}
     try:
         paragraphs = parse_paragraphs(raw)
     except ValueError as e:
@@ -158,7 +216,7 @@ def draft_report(case, llm, with_dictionary=True):
     draft_id = f"RD-{case['case_id']}"
     kept = []
     for paragraph in paragraphs:
-        problems = _problems_in(paragraph, findings, hypothesis)
+        problems = _problems_in(paragraph, findings, hypothesis, cov)
         if problems:
             result["rejected"].append({"paragraph": paragraph, "problems": problems})
         elif len(kept) >= MAX_PARAGRAPHS:
