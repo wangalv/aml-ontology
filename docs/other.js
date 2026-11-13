@@ -93,7 +93,7 @@ function renderInvestigation(root) {
 /* ---------- Agents ---------- */
 const SAVED = 'Saved output of an earlier run, not a live call: nothing is run when you view this page.';
 const ID_SECTION = 'Scenario 1: multi-system alert reasoning';
-const AG_SECTIONS = ['Scenario 1: investigation suggestion', 'Scenario 2: findings report draft', 'Scenario 3: typology-driven query'];
+const AG_SECTIONS = ['Scenario 1: investigation suggestion', 'Scenario 2: investigation traceability', 'Scenario 3: typology-driven query'];
 const AG = { section: AG_SECTIONS[0], doc: { s1: false, s2: false }, open: { s1: false, s2: false } };
 
 function definitionBox(text) { return h('div', { class: 'ctx-box' }, text); }
@@ -336,7 +336,7 @@ const INT_INTRO = {
   investigation: 'How suggested checks, cases, findings and report drafts are written. The same shared terms let an agent read the records of any case system, ' +
     'and let code check them.',
 };
-const INT_SCENARIOS = [['s1', 'Scenario 1: investigation suggestion'], ['s2', 'Scenario 2: findings report draft'], ['s3', 'Scenario 3: typology-driven query']];
+const INT_SCENARIOS = [['s1', 'Scenario 1: investigation suggestion'], ['s2', 'Scenario 2: investigation traceability'], ['s3', 'Scenario 3: typology-driven query']];
 const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds; the value is kept as it is', transform: 'the value is converted to another form, such as a pointer to an AML typology entry or to another record, or a date', unresolved: 'no term yet' };
 const INTS = { scenario: 's1' };
 
@@ -458,8 +458,8 @@ function recordView(source, contextName, area, intro, outro, held) {
 const REC_INTRO = {
   s1: 'The suggested checks for an alert, as a case system would hold them, one check per indicator. The first two columns are the data at the case system; ' +
     'the next two columns link it to the AML ontology, and the last two show the mapping and why.',
-  s2: 'A case with its findings and report draft, as the case system holds it. The first two columns are the data at the case system; the next two ' +
-    'columns link it to the AML ontology, and the last two show the mapping and why.',
+  s2: 'A case with its findings, evidence and report draft, as the case system holds it. The links between them (paragraph to finding, finding to evidence, evidence to data source) are what let a report be traced. ' +
+    'The first two columns are the data at the case system; the next two columns link it to the AML ontology, and the last two show the mapping and why.',
 };
 
 function rawView(source, graph) {
