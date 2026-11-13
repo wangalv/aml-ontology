@@ -147,34 +147,54 @@ function scenario1(root, repaint) {
       docToggle('s1', 'Show the validated JSON-LD of the accepted advice', run.doc, repaint)));
 }
 
+/* The trace of one finding: finding -> indicator -> technique -> evidence -> data source. Every link is an id that the AML typology defines. */
+function traceOf(findingId, s2) {
+  const c = s2.case, t = s2.technique, ds = DATA.snap.dimensions.dataSources;
+  const f = c.findings.find((x) => x.finding_id === findingId);
+  if (!f) return h('div', { class: 'trace' }, findingId);
+  const arrow = () => h('span', { class: 'trace-arrow' }, '→');
+  const chips = [h('span', { class: 'trace-chip' }, 'Finding ' + findingId.replace(/^F-/, '')), arrow(),
+    h('span', { class: 'trace-chip', title: s2.indicator_text[f.indicator] || '' }, h('code', {}, f.indicator)), arrow(),
+    h('span', { class: 'trace-chip' }, h('code', {}, f.technique), ' ', f.technique === t.id ? t.name : '')];
+  const evidence = (f.supported_by || []).map((id) => c.evidence.find((e) => e.evidence_id === id)).filter(Boolean);
+  if (evidence.length) {
+    evidence.forEach((e) => chips.push(arrow(), h('span', { class: 'trace-chip' }, h('code', {}, e.evidence_id)), arrow(),
+      h('span', { class: 'trace-chip' }, h('code', {}, e.record_type), ' ', (ds[e.record_type] || {}).name || '')));
+  } else chips.push(arrow(), h('span', { class: 'trace-chip none' }, 'no evidence: not assessed'));
+  return h('div', { class: 'trace' }, chips);
+}
+
 function scenario2(root, repaint) {
-  const s2 = DATA.agent.s2, c = s2.case, run = s2.real.with, t = s2.technique;
-  const grams = ngramSet([t.definition || '', ...Object.values(s2.indicator_text)], GRAM);
-  const reused = run.accepted.filter((p) => highlight(p.text, grams).hit).length;
+  const s2 = DATA.agent.s2, c = s2.case, run = s2.real.with, t = s2.technique, bare = s2.real.without;
   const findingName = (id) => 'Finding ' + id.replace(/^F-/, '');
   const STATUS = { supported: 'green', 'not-supported': 'red', inconclusive: 'orange', 'not-assessable': 'gray' };
   const findings = c.findings.map((f) => h('div', { class: 'llm-row' },
     h('div', {}, h('strong', {}, `${findingName(f.finding_id)}  `), badge(STATUS[f.status] || 'gray', f.status), ' ', h('code', {}, f.indicator)),
     h('div', { class: 'alert-line' }, f.observation)));
   const paragraphs = run.accepted.map((p) => h('div', { class: 'llm-row' },
-    h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), highlight(p.text, grams).nodes),
-    h('div', { class: 'llm-quote' }, 'Based on ', p.based_on.map((b) => badge('gray', findingName(b))))));
-  root.append(h('p', {}, 'When the investigation is done, the LLM drafts the findings section of the report, using the AML typology to say what each finding means.'),
+    h('div', { class: 'llm-reason' }, h('span', { class: 'tag llm' }, 'LLM'), p.text),
+    h('div', { class: 'llm-quote' }, 'Trace: where this paragraph comes from'),
+    p.based_on.map((b) => traceOf(b, s2))));
+  root.append(h('p', {}, 'When the investigation is done, the LLM drafts the findings section of the report. The point of the semantic layer here is the trace: every paragraph can be followed back to the findings it rests on, ' +
+      'and from there to the indicator, the technique, the evidence and the data source, each named by an id that the AML typology defines.'),
     flowCard(s2.diagram),
     h('div', { class: 'card' },
       h('div', { class: 'big-label' }, '1  What the investigator has: the findings of the case'),
       h('div', {}, h('strong', {}, `Case ${c.case_id}`), ' · investigating ', badge('blue', `${t.id} ${t.name || ''}`)),
       findings,
       caption('Written by code from the same transaction, as a stand-in for an investigator\'s notes. No report wording, and nothing says what the indicators mean.')),
-    h('div', { class: 'flow-arrow' }, `▼  the LLM reads what the AML typology says about ${t.id} and the ${Object.keys(s2.indicator_text).length} indicators in these findings`),
+    h('div', { class: 'flow-arrow' }, '▼  the LLM drafts; each paragraph names the findings it rests on'),
     h('div', { class: 'llm-box' },
-      h('div', { class: 'big-label' }, '2  What the LLM writes: the findings section of the report'),
-      caption('Each paragraph says which finding it rests on. Yellow: wording that also appears in the AML typology text.'),
+      h('div', { class: 'big-label' }, '2  What the LLM writes: the findings section of the report, with its trace'),
+      caption('Under each paragraph: the chain from the finding it cites to the data source. Hover an indicator to read what the AML typology says about it.'),
       paragraphs,
-      caption(`${reused} of ${run.accepted.length} paragraphs reuse AML typology wording (${GRAM} or more words in a row): a rough sign that the typology was used, not proof that a paragraph is right. ` +
-        'Checked by code: every paragraph cites a real finding of this case and names only technique and indicator ids that belong to it. Not checked: whether the wording is faithful to a finding.')),
+      caption('Checked by code: every paragraph cites a real finding of this case, names only technique and indicator ids that belong to the findings it cites, ' +
+        'and the draft as JSON-LD passes the validation of the Investigation ontology (the ids exist, the shapes and the links between records are valid). ' +
+        'Not checked: whether the wording is faithful to a finding. The investigator reviews every draft.')),
     h('details', { class: 'card', open: AG.open.s2, ontoggle: (e) => { AG.open.s2 = e.target.open; } },
       h('summary', {}, 'What the LLM was given from the AML typology, and the JSON-LD of the draft'),
+      caption(`In the saved run the draft reads the same with and without this text (${run.accepted.length} paragraphs with it, ${bare.accepted.length} without; none rejected either way, and no paragraph reuses its wording). ` +
+        'The findings already say what was observed in plain words, so here the typology\'s job is the trace and the validation, not the wording.'),
       h('div', { class: 'ctx-title', style: { marginTop: '8px' } }, `What AML typology says about ${t.id} ${t.name}`),
       caption('Definition of the technique'), definitionBox(t.definition || ''),
       caption('What the indicators in these findings mean'),

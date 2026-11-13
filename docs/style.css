@@ -282,3 +282,9 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 @media (prefers-color-scheme: dark) { .arch-layer pre mark.hl { background: rgba(255,107,107,.18); color: #ff6b6b; } }
 
 .layer .moat { position: absolute; top: -9px; left: 16px; padding: 0 6px; background: var(--bg); color: var(--muted); font-size: .7rem; line-height: 1.2; letter-spacing: .06em; }
+
+.trace { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 4px 0 2px; font-size: .78rem; }
+.trace-chip { padding: 1px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--btn); }
+.trace-chip.none { color: var(--muted); border-style: dashed; }
+.trace-chip[title]:not([title=""]) { cursor: help; }
+.trace-arrow { color: var(--muted); }
