@@ -289,6 +289,7 @@ function renderIdentificationAgent(root) {
   const techBox = h('div');
   const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'transaction details')]));
   const evById = Object.fromEntries(e.evidence.map((x) => [x.id, x]));
+  const spell = (t) => String(t).replace(/\bE(\d)\b/g, (m) => (evLabel[m] ? `${m} (${evLabel[m]})` : m));  // E4 -> E4 (graph_roundtrip)
   const wordsOf = (r) => { const own = r.evidence.map((id) => evById[id]).filter((x) => x && x.kind === r.system); const ev = own[0] || evById[r.evidence[0]]; return ev ? ev.text : ''; };
   const systemColumn = (system, rows) => h('div', { class: 'sys-col' },
     h('div', {}, sysBadge(system), ' ', h('span', { class: 'muted' }, 'says, in its own words:')),
@@ -297,24 +298,43 @@ function renderIdentificationAgent(root) {
       h('div', { class: 'muted' }, '↓ the LLM matches it to the AML typology indicator'),
       h('div', {}, h('code', {}, r.indicator), ` ${r.support === 'yes' ? 'supported' : 'partly supported'} `, r.pointed ? null : badge('orange', "read from the evidence, not the system's own flag")),
       h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AML typology'), shorten(r.indicator_text, 110)),
-      h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), r.reason, ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)))));
-  const groups = litRows.map((row) => {
+      h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), spell(r.reason), ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)))));
+  // the page follows the technique more than one system supports, and what the other systems add that the rule engine does not support
+  const shown = agreeRows.length ? litRows.filter((r) => r === agreeRows[0] || !r.systems.includes('rule')) : litRows;
+  const groups = shown.map((row) => {
     const rows = e.rows.filter((r) => r.technique === row.id), systems = [...new Set(rows.map((r) => r.system))];
     return h('div', { class: 'tech-group' + (systems.length > 1 ? ' agree' : '') },
-      h('div', {}, h('strong', {}, `${row.id} ${(rows[0] || {}).technique_name || ''}`), ' ', systems.length > 1 ? badge('green', `${systems.length} systems agree`) : badge('gray', '1 system')),
-      systems.length > 1 ? caption('The systems use different words. The AML typology gives them one shared meaning, so the investigator can read both as pointing to this technique.') : null,
+      h('div', {}, h('strong', {}, `${row.id} ${(rows[0] || {}).technique_name || ''}`), ' ', systems.length > 1 ? badge('green', systems.map((k) => `${SYS_NAME[k]}: ${rows.some((r) => r.system === k && r.support === 'yes') ? 'supported' : 'partly'}`).join(' · ')) : badge('gray', '1 system')),
+      caption(systems.map((k) => `${SYS_NAME[k]}: ` + (rows.some((r) => r.system === k && r.pointed) ? 'its own flag points here' : 'read by the LLM from the evidence')).join(' · ')),
+      systems.length > 1 ? caption('The systems use different words. The AML typology gives them one shared vocabulary, so both can be read as pointing to this technique' + (systems.some((k) => !rows.some((r) => r.system === k && r.support === 'yes')) ? ', one of them only partly.' : '.')) : null,
       h('div', { class: systems.length > 1 ? 'cols2' : '' }, ...systems.map((k) => systemColumn(k, rows.filter((r) => r.system === k)))));
   });
+  /* What Team A would be told: put together by code from the results below, not written by the model. */
+  const tname = (id) => `${id} ${(e.rows.find((x) => x.technique === id) || {}).technique_name || ''}`.trim();
+  const sysList = (ks) => ks.map((k) => `the ${SYS_NAME[k]}`).join(' and ');
+  const ownRows = shown.filter((r) => r.systems.includes('rule')), addedRows = shown.filter((r) => !r.systems.includes('rule'));
+  const cyc = p.cycle, ml = (e.mapping.systems.ml || {}).score;
+  const told = [
+    ...ownRows.map((r) => `Your system supports ${tname(r.id)}.` + r.systems.filter((k) => k !== 'rule').map((k) => ` ${sysList([k])[0].toUpperCase() + sysList([k]).slice(1)} also points to it${r.cells[k].state === 'partly' ? ', but only partly' : ''}.`).join('')),
+    ...addedRows.map((r) => `${sysList(r.systems)[0].toUpperCase() + sysList(r.systems).slice(1)} adds ${tname(r.id)}` +
+      (r.systems.includes('graph') && cyc ? `: a verified cycle of ${cyc.legs.length} payments that returns to the origin account ${cyc.accounts[0]} over ${cyc.span_days} days` : '') +
+      (r.cells.rule.pointed ? '.' : ", which none of your system's flags point to.")),
+    ml != null ? `The ML model gives a score of ${ml} and no reason, so it cannot be read.` : null].filter(Boolean);
+  const teamBox = h('div', { class: 'card' },
+    h('div', {}, h('strong', {}, 'What Team A would be told')),
+    h('div', {}, h('strong', {}, 'Team A asks: '), 'What do the other systems say about this payment?'),
+    h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' ')),
+    caption('Put together by code from the results below, not written by the model.'));
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
     caption(`Each system describes the transaction in its own terms. The LLM reads each one against the ${total} risk indicators of the AML typology (${e.techniques.length} techniques), which gives the systems one shared vocabulary. ` +
-      'Where two systems land on the same technique, the investigator can see they point at the same concern. Code only checks the ids, the citations and the numbers.'),
+      'A team can then read another system\'s reasons in the terms it already knows. Where two systems land on the same technique, both read it as pointing to the same concern, though one may support it only partly. Code only checks the ids, the citations and the numbers.'),
     ...groups,
     dropped.length ? h('div', { class: 'dropped-box' },
       h('div', {}, badge('red', `Not accepted (${dropped.length})`), ' ', h('strong', {}, 'Removed by the code: the AML typology limits what the LLM can conclude')),
       caption('An indicator counts as supported only if the evidence says what the indicator says. The LLM listed these matches, but its reason claimed more than the evidence it cites, so they are not shown as support.'),
       ...dropped.map((d) => h('div', { class: 'llm-row' }, h('div', {}, sysBadge(d.system), ' → ', h('code', {}, d.indicator), ' ', h('span', { class: 'muted' }, 'removed')),
-        h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), d.reason), h('div', { class: 'dropped-why' }, 'Why it was removed: ' + d.problems.join(' '))))) : '');
+        h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), spell(d.reason)), h('div', { class: 'dropped-why' }, 'Why it was removed: ' + d.problems.join(' '))))) : '');
 
   /* Click a technique at the top of the diagram: where it sits in the AML typology, with the same detail and relationship graph as the AML typology box. */
   function showTech() {
@@ -344,18 +364,17 @@ function renderIdentificationAgent(root) {
 
   const flowSvg = document.importNode(new DOMParser().parseFromString(e.flow, 'image/svg+xml').documentElement, true);
   root.append(pills([[ID_SECTION, ID_SECTION]], ID_SECTION, () => {}), caption(SAVED),
-    h('p', {}, 'Transaction monitoring already runs by itself. When several systems alert on the same transaction, each gives its reason in its own terms. ' +
-      "The agent judges each system's evidence against AML typology risk indicators, and a technique that more than one system supports is a strong, linked signal. The investigator decides."),
-    h('div', { class: 'card' }, h('strong', {}, 'How the agent gets its input'),
-      caption("In the saved run, the agent's input about the alerts came through the integration layer, not straight from the alert tables: the alert mapping (R2RML) and the alert ontology gave the systems that alerted, their flags and score, and the techniques each flag points to, the same facts as on the Integration page. " +
-        "A small program applied the mapping; no engine such as Ontop is connected. Two things did not come through it: the transaction's own details (amount, accounts, time, format), which were read from the transactions table, and the amounts and times of the round trip, which were read from the graph analysis."),
+    h('p', {}, 'Rules, a machine-learning model and a graph analysis monitor transactions in separate systems, with their own teams, data and business logic. ' +
+      "Usually a team can see another system's alerts only if the data is merged or the applications are connected, and the other team's business logic is still hard to learn. " +
+      "With a semantic layer, each system maps its business logic to shared terms once, and an agent helps a team read what the other systems say, with the data left where it is."),
+    h('div', { class: 'card' }, h('strong', {}, 'Why a semantic layer'),
       h('div', { class: 'diagram s4', style: { maxWidth: '1245px' } }, flowSvg),
-      caption("'Agree' on this page means that the evidence of more than one system supports the same technique. For this transaction " + agreeLine + " The flags of the systems can point to different techniques; that is the question of the Integration page."),
       h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('int2') }, 'See the mapping in Integration (Risk identification)'))),
     h('div', { class: 'card' },
       h('div', {}, h('strong', {}, `Transaction ${p.tx_id}`), ' ', p.sources.map((k) => [sysBadge(k), ' '])),
       caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
+    teamBox,
     llmBox,
     techBox,
     caption('Checked by code: every indicator is one that was listed under the techniques the flags point to (strong and medium links; weak ones are not given to the model); every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
