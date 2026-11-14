@@ -290,6 +290,7 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .trace-arrow { color: var(--muted); }
 
 .why-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 900px) { .why-cols { grid-template-columns: minmax(0, 1fr); } }
+.why-cols > div:not(.why-fig) { padding-top: 3em; }
+@media (max-width: 900px) { .why-cols { grid-template-columns: minmax(0, 1fr); } .why-cols > div:not(.why-fig) { padding-top: 0; } }
 .why-fig { width: 100%; max-width: 560px; margin: 0 auto; }
 .why-fig svg { display: block; width: 100%; height: auto; }
