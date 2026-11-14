@@ -320,11 +320,11 @@ function renderIdentificationAgent(root) {
       (r.systems.includes('graph') && cyc ? `: a verified cycle of ${cyc.legs.length} payments that returns to the origin account ${cyc.accounts[0]} over ${cyc.span_days} days` : '') +
       (r.cells.rule.pointed ? '.' : ", which none of your system's flags point to.")),
     ml != null ? `The ML model gives a score of ${ml} and no reason, so it cannot be read.` : null].filter(Boolean);
-  const teamBox = h('div', { class: 'card' },
+  const teamBox = h('div', { class: 'card', style: { fontSize: '0.85em' } },
     h('div', {}, h('strong', {}, 'What Team A would be told')),
     h('div', {}, h('strong', {}, 'Team A asks: '), 'What do the other systems say about this payment?'),
     h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' ')),
-    caption('Put together by code from the results below, not written by the model.'));
+    h('div', { class: 'caption', style: { fontSize: '0.75rem' } }, 'Put together by code from the results below, not written by the model.'));
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
     caption(`Each system describes the transaction in its own terms. The LLM reads each one against the ${total} risk indicators of the AML typology (${e.techniques.length} techniques), which gives the systems one shared vocabulary. ` +
