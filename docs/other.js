@@ -288,15 +288,28 @@ function renderIdentificationAgent(root) {
   const dropped = ['rule', 'graph'].flatMap((k) => ((e.lanes[k] || {}).dropped || []).map((d) => ({ ...d, system: k })));
   const techBox = h('div');
   const total = e.techniques.reduce((a, t) => a + t.indicators.length, 0), evLabel = Object.fromEntries(e.evidence.map((x) => [x.id, x.flag || (x.kind === 'ml' ? 'ML score' : 'transaction details')]));
+  const evById = Object.fromEntries(e.evidence.map((x) => [x.id, x]));
+  const wordsOf = (r) => { const own = r.evidence.map((id) => evById[id]).filter((x) => x && x.kind === r.system); const ev = own[0] || evById[r.evidence[0]]; return ev ? ev.text : ''; };
+  const systemColumn = (system, rows) => h('div', { class: 'sys-col' },
+    h('div', {}, sysBadge(system), ' ', h('span', { class: 'muted' }, 'says, in its own words:')),
+    h('div', { class: 'sys-words' }, shorten(wordsOf(rows[0]), 170)),
+    ...rows.map((r) => h('div', { class: 'llm-row' },
+      h('div', { class: 'muted' }, '↓ the LLM matches it to the AML typology indicator'),
+      h('div', {}, h('code', {}, r.indicator), ` ${r.support === 'yes' ? 'supported' : 'partly supported'} `, r.pointed ? null : badge('orange', "read from the evidence, not the system's own flag")),
+      h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AML typology'), shorten(r.indicator_text, 110)),
+      h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), r.reason, ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)))));
+  const groups = litRows.map((row) => {
+    const rows = e.rows.filter((r) => r.technique === row.id), systems = [...new Set(rows.map((r) => r.system))];
+    return h('div', { class: 'tech-group' + (systems.length > 1 ? ' agree' : '') },
+      h('div', {}, h('strong', {}, `${row.id} ${(rows[0] || {}).technique_name || ''}`), ' ', systems.length > 1 ? badge('green', `${systems.length} systems agree`) : badge('gray', '1 system')),
+      systems.length > 1 ? caption('The systems use different words. The AML typology gives them one shared meaning, so the investigator can read both as pointing to this technique.') : null,
+      h('div', { class: systems.length > 1 ? 'cols2' : '' }, ...systems.map((k) => systemColumn(k, rows.filter((r) => r.system === k)))));
+  });
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
-    caption(`Given ${total} risk indicators written as free text, from ${e.techniques.length} techniques, and each system's evidence on its own, it picked the ${e.rows.length} indicators below as supported, ` +
-      'with a reason and the evidence it relies on. Code only checks the ids, the citations and the numbers.'),
-    ...e.rows.map((r) => h('div', { class: 'llm-row' },
-      h('div', {}, sysBadge(r.system), ' → ', h('code', {}, r.technique || '–'), ` ${r.technique_name} → `, h('code', {}, r.indicator), ` ${r.support === 'yes' ? 'supported' : 'partly supported'} `,
-        r.pointed ? null : badge('orange', "read from the evidence, not the system's own flag")),
-      h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), r.reason, ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)),
-      h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AML typology'), shorten(r.indicator_text, 125)))),
+    caption(`Each system describes the transaction in its own terms. The LLM reads each one against the ${total} risk indicators of the AML typology (${e.techniques.length} techniques), which gives the systems one shared vocabulary. ` +
+      'Where two systems land on the same technique, the investigator can see they point at the same concern. Code only checks the ids, the citations and the numbers.'),
+    ...groups,
     dropped.length ? h('div', { class: 'dropped-box' },
       h('div', {}, badge('red', `Not accepted (${dropped.length})`), ' ', h('strong', {}, 'Removed by the code: the AML typology limits what the LLM can conclude')),
       caption('An indicator counts as supported only if the evidence says what the indicator says. The LLM listed these matches, but its reason claimed more than the evidence it cites, so they are not shown as support.'),

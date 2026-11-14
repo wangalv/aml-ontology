@@ -299,3 +299,8 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .dropped-box .llm-row { border-top: 1px dashed rgba(226, 75, 74, .35); }
 .dropped-why { margin-top: 4px; font-size: .86rem; color: #c0392b; }
 @media (prefers-color-scheme: dark) { .dropped-why { color: #ff8a80; } }
+
+.tech-group { margin-top: 12px; padding: 8px 12px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.tech-group.agree { border-color: rgba(46, 158, 107, .6); background: rgba(46, 158, 107, .06); }
+.sys-col { min-width: 0; }
+.sys-words { margin: 3px 0 6px; padding: 4px 8px; border-left: 3px solid var(--line); font-size: .86rem; color: var(--muted); }
