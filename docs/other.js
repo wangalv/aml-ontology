@@ -324,8 +324,7 @@ function renderIdentificationAgent(root) {
     h('div', { style: { fontSize: '0.85em' } },
       h('div', {}, h('strong', {}, 'What Team A would be told')),
       h('div', {}, h('strong', {}, 'Team A asks: '), 'What do the other systems say about this payment?'),
-      h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' ')),
-      h('div', { class: 'caption', style: { fontSize: '0.75rem' } }, 'Put together by code from the results behind it, not written by the model.')));
+      h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' '))));
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
     caption(`Each system describes the transaction in its own terms. The LLM reads each one against the ${total} risk indicators of the AML typology (${e.techniques.length} techniques), which gives the systems one shared vocabulary. ` +
