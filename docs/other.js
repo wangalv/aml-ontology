@@ -225,11 +225,12 @@ function scenario3(root) {
     h('p', {}, 'An investigator wants to test a hypothesis: that funds are being round-tripped. The indicator in the AML typology speaks in business terms (funds revert to the same origin across multiple accounts), while the database speaks in columns. An ontology names the business terms and an R2RML mapping says which column each term is; here an LLM does what an OBDA engine such as Ontop would: it uses them to turn the indicator into SQL. In the saved run that SQL was run on the transactions table and returned the transactions that fit. The mapping is shown in Integration (investigation), Scenario 3.'),
     h('div', { class: 'card' }, h('div', { class: 'diagram s4' }, svg)),
     h('div', { class: 'card' },
-      h('div', { class: 'big-label' }, '1  The indicator the investigator starts from'),
-      h('div', {}, h('strong', {}, `${s3.indicator.id}`), ` · AML typology `, badge('blue', `${s3.technique.id} ${s3.technique.name}`)),
+      h('div', { class: 'big-label' }, '1  The task: find the transactions that fit one indicator'),
+      h('p', {}, `The investigator picks one risk indicator of ${s3.technique.id} ${s3.technique.name} and wants the transactions in the database that fit the pattern it describes.`),
+      h('div', {}, h('strong', {}, `${s3.indicator.id}`), ' · AML typology'),
       h('div', { class: 'alert-line' }, s3.indicator.text),
-      caption('The indicator speaks in business terms. The database speaks in columns.')),
-    h('div', { class: 'flow-arrow' }, '▼  the LLM reads the indicator, the business terms of the data ontology and the mapping from terms to columns; it writes a query over the terms (SPARQL), then rewrites it into SQL. No OBDA engine is installed, so the LLM stands in for one'),
+      caption('The database holds payments, not indicators, so the words of the indicator have to be turned into a query. Only the part the data can show is queried: the cycle of payments, not whether it lacks a business rationale.')),
+    h('div', { class: 'flow-arrow' }, '▼  the LLM turns the indicator into a query over the ontology\'s business terms, then into SQL using the mapping'),
     h('div', { class: 'big-label', style: { marginTop: '8px' } }, '2  What the LLM writes: the SQL, and where each part comes from'),
     pre(rw.sql_pretty || rw.sql),
     dataTable(['Words of the indicator', 'The SQL it became', 'Ontology terms', 'Columns'],
@@ -389,7 +390,7 @@ function sourceView(source, graph) {
     h('div', {}, h('strong', {}, 'JSON-LD'), caption('The same record in shared terms, ready to check.'), jsonBlock({ '@graph': graph }, 420)));
 }
 
-const INT_WHY = 'Source systems, indicators and agents each use their own words: a source says `from_account`, an indicator says "the origin of the funds". This layer ties them to shared terms in the semantic layer, so a use case can work across them. This demo tries two methods, chosen by the shape of the data:\n\n- JSON-LD, for records (Scenarios 1 and 2). A context turns each field of a JSON record into a shared term, and values become links into AML typology.\n- OBDA, for databases (Scenario 3, a design). An ontology names the business terms and an R2RML mapping says which column each term is. An engine such as Ontop turns a query on the terms into SQL.\n\nWhat it gives:\n\n- Map once, reuse everywhere. A system is mapped once, and any agent can read it through an API or an MCP tool.\n- One meaning across systems. The same word means the same thing, so records from different systems can be compared.\n- A consistent, accurate LLM. It works with defined terms and real identifiers instead of guessing what a field means, and code can check its output against them.';
+const INT_WHY = 'The integration layer is the bridge between the source systems and the semantic layer. Its purpose: let agents and applications use data from any source in the semantic layer\'s shared terms, without each of them learning every system\'s own field names (a source says `from_account`, an indicator says "the origin of the funds").\n\nIt does two things:\n\n- **Link.** The core ties each source to the ontology, once. JSON-LD does it for records (Scenarios 1 and 2); OBDA for databases (Scenario 3, a design).\n- **Deliver.** The wrapper hands the result to agents and applications. A Skill suits slow-changing knowledge such as the AML typology; MCP and API suit live data that needs permissions.';
 
 /* A record field by field: its value, the ontology term it is mapped to, and what a pointer leads to in AML typology. */
 function flatten(value, path, leaf, out) {
@@ -501,7 +502,7 @@ function obdaView() {
           'for example from account is the column from_account. Both are written once, as files, not described in prose to the model.'),
         h('li', {}, 'An OBDA engine such as Ontop uses them to turn a query on the terms into SQL on the table. No engine is installed here: in the Agent page an LLM does the rewrite, ' +
           'and code checks its SQL against this mapping.')),
-      caption('Left: the columns of the table. Middle: the R2RML mapping. Right: the ontology terms the columns become. Far right: the AML typology entries the ontology points to. A design: nothing here runs.'),
+      caption('Left: the columns of the table. Middle: the R2RML mapping. Right: the ontology terms the columns become. Far right: the AML typology entries the ontology points to.'),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg)),
     h('h3', {}, `The mapping, term by term`),
     caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
@@ -546,8 +547,10 @@ function obdaAlertsView() {
 function renderIntegration(root, id) {
   const snap = DATA.integ, area = INT_AREA[id];
   const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one the identification agent explains); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
-  root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { style: { marginTop: '10px' } }, md(INT_WHY),
-    caption('In this demo the mapping and the checks are real, except the R2RML mappings, which are designs: for the alert tables a small program applies the mapping to one transaction, and in scenario 3 a language model stands in for the engine. No engine such as Ontop is connected, and there is no API or MCP server yet.'))), introCap);
+  root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { class: 'why-cols' },
+    h('div', { class: 'why-fig' }, document.importNode(new DOMParser().parseFromString(snap.why_diagram, 'image/svg+xml').documentElement, true)),
+    h('div', {}, md(INT_WHY),
+      caption('Only the core is built in this demo: no Ontop, API or MCP server yet. A small program applies the mapping to the alert tables, and in scenario 3 an LLM stands in for the engine.')))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
