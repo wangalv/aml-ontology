@@ -296,7 +296,12 @@ function renderIdentificationAgent(root) {
       h('div', {}, sysBadge(r.system), ' → ', h('code', {}, r.technique || '–'), ` ${r.technique_name} → `, h('code', {}, r.indicator), ` ${r.support === 'yes' ? 'supported' : 'partly supported'} `,
         r.pointed ? null : badge('orange', "read from the evidence, not the system's own flag")),
       h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), r.reason, ' ', h('span', { class: 'muted' }, `(evidence: ${r.evidence.map((id) => evLabel[id] || id).join(', ')})`)),
-      h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AML typology'), shorten(r.indicator_text, 125)))));
+      h('div', { class: 'llm-quote' }, h('span', { class: 'tag' }, 'AML typology'), shorten(r.indicator_text, 125)))),
+    dropped.length ? h('div', { class: 'dropped-box' },
+      h('div', {}, badge('red', `Not accepted (${dropped.length})`), ' ', h('strong', {}, 'Removed by the code: the AML typology limits what the LLM can conclude')),
+      caption('An indicator counts as supported only if the evidence says what the indicator says. The LLM listed these matches, but its reason claimed more than the evidence it cites, so they are not shown as support.'),
+      ...dropped.map((d) => h('div', { class: 'llm-row' }, h('div', {}, sysBadge(d.system), ' → ', h('code', {}, d.indicator), ' ', h('span', { class: 'muted' }, 'removed')),
+        h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), d.reason), h('div', { class: 'dropped-why' }, 'Why it was removed: ' + d.problems.join(' '))))) : '');
 
   /* Click a technique at the top of the diagram: where it sits in the AML typology, with the same detail and relationship graph as the AML typology box. */
   function showTech() {
@@ -339,9 +344,6 @@ function renderIdentificationAgent(root) {
       caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
     llmBox,
-    dropped.length ? h('details', { class: 'card' }, h('summary', {}, `What the code dropped (${dropped.length})`),
-      caption('The model listed these matches, but its reason claimed more than the evidence it cites says, so code took them out. They are not shown as support.'),
-      ...dropped.map((d) => h('div', { class: 'llm-row' }, h('div', {}, sysBadge(d.system), ' → ', h('code', {}, d.indicator)), h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), d.reason), h('div', { class: 'muted' }, 'Dropped: ' + d.problems.join(' '))))) : null,
     techBox,
     caption('Checked by code: every indicator is one that was listed under the techniques the flags point to (strong and medium links; weak ones are not given to the model); every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
       `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));

@@ -294,3 +294,8 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 @media (max-width: 900px) { .why-cols { grid-template-columns: minmax(0, 1fr); } .why-cols > div:not(.why-fig) { padding-top: 0; } }
 .why-fig { width: 100%; max-width: 560px; margin: 0 auto; }
 .why-fig svg { display: block; width: 100%; height: auto; }
+
+.dropped-box { margin-top: 12px; padding: 8px 12px 10px; border: 1px solid rgba(226, 75, 74, .6); border-radius: 8px; background: rgba(226, 75, 74, .08); }
+.dropped-box .llm-row { border-top: 1px dashed rgba(226, 75, 74, .35); }
+.dropped-why { margin-top: 4px; font-size: .86rem; color: #c0392b; }
+@media (prefers-color-scheme: dark) { .dropped-why { color: #ff8a80; } }
