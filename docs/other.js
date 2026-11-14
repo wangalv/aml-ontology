@@ -390,7 +390,7 @@ function sourceView(source, graph) {
     h('div', {}, h('strong', {}, 'JSON-LD'), caption('The same record in shared terms, ready to check.'), jsonBlock({ '@graph': graph }, 420)));
 }
 
-const INT_WHY = 'The integration layer is the bridge between the source systems and the semantic layer. Its purpose: let agents and applications use data from any source in the semantic layer\'s shared terms, without each of them learning every system\'s own field names (a source says `from_account`, an indicator says "the origin of the funds").\n\nIt does two things:\n\n- **Link.** The core ties each source to the ontology, once. JSON-LD does it for records (Scenarios 1 and 2); OBDA for databases (Scenario 3, a design).\n- **Deliver.** The wrapper hands the result to agents and applications. A Skill suits slow-changing knowledge such as the AML typology; MCP and API suit live data that needs permissions.';
+const INT_WHY = 'The integration layer is the bridge between the source systems and the semantic layer. Its purpose: let agents and applications use data from any source in the semantic layer\'s shared terms, without each of them learning every system\'s own field names (a source says `from_account`, an indicator says "the origin of the funds").\n\nTechnology stack to consider:\n\n- **Core: link the source to the ontology** (built in this demo). JSON-LD for records (Scenarios 1 and 2); OBDA for databases (Scenario 3, a design). Applications can use the core directly.\n- **Wrapper (optional): a standard way in for agents and applications** (not built or tested here). Options are MCP, API and Skill. Common practice is a Skill for slow-changing knowledge such as the AML typology, and MCP or API for live data that needs permissions.';
 
 /* A record field by field: its value, the ontology term it is mapped to, and what a pointer leads to in AML typology. */
 function flatten(value, path, leaf, out) {
@@ -550,7 +550,7 @@ function renderIntegration(root, id) {
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { class: 'why-cols' },
     h('div', { class: 'why-fig' }, document.importNode(new DOMParser().parseFromString(snap.why_diagram, 'image/svg+xml').documentElement, true)),
     h('div', {}, md(INT_WHY),
-      caption('Only the core is built in this demo: no Ontop, API or MCP server yet. A small program applies the mapping to the alert tables, and in scenario 3 an LLM stands in for the engine.')))), introCap);
+      caption('Only the core is built in this demo: no Ontop, API, MCP server or Skill yet. A small program applies the mapping to the alert tables, and in scenario 3 an LLM stands in for the engine.')))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
