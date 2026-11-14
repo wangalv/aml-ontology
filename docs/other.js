@@ -549,8 +549,7 @@ function renderIntegration(root, id) {
   const introCap = caption(INT_INTRO[area]), footCap = caption(`From ${snap.meta.source}, exported ${snap.meta.exported}. The sample records stand for what a detection system and a case system would send. The alert and the case are built from one transaction in the synthetic IBM AML data (the one the identification agent explains); the checklist, findings and report draft are written by code as stand-ins for a source system and an investigator.`);
   root.append(h('details', { class: 'card' }, h('summary', {}, 'Why this layer exists'), h('div', { class: 'why-cols' },
     h('div', { class: 'why-fig' }, document.importNode(new DOMParser().parseFromString(snap.why_diagram, 'image/svg+xml').documentElement, true)),
-    h('div', {}, md(INT_WHY),
-      caption('Only the core is built in this demo: no Ontop, API, MCP server or Skill yet. A small program applies the mapping to the alert tables, and in scenario 3 an LLM stands in for the engine.')))), introCap);
+    h('div', {}, md(INT_WHY)))), introCap);
   if (id === 'int1') {
     root.append(mappingView(area), caption('Nothing is mapped for this area, so there is no sample to show.'));
   } else {
