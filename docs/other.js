@@ -343,7 +343,7 @@ function renderIdentificationAgent(root) {
   function showTech() {
     dropNet('rel');
     svg.querySelectorAll('.tech-head').forEach((g) => g.classList.toggle('sel', g.dataset.tech === O.sel));
-    if (!O.sel) { techBox.replaceChildren(caption('Click a technique at the top of the diagram to see where it sits in the AML typology. Rest on a lamp to read the model\'s reason.')); return; }
+    if (!O.sel) { techBox.replaceChildren(); return; }
     const focus = O.focus || O.sel, parts = [], row = e.lamps.find((r) => r.id === O.sel);
     if (focus !== O.sel) {
       const origin = snap.techniques[O.sel];
@@ -378,9 +378,7 @@ function renderIdentificationAgent(root) {
       caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
     teamBox,
-    techBox,
-    caption('Checked by code: every indicator is one that was listed under the techniques the flags point to (strong and medium links; weak ones are not given to the model); every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
-      `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));
+    techBox);
 }
 
 /* ---------- Integration ---------- */
