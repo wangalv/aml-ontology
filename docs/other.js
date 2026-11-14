@@ -354,8 +354,7 @@ const INT_INTRO = {
     'account or transaction concepts. So this interface still has to be designed.',
   alerts: "How an alert from a detection system arrives. The fields keep the source system's own names; a JSON-LD context maps each one to a shared term, " +
     'and the suspected typology becomes a pointer into AML typology.',
-  investigation: 'How suggested checks, cases, findings and report drafts are written. The same shared terms let an agent read the records of any case system, ' +
-    'and let code check them.',
+  investigation: '',
 };
 const INT_SCENARIOS = [['s1', 'Scenario 1: investigation suggestion'], ['s2', 'Scenario 2: investigation traceability'], ['s3', 'Scenario 3: typology-driven query']];
 const TYPE_NOTE = { extension: 'a term the Investigation Ontology adds; the value is kept as it is', transform: 'the value is converted to another form, such as a pointer to an AML typology entry or to another record, or a date', unresolved: 'no term yet' };
@@ -558,7 +557,8 @@ function renderIntegration(root, id) {
     const show = () => {
       const s3 = id === 'int3' && INTS.scenario === 's3';  /* scenario 3 has no records and no sample: its own text explains it */
       const hide = s3 || id === 'int2';
-      introCap.style.display = footCap.style.display = hide ? 'none' : '';
+      introCap.style.display = (hide || !INT_INTRO[area]) ? 'none' : '';
+      footCap.style.display = hide ? 'none' : '';
       if (id === 'int2') {
         body.replaceChildren(obdaAlertsView(),
           h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag2') }, 'See this in Risk identification agentic AI use cases')));
