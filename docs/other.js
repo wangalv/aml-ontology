@@ -320,11 +320,12 @@ function renderIdentificationAgent(root) {
       (r.systems.includes('graph') && cyc ? `: a verified cycle of ${cyc.legs.length} payments that returns to the origin account ${cyc.accounts[0]} over ${cyc.span_days} days` : '') +
       (r.cells.rule.pointed ? '.' : ", which none of your system's flags point to.")),
     ml != null ? `The ML model gives a score of ${ml} and no reason, so it cannot be read.` : null].filter(Boolean);
-  const teamBox = h('div', { class: 'card', style: { fontSize: '0.85em' } },
-    h('div', {}, h('strong', {}, 'What Team A would be told')),
-    h('div', {}, h('strong', {}, 'Team A asks: '), 'What do the other systems say about this payment?'),
-    h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' ')),
-    h('div', { class: 'caption', style: { fontSize: '0.75rem' } }, 'Put together by code from the results below, not written by the model.'));
+  const teamBox = h('div', { class: 'card' },
+    h('div', { style: { fontSize: '0.85em' } },
+      h('div', {}, h('strong', {}, 'What Team A would be told')),
+      h('div', {}, h('strong', {}, 'Team A asks: '), 'What do the other systems say about this payment?'),
+      h('div', { style: { marginTop: '4px' } }, h('strong', {}, 'The answer: '), told.join(' ')),
+      h('div', { class: 'caption', style: { fontSize: '0.75rem' } }, 'Put together by code from the results behind it, not written by the model.')));
   const llmBox = h('div', { class: 'llm-box' },
     h('div', {}, badge('violet', 'LLM'), ' ', h('strong', {}, 'What the LLM concluded')),
     caption(`Each system describes the transaction in its own terms. The LLM reads each one against the ${total} risk indicators of the AML typology (${e.techniques.length} techniques), which gives the systems one shared vocabulary. ` +
@@ -335,6 +336,9 @@ function renderIdentificationAgent(root) {
       caption('An indicator counts as supported only if the evidence says what the indicator says. The LLM listed these matches, but its reason claimed more than the evidence it cites, so they are not shown as support.'),
       ...dropped.map((d) => h('div', { class: 'llm-row' }, h('div', {}, sysBadge(d.system), ' → ', h('code', {}, d.indicator), ' ', h('span', { class: 'muted' }, 'removed')),
         h('div', { class: 'llm-reason' }, h('strong', {}, 'LLM: '), spell(d.reason)), h('div', { class: 'dropped-why' }, 'Why it was removed: ' + d.problems.join(' '))))) : '');
+
+  // the data and the logic behind the answer: closed until the reader opens it
+  teamBox.append(h('details', { style: { marginTop: '8px' } }, h('summary', {}, 'Behind the answer: what the LLM concluded, system by system'), llmBox));
 
   /* Click a technique at the top of the diagram: where it sits in the AML typology, with the same detail and relationship graph as the AML typology box. */
   function showTech() {
@@ -375,7 +379,6 @@ function renderIdentificationAgent(root) {
       caption(`${p.ts.slice(0, 16)} · ${money(p.amount)} ${p.currency} by ${p.format} · from ${p.from} to ${p.to} · the first transaction, in a fixed random order (seed ${s4.seed}), that all three systems alerted on`),
       h('div', { class: 'diagram s4' }, svg)),
     teamBox,
-    llmBox,
     techBox,
     caption('Checked by code: every indicator is one that was listed under the techniques the flags point to (strong and medium links; weak ones are not given to the model); every reason cites evidence that exists, and its numbers and amounts appear in it. ' +
       `A note that fails is sent back once (at most ${s4.limits.max_attempts} attempts). Not checked: whether a reason says only what the evidence says, so read the reasons. The technique mapping is a first draft. The ML model gives a score and no reason, so it is shown but not judged.`));
