@@ -561,10 +561,10 @@ function obdaAlertsView() {
       h('details', {}, h('summary', {}, 'The question as SPARQL, and the lookups the mapping gives'),
         caption('The question in the terms of the ontology. When the page was built it was run over the triples the mapping gives for the transaction, by a small program rather than an engine such as Ontop. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the transaction.'),
         h('pre', {}, ex.question.sparql), h('pre', { style: { maxHeight: '320px' } }, ex.question.lookups.join('\n\n')))),
-    h('h3', {}, 'The mapping, term by term'),
-    caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined. Not mapped: ' +
-      ex.unmapped.map((u) => `${u.columns.join(', ')} (${u.why})`).join('; ') + '.'),
-    dataTable(['Ontology term', 'Built from', 'How', 'Meaning'], ex.mapping.map((r, i) => ({ key: i, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
+    h('details', {}, h('summary', {}, 'The mapping, term by term'),
+      caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined. Not mapped: ' +
+        ex.unmapped.map((u) => `${u.columns.join(', ')} (${u.why})`).join('; ') + '.'),
+      dataTable(['Ontology term', 'Built from', 'How', 'Meaning'], ex.mapping.map((r, i) => ({ key: i, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 })),
     h('details', {}, h('summary', {}, `What the mapping gives for transaction ${ex.example.tx_id}`),
       caption('The triples (subject, predicate, object) that the mapping produces for this transaction, computed by code from the three tables when the page was built. Nothing is stored: an engine would build them when a query needs them.'),
       dataTable(['Subject', 'Predicate', 'Object'], ex.example.triples.map((t, i) => ({ key: i, cells: [h('code', {}, t.s.replace('https://example.org/', '')), h('code', {}, t.p), h('code', {}, t.o.replace('https://example.org/', ''))] })), { maxHeight: 420 })),
