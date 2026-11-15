@@ -103,7 +103,7 @@ function select(id) {
   document.getElementById('detail').replaceChildren(detailView(id));
 }
 
-const TABS = [['arch', 'Architecture demo'], ['layers', 'The layers'], ['modes', 'Operating model']];
+const TABS = [['arch', 'Architecture demo'], ['layers', 'The layers'], ['graph', 'The graph'], ['modes', 'Operating model']];
 
 function showArchitecture() {
   Object.keys(boxes).forEach((k) => delete boxes[k]); // the boxes are rebuilt each time the tab is shown
@@ -122,13 +122,14 @@ function showTab(name) {
   try { history.replaceState(null, '', '#' + (name === 'arch' ? selected : name)); } catch (e) { /* file:// or sandboxed frames */ }
   if (name === 'modes') document.getElementById('app').replaceChildren(modesView());
   else if (name === 'layers') document.getElementById('app').replaceChildren(archView());
+  else if (name === 'graph') document.getElementById('app').replaceChildren(graphView());
   else showArchitecture();
 }
 
 async function main() {
   const app = document.getElementById('app');
   try {
-    const names = { snap: 'amlo_snapshot', tmap: 'typology_map', inv: 'investigation_snapshot', agent: 'agent_snapshot', integ: 'integration_snapshot', shacl: 'shacl_example', obda: 'obda_example', obdaAlerts: 'obda_alerts', metamodel: 'metamodel' };
+    const names = { snap: 'amlo_snapshot', tmap: 'typology_map', inv: 'investigation_snapshot', agent: 'agent_snapshot', integ: 'integration_snapshot', shacl: 'shacl_example', obda: 'obda_example', obdaAlerts: 'obda_alerts', metamodel: 'metamodel', graph: 'graph_snapshot' };
     const loaded = await Promise.all(Object.values(names).map((n) => fetch(`data/${n}.json`, { cache: "no-cache" }).then((r) => {
       if (!r.ok) throw new Error(`${n}.json: ${r.status}`);
       return r.json();
@@ -141,7 +142,7 @@ async function main() {
   }
   const hash = location.hash.slice(1);
   if (ITEMS[hash] && CLICKABLE.has(hash)) selected = hash;
-  showTab(['modes', 'layers'].includes(hash) ? hash : 'arch');
+  showTab(['modes', 'layers', 'graph'].includes(hash) ? hash : 'arch');
   const meta = DATA.snap.meta;
   document.getElementById('footer').replaceChildren(
     h('p', {}, `AMLTRIX ${meta.version} (${meta.url}), snapshot exported ${meta.exported}. ${meta.rights} `,
