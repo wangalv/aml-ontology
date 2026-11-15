@@ -548,24 +548,19 @@ function obdaView() {
 function obdaAlertsView() {
   const ex = DATA.obdaAlerts;
   const parse = (text) => document.importNode(new DOMParser().parseFromString(text, 'image/svg+xml').documentElement, true);
-  const flow = parse(ex.flow_svg), flags = parse(ex.flags_svg);
+  const flags = parse(ex.flags_svg);
   return h('div', {},
     h('div', { class: 'card' },
       h('strong', {}, 'How the alert tables map onto the ontology (OBDA design)'),
       h('ol', { style: { margin: '6px 0 0', paddingLeft: '20px' } },
         h('li', {}, 'The three detection systems alert for different reasons and say different things: the rule engine names the rules that fired, the ML model gives a score and no reason, the transaction graph says the transaction lies on a verified loop. Each keeps its alerts in its own table.'),
-        h('li', {}, 'This layer gives every alert the same shape. The ontology names the terms (alert, the transaction it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
-        h('li', {}, 'A question on those terms, for example which techniques the flags of the systems point to for a transaction and whether they point to the same one, then needs no knowledge of the three tables. An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here: a small program applied the mapping to one transaction in the saved run of the identification agent, which is how the agent got its input. So the mapping is a design, run by code, not by an engine.')),
-      caption(`Three systems raise alerts, each in its own table. One question about a transaction (here ${ex.example.tx_id}, the transaction of the identification agent) goes through the mapping to all three, and the answers come back in one shape.`),
-      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flow),
+        h('li', {}, 'This is the integration layer: each system\'s alerts are mapped once to the semantic layer\'s terms, which gives every alert the same shape. The ontology names the terms (alert, the transaction it is about, the source system, the flag that fired, the ML score), and an R2RML mapping per table says which columns they are. Each table is mapped only for what its own system says. Each flag also points to the AML typology technique it relates to (a draft), so that alerts from different systems can be compared by the risk they point to.'),
+        h('li', {}, 'A question on those terms, for example which techniques each system\'s alert points to for a transaction, then needs no knowledge of the three tables. Reading the evidence behind those alerts is the agent\'s job (see Agent (Risk identification)). An OBDA engine such as Ontop would rewrite it into one SQL lookup per table. No engine is installed here: a small program applied the mapping to one transaction in the saved run of Agent (Risk identification), which is how the agent got its input. So the mapping is a design, run by code, not by an engine.')),
+      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flags),
+      caption(`How strong a link is: a strong link means the flag is close to what the technique describes (a direct sign); a medium link means it matches only part of it, or could have other causes (a partial sign); a weak link is context only. The levels are a judgement from the technique's definition, not measured on data, and a first draft not reviewed by a domain expert. The ontology holds ${ex.link_counts.strong} strong, ${ex.link_counts.medium} medium and ${ex.link_counts.weak} weak links; only the strong and medium ones are drawn and given to the model.`),
       h('details', {}, h('summary', {}, 'The question as SPARQL, and the lookups the mapping gives'),
         caption('The question in the terms of the ontology. When the page was built it was run over the triples the mapping gives for the transaction, by a small program rather than an engine such as Ontop. Below it, the lookups that the mapping gives on the tables: one per TriplesMap, each restricted to the transaction.'),
         h('pre', {}, ex.question.sparql), h('pre', { style: { maxHeight: '320px' } }, ex.question.lookups.join('\n\n')))),
-    h('h3', {}, 'What the flags point to'),
-    h('div', { class: 'card' },
-      caption('The diagram above shows the flags of one transaction. Here are all of them: what each detection system raises in its own terms, the ontology term the R2RML mapping turns it into (with its name as in the diagram above), and the AML typology techniques that term links to. ' +
-        `The links are a first draft, not reviewed by a domain expert. The ontology holds ${ex.link_counts.strong} strong, ${ex.link_counts.medium} medium and ${ex.link_counts.weak} weak links; only the strong and medium ones are drawn and given to the model, the weak ones are context only.`),
-      h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, flags)),
     h('h3', {}, 'The mapping, term by term'),
     caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined. Not mapped: ' +
       ex.unmapped.map((u) => `${u.columns.join(', ')} (${u.why})`).join('; ') + '.'),
