@@ -202,16 +202,10 @@ function graphView() {
   detailEl.replaceChildren(graphDetails(g, GRAPH.node));
   redraw();
 
-  const files = h('details', { class: 'card' }, h('summary', {}, `The ${g.files.length} .ttl files and where they sit`),
-    dataTable(['File', 'Layer', 'In the graph as'], g.files.map((f) => {
-      const L = g.layers.find((l) => l.id === f.layer);
-      return { cells: [f.path, L ? (L.n ? `${L.n}. ${L.name}` : L.name) : 'not a layer', f.role] };
-    })));
   return h('div', {},
     caption('This is the data used in this demo: its ontology, mapping and shapes files, coloured by semantic layer. In a real setting the picture is far more complex, and the relationships between the layers need to follow a metamodel.'),
     caption('Each box is a term defined in one of the .ttl files: a class, a property, a flag, an indicator, a mapping or a shape. Each arrow is a relationship written in those files, for example a flag pointing to an AML typology technique, an indicator needing an AML concept, or a mapping that creates a class from a table. Read it from the AML typology (layer 1), which says what to look for, through the AML concepts and our data terms (layers 2 to 4), which say what that means in the data, to the mappings and tables (layer 5), which tie it to the database; the shapes (layer 6) check the result. Click a box to see its Turtle text; drag a box and the ones linked to it follow.'),
     h('div', { class: 'ttlg2' }, graphEl, legendEl),
     detailEl,
-    caption('Left out: ' + g.omitted + ' Of the AML typology, only T0039 and the techniques the flags point to are drawn.'),
-    files);
+    caption('Left out: ' + g.omitted + ' Of the AML typology, only T0039 and the techniques the flags point to are drawn.'));
 }
