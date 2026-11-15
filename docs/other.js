@@ -367,7 +367,7 @@ function renderIdentificationAgent(root) {
 
   const flowSvg = document.importNode(new DOMParser().parseFromString(e.flow, 'image/svg+xml').documentElement, true);
   root.append(pills([[ID_SECTION, ID_SECTION]], ID_SECTION, () => {}), caption(SAVED),
-    h('p', {}, 'Rules, a machine-learning model and a graph analysis monitor transactions in separate systems, with their own teams, data and business logic. ' +
+    h('p', {}, 'Several financial crime detection systems built on different technologies, such as rules, machine learning and graph analysis. Each has its own team, data and business logic. ' +
       "Usually a team can see another system's alerts only if the data is merged or the applications are connected, and the other team's business logic is still hard to learn. " +
       "With a semantic layer, each system maps its business logic to shared terms once, and an agent helps a team read what the other systems say, with the data left where it is."),
     h('div', { class: 'card' }, h('strong', {}, 'Why a semantic layer'),
