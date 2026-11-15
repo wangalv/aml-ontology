@@ -161,12 +161,7 @@ function graphView() {
       if (!empty) el.addEventListener('click', () => { GRAPH.off.has(l.id) ? GRAPH.off.delete(l.id) : GRAPH.off.add(l.id); paintLegend(); redraw(); });
       return el;
     });
-    const floatBtn = h('button', { class: 'pill' + (FLOAT.on ? ' on' : ''), type: 'button', onclick: () => {
-      FLOAT.on = !FLOAT.on;
-      if (FLOAT.on) graphGlide(); else { clearInterval(glideTimer); if (graphNet) graphNet.setOptions({ physics: { enabled: false } }); }
-      paintLegend();
-    } }, FLOAT.on ? 'Floating: on' : 'Floating: off (frozen)');
-    legendEl.replaceChildren(floatBtn, h('div', { style: { height: '10px' } }), h('b', {}, 'Layers'), caption('Click a layer to show or hide it.'), h('div', { style: { height: '4px' } }), ...items,
+    legendEl.replaceChildren(h('b', {}, 'Layers'), caption('Click a layer to show or hide it.'), h('div', { style: { height: '4px' } }), ...items,
       h('hr'), h('b', {}, 'Arrows'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#78909C' } }, '━ '), 'a property between classes'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#D85A30' } }, '━ ┅ '), 'a flag points to a technique: thick = strong, thin = medium, dotted = weak'),
