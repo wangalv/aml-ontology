@@ -482,7 +482,7 @@ function linkEntry(part, title, detail) {
   return h('div', { class: 'ba-target' }, h('div', { class: 'part' }, part), h('strong', {}, title), h('div', { class: 'muted' }, detail));
 }
 
-function recordView(source, contextName, area, intro, outro, held) {
+function recordView(source, contextName, area, intro, held) {
   const ctx = DATA.integ.contexts[contextName], items = [], mapped = mappingByField(area);
   flatten(source, '', '', items);
   const rows = items.filter((r) => r.leaf in ctx).map((r, i) => {
@@ -502,11 +502,11 @@ function recordView(source, contextName, area, intro, outro, held) {
     const why = m ? m['Why (plain)'] : h('span', { class: 'muted' }, '–');
     return { key: i, cells: [h('code', {}, r.path), String(r.value), longTerm(term), target, becomes, why] };
   });
-  return h('div', {}, caption(intro),
+  return h('div', {}, h('details', {}, h('summary', {}, 'The mapping, term by term'), caption(intro),
     dataTable([`Field in the ${held.noun}`, `Value in the ${held.noun}`, 'Term in the ontology', 'Linked to in the AML ontology', 'The mapping', 'Why'], rows,
       { maxHeight: 520, colClass: ['recv', 'recv', 'link', 'link', 'link', 'link'],
         groups: [[held.group, 2, 'recv'], ['Mapping to the AML ontology', 2, 'link'], ['Why the mapping is this way', 2, 'link']] }),
-    h('details', { class: 'card', style: { marginTop: '12px' } }, h('summary', {}, 'How to read the table'), h('div', { style: { marginTop: '10px' } }, md(HOW_TO_READ))), outro);
+    h('details', { class: 'card', style: { marginTop: '12px' } }, h('summary', {}, 'How to read the table'), h('div', { style: { marginTop: '10px' } }, md(HOW_TO_READ)))));
 }
 
 const REC_INTRO = {
@@ -537,9 +537,9 @@ function obdaView() {
           'and code checks its SQL against this mapping.')),
       caption('Left: the columns of the table. Middle: the R2RML mapping. Right: the ontology terms the columns become. Far right: the AML typology entries the ontology points to.'),
       h('div', { class: 'diagram', style: { maxWidth: '1245px', margin: '0 auto' } }, svg)),
-    h('h3', {}, `The mapping, term by term`),
-    caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
-    dataTable(['Ontology term', 'Built from the column(s)', 'How', 'Meaning'], ex.mapping.map((r) => ({ key: r.term, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 }),
+    h('details', {}, h('summary', {}, 'The mapping, term by term'),
+      caption('Read from the R2RML file and the ontology by code. The meaning of each term is written in the ontology, where the terms are defined.'),
+      dataTable(['Ontology term', 'Built from the column(s)', 'How', 'Meaning'], ex.mapping.map((r) => ({ key: r.term, cells: [h('code', {}, r.term), r.from, r.how, r.meaning] })), { maxHeight: 420 })),
     h('details', {}, h('summary', {}, 'The R2RML mapping'), h('pre', { style: { maxHeight: '420px' } }, ex.r2rml)),
     h('details', {}, h('summary', {}, 'The FinCrime data ontology'), h('pre', { style: { maxHeight: '420px' } }, ex.ontology)));
 }
@@ -594,10 +594,8 @@ function renderIntegration(root, id) {
           h('div', { style: { marginTop: '8px' } }, h('button', { class: 'btn', type: 'button', onclick: () => select('ag3') }, 'See this in Investigation agentic AI use cases')));
       } else {
         const sc = snap.investigation[INTS.scenario];
-        const outro = h('div', { class: 'callout' }, 'Every indicator, technique and data source is a pointer into AML typology, so code can check each one before anyone relies on the record: ' +
-          'does it exist, and does it belong to the suspected technique?');
         body.replaceChildren(pills(INT_SCENARIOS, INTS.scenario, (v) => { INTS.scenario = v; show(); }), mappingDiagram(INTS.scenario),
-          recordView(sc.source, sc.context, 'investigation', REC_INTRO[INTS.scenario], outro, { noun: 'record', group: 'Data at the case system' }), rawView(sc.source, sc.graph));
+          recordView(sc.source, sc.context, 'investigation', REC_INTRO[INTS.scenario], { noun: 'record', group: 'Data at the case system' }), rawView(sc.source, sc.graph));
       }
     };
     show();
