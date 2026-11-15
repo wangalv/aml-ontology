@@ -304,3 +304,8 @@ footer { padding-top: 8px; padding-bottom: 40px; font-size: 0.8rem; color: var(-
 .tech-group.agree { border-color: rgba(46, 158, 107, .6); background: rgba(46, 158, 107, .06); }
 .sys-col { min-width: 0; }
 .sys-words { margin: 3px 0 6px; padding: 4px 8px; border-left: 3px solid var(--line); font-size: .86rem; color: var(--muted); }
+
+.meta-wrap { position: relative; margin: 8px 0 0; border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow: hidden; }
+.meta-fig { filter: grayscale(1); opacity: .4; }
+.meta-wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.meta-wm span { transform: rotate(-22deg); font-size: clamp(1.6rem, 5vw, 3rem); font-weight: 800; letter-spacing: .05em; color: rgba(128, 128, 128, .75); text-transform: uppercase; text-align: center; white-space: nowrap; }

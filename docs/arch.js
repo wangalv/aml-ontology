@@ -47,5 +47,9 @@ function archView() {
     h('div', { class: 'arch-grid' },
       h('div', { class: 'arch-obda' },
         h('div', { class: 'arch-obda-head' }, h('b', {}, 'Ontology-Based Data Access (OBDA)'), h('span', {}, 'layers 1 to 5 are read together as one virtual knowledge graph · a question in business concepts is rewritten to SQL on the source')),
-        layers)));
+        layers)),
+    h('details', { class: 'card', style: { marginTop: '12px' } }, h('summary', {}, 'Metamodel'),
+      h('div', { class: 'meta-wrap' },
+        h('div', { class: 'meta-fig' }, document.importNode(new DOMParser().parseFromString(DATA.metamodel.svg, 'image/svg+xml').documentElement, true)),
+        h('div', { class: 'meta-wm' }, h('span', {}, 'Metamodel to be developed')))));
 }
