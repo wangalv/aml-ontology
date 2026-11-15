@@ -103,7 +103,7 @@ function select(id) {
   document.getElementById('detail').replaceChildren(detailView(id));
 }
 
-const TABS = [['arch', 'Architecture demo'], ['modes', 'Operating model'], ['layers', 'Semantic layers']];
+const TABS = [['arch', 'Architecture demo'], ['layers', 'Semantic layer architecture'], ['modes', 'Operating model']];
 
 function showArchitecture() {
   Object.keys(boxes).forEach((k) => delete boxes[k]); // the boxes are rebuilt each time the tab is shown
