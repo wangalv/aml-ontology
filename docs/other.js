@@ -216,6 +216,38 @@ function scenario2(root, repaint) {
       docToggle('s2', 'Show the JSON-LD that code built from the accepted draft, after it passed the checks', run.doc, repaint)));
 }
 
+/* Colour the words of an SQL text: keywords, table names, columns (alias.column), aliases, numbers. Returns DOM nodes, so the text is never read as HTML. */
+const SQL_WORDS = new Set(('WITH AS SELECT DISTINCT FROM JOIN INNER LEFT RIGHT OUTER ON WHERE AND OR NOT IN IS NULL UNION ALL GROUP BY ORDER HAVING LIMIT OFFSET CASE WHEN THEN ELSE END ' +
+  'OVER PARTITION LAG LEAD COUNT SUM MIN MAX LIKE BETWEEN EXISTS').split(' '));
+function sqlHighlight(text) {
+  const out = [], re = /(--[^\n]*)|('[^']*')|(\d+(?:\.\d+)?)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])/g;
+  let m, prevWord = '', prevText = '';
+  const toks = [];
+  while ((m = re.exec(text))) toks.push(m);
+  toks.forEach((t, i) => {
+    const [all, comment, str, num, word] = t;
+    const next = toks[i + 1] ? toks[i + 1][0] : '';
+    if (comment) out.push(h('span', { class: 'sql-c' }, all));
+    else if (str) out.push(h('span', { class: 'sql-s' }, all));
+    else if (num) out.push(h('span', { class: 'sql-n' }, all));
+    else if (word) {
+      const up = word.toUpperCase();
+      let cls = '';
+      if (SQL_WORDS.has(up)) cls = 'sql-k';
+      else if (prevText === '.') cls = 'sql-col';                               // t1.to_account: the column
+      else if (next === '.') cls = 'sql-al';                                    // t1.to_account: the alias
+      else if (prevWord === 'FROM' || prevWord === 'JOIN') cls = 'sql-t';       // a table or a CTE
+      else if (prevWord === 'AS') cls = 'sql-al';
+      out.push(cls ? h('span', { class: cls }, all) : all);
+      if (!/^\s+$/.test(all)) prevWord = SQL_WORDS.has(up) ? up : '';
+    } else out.push(all);
+    if (all.trim()) prevText = all;
+  });
+  return out;
+}
+const sqlPre = (text) => h('pre', { class: 'sql', style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, sqlHighlight(text));
+const sqlCode = (text) => h('code', { class: 'sql' }, sqlHighlight(text));
+
 function scenario3(root) {
   const s3 = DATA.agent.s3, sp = s3.sparql, rw = s3.rewrite, r = s3.result;
   const svg = document.importNode(new DOMParser().parseFromString(s3.diagram, 'image/svg+xml').documentElement, true);
@@ -232,13 +264,15 @@ function scenario3(root) {
       caption('The database holds payments, not indicators, so the words of the indicator have to be turned into a query. Only the part the data can show is queried: the cycle of payments, not whether it lacks a business rationale.')),
     h('div', { class: 'flow-arrow' }, '▼  the LLM turns the indicator into a query over the ontology\'s business terms, then into SQL using the mapping'),
     h('div', { class: 'big-label', style: { marginTop: '8px' } }, '2  What the LLM writes: the SQL, and where each part comes from'),
-    pre(rw.sql_pretty || rw.sql),
-    dataTable(['Words of the indicator', 'The SQL it became', 'Ontology terms', 'Columns'],
-      s3.trace.map((g, i) => ({ key: i, cells: [
-        h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), g.words, g.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
-        h('div', {}, g.sql.map((q) => h('div', {}, h('code', {}, q)))),
-        h('div', {}, g.terms.map((t) => h('div', {}, h('code', {}, t)))),
-        h('div', {}, g.columns.map((c) => h('div', {}, h('code', {}, c))))] })), { maxHeight: 420 }),
+    h('div', { class: 'sqlrow' },
+      h('div', {}, sqlPre(rw.sql_pretty || rw.sql)),
+      h('div', {},
+        dataTable(['Words of the indicator', 'The SQL it became', 'Ontology terms', 'Columns'],
+          s3.trace.map((g, i) => ({ key: i, cells: [
+            h('div', { class: 'quote' }, h('span', { class: 'tag' }, 'AML typology'), g.words, g.quote_found ? badge('green', 'found in the indicator') : badge('red', 'not in the indicator')),
+            h('div', {}, g.sql.map((q) => h('div', {}, sqlCode(q)))),
+            h('div', {}, g.terms.map((t) => h('div', {}, h('code', {}, t)))),
+            h('div', {}, g.columns.map((c) => h('div', {}, h('code', {}, c))))] })), { maxHeight: 520 }))),
     caption('Checked by code before it ran: one read-only SELECT with a LIMIT; tried on a small made-up table, it had to flag the transactions of a loop and none of a straight chain; ' +
       'and it reads only the columns that the ontology terms stand for in the mapping. The laundering label is not in the table the LLM can query.'),
     h('div', { class: 'big-label', style: { marginTop: '8px' } }, '3  Result: what the SQL returned'),

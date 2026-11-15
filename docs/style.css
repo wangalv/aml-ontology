@@ -323,3 +323,14 @@ pre.ttl { margin: 0 0 10px; padding: 8px 10px; font-size: 0.78rem; line-height: 
 .ttl-head .title { font-size: 1.05rem; font-weight: 700; }
 .ttl-body { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 @media (max-width: 800px) { .ttlg2, .ttl-body { grid-template-columns: minmax(0, 1fr); } }
+
+.sqlrow { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 14px; align-items: start; margin-bottom: 10px; }
+.sqlrow pre { margin: 0; }
+@media (max-width: 800px) { .sqlrow { grid-template-columns: minmax(0, 1fr); } }
+.sql-k { color: #8e6bd8; font-weight: 600; }
+.sql-t { color: #1f9d6b; font-weight: 600; }
+.sql-al { color: #4f8fd8; }
+.sql-col { color: #d8782b; }
+.sql-n { color: #c79a12; }
+.sql-s { color: #c0568a; }
+.sql-c { color: #8a929a; font-style: italic; }
