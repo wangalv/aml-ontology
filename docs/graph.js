@@ -39,6 +39,14 @@ function graphRings(g, v) {
 /* Layer layout: one band per semantic layer, layer 1 at the top. A layer with many nodes wraps into several lines inside its band.
    Inside a band the nodes are ordered by where the nodes they are connected to (in the layers above) sit, so that the arrows cross less. */
 const LAYER_PER_LINE = 9, LAYER_DX = 175, LAYER_LINE_DY = 62, LAYER_GAP = 130;
+/* Break a long name into lines of at most `max` characters, at spaces. */
+function graphWrap(text, max) {
+  const lines = [];
+  let cur = '';
+  text.split(' ').forEach((w) => { if (cur && (cur + ' ' + w).length > max) { lines.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; });
+  return lines.concat(cur).join('\n');
+}
+
 function graphLayers(g, v) {
   const nb = {};
   v.nodes.forEach((n) => { nb[n.id] = []; });
@@ -222,7 +230,7 @@ function graphView() {
       const left = -(LAYER_PER_LINE * LAYER_DX) / 2 - 190;
       lay.rows.forEach((r) => {
         const L = g.layers.find((l) => l.id === r.layer);
-        nodes.push({ id: 'row:' + r.layer, label: (L.n ? `Layer ${L.n}\n` : '') + L.name, shape: 'text', x: left, y: r.y + r.height / 2, fixed: true, physics: false,
+        nodes.push({ id: 'row:' + r.layer, label: (L.n ? `Layer ${L.n}\n` : '') + graphWrap(L.name, 26), shape: 'text', x: left, y: r.y + r.height / 2, fixed: true, physics: false,
           font: { size: 20, bold: true, color: L.color, multi: false, align: 'right' } });
       });
     }
