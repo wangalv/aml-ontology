@@ -39,6 +39,7 @@ function graphRings(g, v) {
 /* Layer layout: one band per semantic layer, layer 1 at the top. A layer with many nodes wraps into several lines inside its band.
    Inside a band the nodes are ordered by where the nodes they are connected to (in the layers above) sit, so that the arrows cross less. */
 const LAYER_PER_LINE = 9, LAYER_DX = 175, LAYER_LINE_DY = 62, LAYER_GAP = 130;
+const FLOW_LAYERS = new Set(['INV']), FLOW_DY = 120;   // layers whose own arrows would otherwise run along one line and over each other
 /* Break a long name into lines of at most `max` characters, at spaces. */
 function graphWrap(text, max) {
   const lines = [];
@@ -63,6 +64,36 @@ function graphLayers(g, v) {
       if ((a === null) !== (b === null)) return a === null ? 1 : -1;
       return p.kind.localeCompare(q.kind) || p.id.localeCompare(q.id);
     });
+    if (FLOW_LAYERS.has(L)) {   // the relationships inside this layer are drawn as a small flow: a node goes below the nodes that point to it
+      const level = {};
+      list.forEach((n) => { level[n.id] = 0; });
+      for (let pass = 0; pass < list.length; pass++) {
+        v.edges.forEach(([e]) => { if (e.from in level && e.to in level && level[e.to] < level[e.from] + 1 && level[e.from] < list.length) level[e.to] = level[e.from] + 1; });
+      }
+      const top = Math.max(...Object.values(level));
+      for (let k = 0; k <= top; k++) {
+        const row = list.filter((n) => level[n.id] === k);
+        const want = row.map((n) => bary(n));
+        row.forEach((n, i) => { n.want = want[i]; });
+        row.sort((p, q) => (p.want === null) - (q.want === null) || (p.want - q.want) || p.id.localeCompare(q.id));
+        const xs = row.map((n, i) => (n.want === null ? i * LAYER_DX : n.want));
+        for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i], xs[i - 1] + LAYER_DX);
+        const known = row.filter((n) => n.want !== null);
+        const shift = known.length ? known.reduce((t, n) => t + n.want, 0) / known.length - xs.filter((_, i) => row[i].want !== null).reduce((t, x) => t + x, 0) / known.length
+          : -((xs.length - 1) * LAYER_DX) / 2;
+        row.forEach((n, i) => { pos[n.id] = { x: xs[i] + shift, y: y + k * FLOW_DY }; });
+      }
+      // put the nodes of each row in the order of the nodes they point to, so that the arrows going down do not cross
+      for (let k = 0; k < top; k++) {
+        const row = list.filter((n) => level[n.id] === k);
+        const mean = (n) => { const t = v.edges.filter(([e]) => e.from === n.id && e.to in level).map(([e]) => pos[e.to].x); return t.length ? t.reduce((x, z) => x + z, 0) / t.length : pos[n.id].x; };
+        const slots = row.map((n) => pos[n.id].x).sort((x, z) => x - z);
+        row.slice().sort((x, z) => mean(x) - mean(z)).forEach((n, i) => { pos[n.id].x = slots[i]; });
+      }
+      rows.push({ layer: L, y, height: top * FLOW_DY });
+      y += top * FLOW_DY + LAYER_GAP;
+      return;
+    }
     const lines = Math.ceil(list.length / LAYER_PER_LINE), per = Math.ceil(list.length / lines);
     rows.push({ layer: L, y, height: (lines - 1) * LAYER_LINE_DY });
     for (let k = 0; k < lines; k++) {
