@@ -204,7 +204,9 @@ function graphView() {
       if (!empty) el.addEventListener('click', () => { GRAPH.off.has(l.id) ? GRAPH.off.delete(l.id) : GRAPH.off.add(l.id); paintLegend(); redraw(); });
       return el;
     });
-    const viewSwitch = pills([['layers', 'By layer'], ['star', 'Floating']], GRAPH.mode, (m) => { GRAPH.mode = m; paintLegend(); redraw(); });
+    const layered = GRAPH.mode === 'layers';   // one switch: on = one band per layer, off = floating
+    const viewSwitch = h('div', { class: 'pills' }, h('button', { class: 'pill' + (layered ? ' on' : ''), type: 'button', title: layered ? 'Click to let the nodes float' : 'Click to arrange the nodes by layer',
+      onclick: () => { GRAPH.mode = layered ? 'star' : 'layers'; paintLegend(); redraw(); } }, 'By layer: ' + (layered ? 'on' : 'off')));
     legendEl.replaceChildren(viewSwitch, h('div', { style: { height: '8px' } }), h('b', {}, 'Layers'), caption('Click a layer to show or hide it.'), h('div', { style: { height: '4px' } }), ...items,
       h('hr'), h('b', {}, 'Arrows'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#78909C' } }, '━ '), 'a property between classes'),
