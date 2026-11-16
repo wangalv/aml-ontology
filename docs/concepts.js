@@ -102,8 +102,7 @@ function conceptsSection() {
 function typologyMappingSection() {
   const texts = (DATA.snap && DATA.snap.indicators) || {};
   const rows = T0039_NEEDS.map(([id, needs]) => {
-    const [color, label] = checkable(needs);
-    return { key: id, cells: [id, shorten(texts[id], 150), needs.map((t) => h('code', { style: { marginRight: '6px' } }, t)), badge(color, label)] };
+    return { key: id, cells: [id, shorten(texts[id], 150), needs.map((t) => h('code', { style: { marginRight: '6px' } }, t))] };
   });
   const counts = { 'Can check': 0, 'Partly': 0, 'Cannot check here': 0 };
   T0039_NEEDS.forEach(([, needs]) => { counts[checkable(needs)[1]] += 1; });
@@ -111,7 +110,7 @@ function typologyMappingSection() {
     h('p', {}, 'For each indicator, the AML concepts it needs, and where in the typology\'s data sources each concept would be recorded. ' +
       'The mapping names concepts and not columns, so it serves every data source: a different database changes the data mapping underneath, not this.'),
     caption('Example: the nine indicators of the technique Circular Transactions (T0039).'),
-    dataTable(['Indicator', 'What the typology says', 'Needs', 'With this data'], rows, { maxHeight: 460 }),
+    dataTable(['Indicator', 'What the typology says', 'Needs'], rows, { maxHeight: 460 }),
     h('p', { style: { marginTop: '10px' } }, `Of the nine, ${counts['Can check']} can be checked, ${counts['Partly']} partly, and ${counts['Cannot check here']} not at all. ` +
       'This is worked out from the table above and from which concepts the data can answer, not typed in by hand. ' +
       'The indicators that cannot be checked are reported as such: the missing concepts are named, and nothing is guessed.'),
