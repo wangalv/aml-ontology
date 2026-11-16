@@ -1,6 +1,6 @@
 /* The "Semantic Layer Architecture" tab: the six layers, drawn as HTML so it follows the page theme and wraps on a narrow screen. No data files; the text is written here. */
 const ARCH_LAYERS = [
-  { n: 1, color: '#6b7280', name: 'External Knowledge',
+  { n: 1, color: '#6b7280', name: 'FinCrime Knowledge',
     tech: [['RDF / Turtle', 'the published typology as linked data'], ['SKOS', 'techniques and indicators as concepts'], ['OWL', 'the ontology the published typology comes with']],
     what: 'Published typologies, techniques, indicators and data-source definitions. Reused as published, not edited.',
     code: 'amx:T0039   (Circular Transactions)\n  amlo:isIndicatedBy  [[amx:IND02191]]' },

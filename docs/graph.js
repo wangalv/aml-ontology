@@ -6,6 +6,8 @@ const GRAPH = { off: new Set(), node: null, center: 'amlo:Technique', mode: 'lay
 /* Star layout: the centre node in the middle, the nodes one arrow away on the first ring, two arrows away on the second, and so on.
    The rings are only the starting positions; the physics then lets the nodes settle and they can be dragged. */
 const GRAPH_ORDER = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'INV'];
+const BAND_ORDER = ['L1', 'INV', 'L2', 'L3', 'L4', 'L5', 'L6'];   // the Investigation ontology is layer 1b, so it comes right after layer 1
+const SUBLAYERS = new Set(['INV']);
 function graphRings(g, v) {
   const nb = {};
   v.nodes.forEach((n) => { nb[n.id] = []; });
@@ -78,7 +80,9 @@ function graphLayers(g, v) {
   v.edges.forEach(([e]) => { nb[e.from].push(e.to); nb[e.to].push(e.from); });
   const pos = {}, rows = [];
   let y = 0;
-  GRAPH_ORDER.forEach((L) => {
+  // the gap below a band: small when the next band is a sub-layer of it
+  const gapAfter = (bi) => { const next = BAND_ORDER.slice(bi + 1).find((m) => v.nodes.some((n) => n.layer === m)); return next && SUBLAYERS.has(next) ? 90 : LAYER_GAP; };
+  BAND_ORDER.forEach((L, bi) => {
     const list = v.nodes.filter((n) => n.layer === L);
     if (!list.length) return;
     const bary = (n) => { const xs = nb[n.id].filter((m) => m in pos).map((m) => pos[m].x); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
@@ -92,7 +96,7 @@ function graphLayers(g, v) {
       const order = graphChain(list, v);
       order.forEach((n, i) => { pos[n.id] = { x: (i - (order.length - 1) / 2) * LINE_DX, y }; });
       rows.push({ layer: L, y, height: 0 });
-      y += LAYER_GAP;
+      y += gapAfter(bi);
       return;
     }
     const lines = Math.ceil(list.length / LAYER_PER_LINE), per = Math.ceil(list.length / lines);
@@ -101,7 +105,7 @@ function graphLayers(g, v) {
       const chunk = list.slice(k * per, (k + 1) * per);
       chunk.forEach((n, i) => { pos[n.id] = { x: (i - (chunk.length - 1) / 2) * LAYER_DX + (k % 2 ? LAYER_DX / 4 : 0), y: y + k * LAYER_LINE_DY }; });
     }
-    y += (lines - 1) * LAYER_LINE_DY + LAYER_GAP;
+    y += (lines - 1) * LAYER_LINE_DY + gapAfter(bi);
   });
   return { pos, rows };
 }
@@ -179,7 +183,7 @@ function graphDetails(g, id) {
   const L = g.layers.find((l) => l.id === n.layer);
   const kindName = { class: 'Class', property: 'Property', requirement: 'Indicator and what it needs', technique: 'AML typology technique', flag: 'Flag', mapping: 'R2RML mapping', table: 'Table', shape: 'SHACL shape' }[n.kind] || n.kind;
   wrap.append(h('div', { class: 'ttl-head' }, h('span', { class: 'title' }, n.label.replace('\n', ' ')), ' ',
-    h('span', { class: 'badge', style: { background: L.color, color: '#10211f' } }, L.n ? `Layer ${L.n}` : 'Investigation'), ' ',
+    h('span', { class: 'badge', style: { background: L.color, color: '#10211f' } }, `Layer ${L.n}`), ' ',
     h('span', { class: 'muted' }, `${kindName} · ${L.name}` + (n.ttl ? ` · ${n.file}, line ${n.line}` : ''))));
   const src = n.ttl ? h('pre', { class: 'ttl' }, n.ttl)
     : h('p', { class: 'muted' }, n.kind === 'table' ? 'A table of the database, not a term in a .ttl file. The mappings that read it point to it.' : 'No Turtle block for this node.');
@@ -227,12 +231,12 @@ function graphView() {
   const count = (l) => g.nodes.filter((n) => n.layer === l).length;
 
   const paintLegend = () => {
-    const items = g.layers.map((l) => {
+    const items = g.layers.slice().sort((a, b) => BAND_ORDER.indexOf(a.id) - BAND_ORDER.indexOf(b.id)).map((l) => {
       const n = count(l.id), empty = n === 0, off = GRAPH.off.has(l.id);
       const sw = h('span', { class: 'sw', style: { background: empty ? 'transparent' : l.color, borderStyle: empty ? 'dashed' : 'solid', opacity: off ? 0.3 : 1 } });
       const body = h('div', {}, h('b', {}, l.n ? `${l.n}. ${l.name}` : l.name), ' ', h('span', { class: 'muted' }, empty ? '(no .ttl file)' : `(${n})`), h('br'),
         h('span', { class: 'tx' }, empty ? 'Not drawn: this demo has no file for this layer.' : l.tag));
-      const el = h('div', { class: 'legend-item', style: { cursor: empty ? 'default' : 'pointer', opacity: empty ? 0.55 : off ? 0.45 : 1 }, title: empty ? '' : 'Click to show or hide this layer' }, sw, body);
+      const el = h('div', { class: 'legend-item', style: { cursor: empty ? 'default' : 'pointer', opacity: empty ? 0.55 : off ? 0.45 : 1, marginLeft: SUBLAYERS.has(l.id) ? '18px' : '0' }, title: empty ? '' : 'Click to show or hide this layer' }, sw, body);
       if (!empty) el.addEventListener('click', () => { GRAPH.off.has(l.id) ? GRAPH.off.delete(l.id) : GRAPH.off.add(l.id); paintLegend(); redraw(); });
       return el;
     });
