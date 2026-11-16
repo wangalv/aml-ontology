@@ -1,4 +1,4 @@
-/* The "AML concepts and requirements" box: the AML vocabulary the indicators talk about, and what each indicator needs from it.
+/* The "AML concepts and typology mapping" box: the AML vocabulary the indicators talk about, and what each indicator needs from it.
    Written here, not read from a data file. The terms and the Turtle come from the AML OBDA demo (ontology/core/aml_core.ttl and
    ontology/application/typology_requirements.ttl), a draft that no domain expert has reviewed. */
 
@@ -54,7 +54,7 @@ amd:originator a owl:ObjectProperty ;
 amd:Jurisdiction a owl:Class ;
     rdfs:comment "The country or legal territory a transfer or an entity belongs to. The data has no country." .`;
 
-const TTL_REQUIREMENTS = `@prefix amd:   <https://example.org/aml-data#> .
+const TTL_MAPPING = `@prefix amd:   <https://example.org/aml-data#> .
 @prefix fcd:   <https://example.org/fincrime-data#> .
 @prefix align: <https://example.org/align#> .
 @prefix amx:   <https://example.org/amltrix/> .   # entries of the AML typology
@@ -70,7 +70,7 @@ amd:Jurisdiction align:recordedIn amx:DS0047 .   # DS0047 Correspondent and Cros
 # Context shown to the investigator for a technique. It is not evidence for any indicator.
 amx:T0039 align:backgroundTerm fcd:customerType , fcd:industry , fcd:onboardingTenureDays , fcd:pepFlag , fcd:riskRating .`;
 
-const CONCEPT_SECTIONS = ['AML concepts', 'Requirements'];
+const CONCEPT_SECTIONS = ['AML concepts', 'Typology mapping'];
 const CONCEPTS = { section: CONCEPT_SECTIONS[0] };
 
 function answerable() { return new Set(AML_TERMS.filter((t) => t[3]).map((t) => t[0])); }
@@ -99,7 +99,7 @@ function conceptsSection() {
     ttlBlock('Example in Turtle: three of the concepts (excerpt)', TTL_CONCEPTS));
 }
 
-function requirementsSection() {
+function typologyMappingSection() {
   const texts = (DATA.snap && DATA.snap.indicators) || {};
   const rows = T0039_NEEDS.map(([id, needs]) => {
     const [color, label] = checkable(needs);
@@ -109,13 +109,13 @@ function requirementsSection() {
   T0039_NEEDS.forEach(([, needs]) => { counts[checkable(needs)[1]] += 1; });
   return h('div', {},
     h('p', {}, 'For each indicator, the AML concepts it needs, and where in the typology\'s data sources each concept would be recorded. ' +
-      'A requirement names concepts and not columns, so one requirement serves every data source: a different database changes the mapping underneath, not this.'),
+      'The mapping names concepts and not columns, so it serves every data source: a different database changes the data mapping underneath, not this.'),
     caption('Example: the nine indicators of the technique Circular Transactions (T0039).'),
     dataTable(['Indicator', 'What the typology says', 'Needs', 'With this data'], rows, { maxHeight: 460 }),
     h('p', { style: { marginTop: '10px' } }, `Of the nine, ${counts['Can check']} can be checked, ${counts['Partly']} partly, and ${counts['Cannot check here']} not at all. ` +
       'This is worked out from the table above and from which concepts the data can answer, not typed in by hand. ' +
       'The indicators that cannot be checked are reported as such: the missing concepts are named, and nothing is guessed.'),
-    ttlBlock('Example in Turtle: requirements, sources and background (excerpt)', TTL_REQUIREMENTS));
+    ttlBlock('Example in Turtle: what the indicators need, sources and background (excerpt)', TTL_MAPPING));
 }
 
 function renderConcepts(root) {
@@ -123,13 +123,13 @@ function renderConcepts(root) {
   root.append(
     h('p', {}, 'Two things sit in this box, both in AML words and neither tied to a database. ',
       h('strong', {}, 'AML concepts'), ' are the common vocabulary of funds transfers and accounts that the indicators talk about. ',
-      h('strong', {}, 'Requirements'), ' say which of those concepts each indicator needs.'),
+      h('strong', {}, 'Typology mapping'), ' says which of those concepts each indicator needs.'),
     caption('A draft written for the demo and not reviewed by a domain expert. The typology gives one sentence per indicator and does not say which concepts it needs, ' +
-      'so the concepts and the requirements are our reading of those sentences. The namespace is a placeholder.'),
+      'so the concepts and the typology mapping are our reading of those sentences. The namespace is a placeholder.'),
     pillBox, body);
   function show() {
     pillBox.replaceChildren(pills(CONCEPT_SECTIONS.map((s) => [s, s]), CONCEPTS.section, (s) => { CONCEPTS.section = s; show(); }));
-    body.replaceChildren(CONCEPTS.section === 'AML concepts' ? conceptsSection() : requirementsSection());
+    body.replaceChildren(CONCEPTS.section === 'AML concepts' ? conceptsSection() : typologyMappingSection());
   }
   show();
 }

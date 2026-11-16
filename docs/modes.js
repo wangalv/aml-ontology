@@ -109,7 +109,7 @@ const MODES = [
         who: 'Semantic foundation',
         parts: [
           ['External knowledge', 'AML typology: techniques, indicators and their data sources'],
-          ['AML concepts and requirements', 'Canonical AML concepts, and the concepts each indicator needs'],
+          ['AML concepts and typology mapping', 'Canonical AML concepts, and the concepts each indicator needs'],
           ['Data alignment and mapping', 'Source vocabulary aligned to the AML concepts, mapped to tables and columns (R2RML)'],
         ],
         what: 'IT is responsible for the technology platform, the implementation of the semantic model, data mapping, integration, security, performance and operational governance. Business experts take part in defining and validating the knowledge.',
