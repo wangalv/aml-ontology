@@ -215,9 +215,7 @@ function graphView() {
       h('div', { class: 'tx' }, h('span', { style: { color: '#BA68C8' } }, '┅ '), 'a shape checks a class'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#F9A825' } }, '━ '), 'an indicator needs an AML concept'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#42A5F5' } }, '┅ '), 'our data term is a kind of AML concept'),
-      h('div', { class: 'tx' }, h('span', { style: { color: '#B0BEC5' } }, '━ '), 'is a (subclass or individual), has (property)'),
-      h('hr'), h('b', {}, 'Node shapes'),
-      h('div', { class: 'tx' }, 'All nodes are rectangles. The border tells the kind: thick = class, thin = flag, mapping, property or indicator, long dashes = table, short dashes = AML typology technique, dots = shape.'));
+      h('div', { class: 'tx' }, h('span', { style: { color: '#B0BEC5' } }, '━ '), 'is a (subclass or individual), has (property)'));
   };
 
   const redraw = () => {
