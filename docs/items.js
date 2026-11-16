@@ -1,6 +1,6 @@
 /* The boxes of the architecture map. Mirrors ITEMS in portal/semantic_tab.py. */
 const SEMANTIC = {
-  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', det: 'Features', inv: 'Investigation ontology', kmg: 'Knowledge management',
+  typ: 'AML typology', ind: 'Risk indicators', scn: 'Risk scenarios', det: 'Features', inv: 'Investigation ontology', kmg: 'Other knowledge management',
 };
 const BADGE = { 'Live data': 'green', 'Sample': 'blue', 'Design only': 'gray', 'Placeholder': 'orange' };
 const DEFAULT_ITEM = 'ag2';
@@ -92,7 +92,7 @@ const ITEMS = {
     'so source data has no mapping to the ontology yet.',
     'Each domain defines customer and account for itself, so the same word means different things.',
     'Domains share one definition and add only their own terms.'),
-  kmg: item('Knowledge management', 'Placeholder', [], 'Policies and cases',
+  kmg: item('Other knowledge management', 'Placeholder', [], 'Policies and cases',
     'Policies and past cases the agents can draw on.',
     'Knowledge is searched by keyword.', 'Knowledge is linked to typologies and indicators.'),
   cor: item('AML concepts and typology mapping', 'Sample', [], 'Note',
