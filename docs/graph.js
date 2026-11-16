@@ -1,7 +1,7 @@
 /* "The graph" tab: one graph of the definition files (.ttl) of the demo, each node coloured by the semantic layer it belongs to.
    Reads data/graph_snapshot.json, which ontology/build_graph_snapshot.py makes from the .ttl files. Layers 2 and 3 have no .ttl file in this demo. */
 const TTL_GRAPH_H = Math.max(560, Math.min(860, Math.round(window.innerHeight * 0.74)));   // as tall as the window allows; the panel with the Turtle text sits under it
-const GRAPH = { off: new Set(), node: null, center: 'amlo:Technique' };
+const GRAPH = { off: new Set(), node: null, center: 'amlo:Technique', mode: 'layers' };   // mode: 'star' (floating) or 'layers' (one row per semantic layer)
 
 /* Star layout: the centre node in the middle, the nodes one arrow away on the first ring, two arrows away on the second, and so on.
    The rings are only the starting positions; the physics then lets the nodes settle and they can be dragged. */
@@ -34,6 +34,36 @@ function graphRings(g, v) {
     }
   });
   return pos;
+}
+
+/* Layer layout: one band per semantic layer, layer 1 at the top. A layer with many nodes wraps into several lines inside its band.
+   Inside a band the nodes are ordered by where the nodes they are connected to (in the layers above) sit, so that the arrows cross less. */
+const LAYER_PER_LINE = 9, LAYER_DX = 175, LAYER_LINE_DY = 62, LAYER_GAP = 130;
+function graphLayers(g, v) {
+  const nb = {};
+  v.nodes.forEach((n) => { nb[n.id] = []; });
+  v.edges.forEach(([e]) => { nb[e.from].push(e.to); nb[e.to].push(e.from); });
+  const pos = {}, rows = [];
+  let y = 0;
+  GRAPH_ORDER.forEach((L) => {
+    const list = v.nodes.filter((n) => n.layer === L);
+    if (!list.length) return;
+    const bary = (n) => { const xs = nb[n.id].filter((m) => m in pos).map((m) => pos[m].x); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+    list.sort((p, q) => {
+      const a = bary(p), b = bary(q);
+      if (a !== null && b !== null && a !== b) return a - b;
+      if ((a === null) !== (b === null)) return a === null ? 1 : -1;
+      return p.kind.localeCompare(q.kind) || p.id.localeCompare(q.id);
+    });
+    const lines = Math.ceil(list.length / LAYER_PER_LINE), per = Math.ceil(list.length / lines);
+    rows.push({ layer: L, y, height: (lines - 1) * LAYER_LINE_DY });
+    for (let k = 0; k < lines; k++) {
+      const chunk = list.slice(k * per, (k + 1) * per);
+      chunk.forEach((n, i) => { pos[n.id] = { x: (i - (chunk.length - 1) / 2) * LAYER_DX + (k % 2 ? LAYER_DX / 4 : 0), y: y + k * LAYER_LINE_DY }; });
+    }
+    y += (lines - 1) * LAYER_LINE_DY + LAYER_GAP;
+  });
+  return { pos, rows };
 }
 
 /* Every node is a rectangle with square corners; the kind of node shows in the border: solid and thick = class, solid thin = flag or mapping,
@@ -93,12 +123,17 @@ function graphOptionsStar() {
   };
 }
 
+function graphOptionsLayers() {
+  return { autoResize: true, physics: { enabled: false }, interaction: { hover: true, zoomView: true, dragNodes: true, tooltipDelay: 150 },
+    edges: { smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.45 } }, nodes: { margin: 8 } };
+}
+
 /* The panel under the graph: what the node is on one line, then its Turtle text on the left and what it points to on the right. */
 function graphDetails(g, id) {
   const wrap = h('div', {});
   const n = id && g.nodes.find((x) => x.id === id);
   if (!n) {
-    wrap.append(h('b', {}, 'Click a node'), ' ', h('span', { class: 'muted' }, 'Its Turtle (.ttl) text, the file it comes from, and what it points to appear here. The graph floats and then comes to rest: drag a node and the ones linked to it follow. Scroll to zoom; double-click a node to put it in the centre.'));
+    wrap.append(h('b', {}, 'Click a node'), ' ', h('span', { class: 'muted' }, 'Its Turtle (.ttl) text, the file it comes from, and what it points to appear here. In the Floating view the graph floats and then comes to rest: drag a node and the ones linked to it follow, and double-click a node to put it in the centre. In the By layer view the nodes stay in the band of their layer. Scroll to zoom.'));
     return wrap;
   }
   const L = g.layers.find((l) => l.id === n.layer);
@@ -125,7 +160,7 @@ const GLIDE_START = 18;
 /* Let the nodes float, then bring them to rest slowly: the top speed is cut a little every half second until they stop. */
 function graphGlide() {
   clearInterval(glideTimer);
-  if (!graphNet || !FLOAT.on) return;
+  if (!graphNet || !FLOAT.on || GRAPH.mode !== 'star') return;
   let speed = GLIDE_START;
   graphNet.setOptions({ physics: { enabled: true, maxVelocity: speed } });
   graphNet.startSimulation();
@@ -161,7 +196,8 @@ function graphView() {
       if (!empty) el.addEventListener('click', () => { GRAPH.off.has(l.id) ? GRAPH.off.delete(l.id) : GRAPH.off.add(l.id); paintLegend(); redraw(); });
       return el;
     });
-    legendEl.replaceChildren(h('b', {}, 'Layers'), caption('Click a layer to show or hide it.'), h('div', { style: { height: '4px' } }), ...items,
+    const viewSwitch = pills([['layers', 'By layer'], ['star', 'Floating']], GRAPH.mode, (m) => { GRAPH.mode = m; paintLegend(); redraw(); });
+    legendEl.replaceChildren(viewSwitch, h('div', { style: { height: '8px' } }), h('b', {}, 'Layers'), caption('Click a layer to show or hide it.'), h('div', { style: { height: '4px' } }), ...items,
       h('hr'), h('b', {}, 'Arrows'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#78909C' } }, '━ '), 'a property between classes'),
       h('div', { class: 'tx' }, h('span', { style: { color: '#D85A30' } }, '━ ┅ '), 'a flag points to a technique: thick = strong, thin = medium, dotted = weak'),
@@ -178,17 +214,33 @@ function graphView() {
     const v = graphVisible(g);
     graphData.nodes = v.nodes;
     if (!v.nodes.some((n) => n.id === GRAPH.center)) GRAPH.center = v.nodes[0].id;
-    const pos = graphRings(g, v);
+    const layered = GRAPH.mode === 'layers';
+    const lay = layered ? graphLayers(g, v) : null;
+    const pos = layered ? lay.pos : graphRings(g, v);
     const nodes = v.nodes.map((n) => graphNodeOptions(n, color[n.layer], pos));
+    if (layered) {   // the name of each layer, at the left of its band
+      const left = -(LAYER_PER_LINE * LAYER_DX) / 2 - 190;
+      lay.rows.forEach((r) => {
+        const L = g.layers.find((l) => l.id === r.layer);
+        nodes.push({ id: 'row:' + r.layer, label: (L.n ? `Layer ${L.n}\n` : '') + L.name, shape: 'text', x: left, y: r.y + r.height / 2, fixed: true, physics: false,
+          font: { size: 20, bold: true, color: L.color, multi: false, align: 'right' } });
+      });
+    }
     const edges = v.edges.map(([e, i]) => graphEdgeOptions(e, i));
-    if (graphNet) { setNet(graphNet, nodes, edges); setTimeout(() => graphNet && graphNet.fit({ animation: true }), 1200); graphGlide(); }
+    if (graphNet) {
+      clearInterval(glideTimer);
+      graphNet.setOptions(layered ? graphOptionsLayers() : graphOptionsStar());
+      setNet(graphNet, nodes, edges);
+      setTimeout(() => graphNet && graphNet.fit({ animation: !layered }), layered ? 400 : 1200);
+      graphGlide();
+    }
     else whenConnected(graphEl, () => {
-      graphNet = makeNet('graph', graphEl, nodes, edges, graphOptionsStar(), (id) => { GRAPH.node = id; detailEl.replaceChildren(graphDetails(g, id)); detailEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });   // the panel is under the graph: bring it into view
+      graphNet = makeNet('graph', graphEl, nodes, edges, layered ? graphOptionsLayers() : graphOptionsStar(), (id) => { if (id.startsWith('row:')) return; GRAPH.node = id; detailEl.replaceChildren(graphDetails(g, id)); detailEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });   // the panel is under the graph: bring it into view
       setTimeout(() => graphNet && graphNet.fit({ animation: true }), 1500);
-      graphNet.on('dragStart', () => { clearInterval(glideTimer); if (FLOAT.on) { graphNet.setOptions({ physics: { enabled: true, maxVelocity: GLIDE_START } }); } });
+      graphNet.on('dragStart', () => { clearInterval(glideTimer); if (FLOAT.on && GRAPH.mode === 'star') { graphNet.setOptions({ physics: { enabled: true, maxVelocity: GLIDE_START } }); } });
       graphNet.on('dragEnd', () => graphGlide());
       graphGlide();
-      graphNet.on('doubleClick', (p) => { if (p.nodes.length) { GRAPH.center = p.nodes[0]; GRAPH.node = p.nodes[0]; redraw(); detailEl.replaceChildren(graphDetails(g, GRAPH.node)); } });
+      graphNet.on('doubleClick', (p) => { if (p.nodes.length && !p.nodes[0].startsWith('row:') && GRAPH.mode === 'star') { GRAPH.center = p.nodes[0]; GRAPH.node = p.nodes[0]; redraw(); detailEl.replaceChildren(graphDetails(g, GRAPH.node)); } });
     });
   };
   graphData = { nodes: g.nodes, paint: () => detailEl.replaceChildren(graphDetails(g, GRAPH.node)) };
