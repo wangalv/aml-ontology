@@ -236,7 +236,7 @@ function graphView() {
       const sw = h('span', { class: 'sw', style: { background: empty ? 'transparent' : l.color, borderStyle: empty ? 'dashed' : 'solid', opacity: off ? 0.3 : 1 } });
       const body = h('div', {}, h('b', {}, l.n ? `${l.n}. ${l.name}` : l.name), ' ', h('span', { class: 'muted' }, empty ? '(no .ttl file)' : `(${n})`), h('br'),
         h('span', { class: 'tx' }, empty ? 'Not drawn: this demo has no file for this layer.' : l.tag));
-      const el = h('div', { class: 'legend-item', style: { cursor: empty ? 'default' : 'pointer', opacity: empty ? 0.55 : off ? 0.45 : 1, marginLeft: SUBLAYERS.has(l.id) ? '18px' : '0' }, title: empty ? '' : 'Click to show or hide this layer' }, sw, body);
+      const el = h('div', { class: 'legend-item', style: { cursor: empty ? 'default' : 'pointer', opacity: empty ? 0.55 : off ? 0.45 : 1 }, title: empty ? '' : 'Click to show or hide this layer' }, sw, body);
       if (!empty) el.addEventListener('click', () => { GRAPH.off.has(l.id) ? GRAPH.off.delete(l.id) : GRAPH.off.add(l.id); paintLegend(); redraw(); });
       return el;
     });
