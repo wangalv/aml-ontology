@@ -1,4 +1,4 @@
-/* "The graph" tab: one graph of the definition files (.ttl) of the demo, each node coloured by the semantic layer it belongs to.
+/* "The Graph" tab: one graph of the definition files (.ttl) of the demo, each node coloured by the semantic layer it belongs to.
    Reads data/graph_snapshot.json, which ontology/build_graph_snapshot.py makes from the .ttl files. Layers 2 and 3 have no .ttl file in this demo. */
 const TTL_GRAPH_H = Math.max(560, Math.min(860, Math.round(window.innerHeight * 0.74)));   // as tall as the window allows; the panel with the Turtle text sits under it
 const GRAPH = { off: new Set(), node: null, center: 'amlo:Technique', mode: 'layers' };   // mode: 'star' (floating) or 'layers' (one row per semantic layer)
